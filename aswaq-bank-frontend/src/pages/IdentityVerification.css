@@ -1,0 +1,402 @@
+.iv-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f6f8fc;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  color: #14213d;
+}
+
+/* ===== Navbar ===== */
+.iv-navbar {
+  background: #ffffff;
+  border-bottom: 1px solid #eef1f7;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.iv-navbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.iv-brand-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iv-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.iv-brand-name {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #14213d;
+}
+
+.iv-brand-tagline {
+  font-size: 0.75rem;
+  color: #8b95a7;
+}
+
+.iv-navbar-links {
+  display: flex;
+  gap: 32px;
+}
+
+.iv-navbar-links a {
+  color: #4a5468;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.iv-navbar-links a:hover {
+  color: #1657ff;
+}
+
+.iv-lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #14213d;
+  cursor: pointer;
+}
+
+/* ===== Main layout ===== */
+.iv-main {
+  flex: 1;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 64px 32px 96px;
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 64px;
+  align-items: start;
+}
+
+/* ===== Hero (sans illustration) ===== */
+.iv-hero-title {
+  font-size: 2.3rem;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin: 0 0 20px;
+  color: #14213d;
+}
+
+.iv-hero-accent {
+  color: #1657ff;
+}
+
+.iv-hero-subtitle {
+  font-size: 1rem;
+  color: #5b6478;
+  line-height: 1.6;
+  max-width: 420px;
+  margin: 0 0 36px;
+}
+
+.iv-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 420px;
+}
+
+.iv-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.iv-feature-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #e8effe;
+  color: #1657ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iv-feature-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #14213d;
+}
+
+.iv-feature-text {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: #7b8496;
+  line-height: 1.4;
+}
+
+/* ===== Carte / colonne droite ===== */
+.iv-card-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.iv-card {
+  width: 100%;
+  max-width: 640px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(20, 33, 61, 0.08);
+  padding: 36px 40px 32px;
+}
+
+.iv-card-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.iv-card-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 0 0 6px;
+  color: #14213d;
+}
+
+.iv-card-subtitle {
+  font-size: 0.85rem;
+  color: #8b95a7;
+  margin: 0;
+}
+
+.iv-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.iv-form-row {
+  display: grid;
+  gap: 16px;
+}
+
+.iv-row-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.iv-row-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #14213d;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #dde2ec;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #14213d;
+  background: #fbfcfe;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #1657ff;
+  box-shadow: 0 0 0 3px rgba(22, 87, 255, 0.12);
+  background: #ffffff;
+}
+
+/* ===== Téléphone ===== */
+.iv-phone-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+}
+
+.iv-phone-code {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid #dde2ec;
+  border-radius: 10px;
+  background: #fbfcfe;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #14213d;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.iv-flag {
+  font-size: 0.95rem;
+}
+
+/* ===== Upload fichiers ===== */
+.iv-file-upload {
+  position: relative;
+}
+
+.iv-file-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.iv-file-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 22px 12px;
+  border: 1.5px dashed #c7d0e0;
+  border-radius: 12px;
+  background: #fbfcfe;
+  color: #5b6478;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.iv-file-label:hover {
+  border-color: #1657ff;
+  background: #f4f7ff;
+}
+
+.iv-upload-icon {
+  color: #1657ff;
+  margin-bottom: 4px;
+}
+
+.iv-file-hint {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #9aa3b4;
+}
+
+/* ===== Bouton principal ===== */
+.iv-submit-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  background: #1657ff;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.iv-submit-button:hover {
+  background: #0d47e0;
+}
+
+.iv-submit-button:active {
+  transform: translateY(1px);
+}
+
+/* ===== Footer carte ===== */
+.iv-footer {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.iv-back-link {
+  display: inline-block;
+  font-size: 0.85rem;
+  color: #5b6478;
+  text-decoration: none;
+  margin-bottom: 14px;
+}
+
+.iv-back-link:hover {
+  text-decoration: underline;
+}
+
+.iv-security-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #5b6478;
+}
+
+.iv-compliance {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  color: #9aa3b4;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 960px) {
+  .iv-main {
+    grid-template-columns: 1fr;
+    padding: 40px 24px 64px;
+    gap: 40px;
+  }
+
+  .iv-hero-title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .iv-navbar-links {
+    display: none;
+  }
+
+  .iv-card {
+    padding: 28px 20px;
+  }
+
+  .iv-row-3,
+  .iv-row-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #1657ff;
+  outline-offset: 2px;
+}

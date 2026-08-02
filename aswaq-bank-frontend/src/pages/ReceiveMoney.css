@@ -1,0 +1,481 @@
+/* ===== PAGE RECEVOIR DE L'ARGENT ===== */
+
+.receive-money-main {
+  background: #f4f6fb;
+  padding: 1.5rem 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Topbar */
+.rm-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.logo-white {
+  filter: brightness(0) invert(1);
+}
+.rm-greeting {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0b1f4b;
+  margin: 0;
+}
+
+.rm-greeting-sub {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0.2rem 0 0;
+}
+
+.rm-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Page header */
+.rm-page-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.rm-back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #0b1f4b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.rm-back-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.rm-page-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0b1f4b;
+  margin: 0;
+}
+
+.rm-page-subtitle {
+  color: #6b7280;
+  font-size: 0.88rem;
+  margin: 0.2rem 0 0;
+}
+
+/* Cards */
+.rm-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.rm-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.rm-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0b1f4b;
+  margin: 0;
+}
+
+.rm-info-icon {
+  color: #94a3b8;
+  cursor: help;
+}
+
+.rm-card-desc {
+  font-size: 0.82rem;
+  color: #6b7280;
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+/* Top cards grid */
+.rm-top-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.25rem;
+}
+
+/* IBAN Card */
+.rm-iban-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.rm-iban-text {
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0b1f4b;
+  letter-spacing: 0.5px;
+}
+
+.rm-copy-iban-btn {
+  background: none;
+  border: none;
+  color: #1d4fd8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  transition: color 0.2s;
+}
+
+.rm-copy-iban-btn:hover {
+  color: #1641b8;
+}
+
+/* QR Card */
+.rm-qr-display {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.rm-qr-code {
+  background: white;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.rm-qr-svg {
+  width: 140px;
+  height: 140px;
+}
+
+.rm-qr-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Info Card */
+.rm-info-card {
+  background: linear-gradient(135deg, #eef3fc 0%, #dbeafe 100%);
+  border: 1px solid #bfdbfe;
+  position: relative;
+  overflow: hidden;
+}
+
+.rm-info-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #1d4fd8;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.rm-info-card-text {
+  font-size: 0.85rem;
+  color: #1e3a8a;
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+
+.rm-info-card-text strong {
+  font-weight: 700;
+}
+
+.rm-info-card-illustration {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.rm-bank-icon {
+  color: #1d4fd8;
+}
+
+.rm-clock-icon {
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+/* Action buttons */
+.rm-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  color: #1d4fd8;
+}
+
+.rm-action-btn:hover {
+  background: #f8fafc;
+  border-color: #1d4fd8;
+}
+
+.rm-action-btn-outline {
+  width: 100%;
+}
+
+/* Bottom cards grid */
+.rm-bottom-cards {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 1.25rem;
+}
+
+/* Request card */
+.rm-form-group {
+  margin-bottom: 1rem;
+}
+
+.rm-form-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.4rem;
+}
+
+.rm-form-input {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  color: #0b1f4b;
+  outline: none;
+  transition: all 0.2s;
+  background: white;
+}
+
+.rm-form-input:focus {
+  border-color: #1d4fd8;
+  box-shadow: 0 0 0 3px rgba(29, 79, 216, 0.1);
+}
+
+.rm-form-input::placeholder {
+  color: #94a3b8;
+}
+
+.rm-amount-input-wrapper {
+  position: relative;
+}
+
+.rm-amount-input {
+  padding-right: 4rem;
+}
+
+.rm-amount-currency {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.rm-send-request-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #1d4fd8;
+  color: white;
+  border: none;
+  padding: 0.85rem;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 0.5rem;
+}
+
+.rm-send-request-btn:hover {
+  background: #1641b8;
+}
+
+/* History card */
+.rm-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.rm-view-all-btn {
+  background: none;
+  border: none;
+  color: #1d4fd8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rm-view-all-btn:hover {
+  text-decoration: underline;
+}
+
+.rm-history-table-wrapper {
+  overflow-x: auto;
+}
+
+.rm-history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rm-history-table th {
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.rm-history-table td {
+  padding: 0.9rem 0.5rem;
+  font-size: 0.88rem;
+  color: #0b1f4b;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.rm-history-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rm-history-date {
+  color: #64748b;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.rm-sender-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.rm-sender-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #eef3fc;
+  color: #1d4fd8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.rm-sender-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.rm-sender-name {
+  font-weight: 600;
+  color: #0b1f4b;
+  font-size: 0.88rem;
+}
+
+.rm-sender-type {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.rm-history-ref {
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.rm-history-amount {
+  font-weight: 700;
+  color: #16a34a;
+  white-space: nowrap;
+}
+
+.rm-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.rm-status-received {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .rm-top-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+  .rm-info-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .rm-top-cards {
+    grid-template-columns: 1fr;
+  }
+  .rm-bottom-cards {
+    grid-template-columns: 1fr;
+  }
+  .receive-money-main {
+    padding: 1rem;
+  }
+}

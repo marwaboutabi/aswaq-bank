@@ -1,0 +1,407 @@
+/* ===== Base (identique à Login.css) ===== */
+.create-account-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f6f8fc;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  color: #14213d;
+}
+
+/* ===== Navbar (identique à Login.css) ===== */
+.ca-navbar {
+  background: #ffffff;
+  border-bottom: 1px solid #eef1f7;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.ca-navbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.ca-brand-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ca-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.ca-brand-name {
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  color: #14213d;
+}
+
+.ca-brand-tagline {
+  font-size: 0.75rem;
+  color: #8b95a7;
+}
+
+.ca-navbar-links {
+  display: flex;
+  gap: 32px;
+}
+
+.ca-navbar-links a {
+  color: #4a5468;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.ca-navbar-links a:hover {
+  color: #1657ff;
+}
+
+.ca-lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #14213d;
+  cursor: pointer;
+}
+
+/* ===== Main layout (identique à Login.css) ===== */
+.ca-main {
+  flex: 1;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 64px 32px 96px;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 64px;
+  align-items: start;
+}
+
+/* ===== Hero / left column (tailles identiques à Login.css) ===== */
+.ca-hero-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 0 0 20px;
+  color: #14213d;
+}
+
+.ca-hero-accent {
+  color: #1657ff;
+}
+
+.ca-hero-subtitle {
+  font-size: 1.05rem;
+  color: #5b6478;
+  line-height: 1.6;
+  max-width: 480px;
+  margin: 0 0 32px;
+}
+
+
+
+/* ===== Features (mêmes tailles que .hero-feature de Login.css) ===== */
+.ca-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 420px;
+}
+
+.ca-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.ca-feature-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #e8effe;
+  color: #1657ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ca-feature-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #14213d;
+}
+
+.ca-feature-text {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: #7b8496;
+  line-height: 1.4;
+}
+
+/* ===== Card / right column (même largeur que .login-card : 440px) ===== */
+.ca-card-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.ca-card {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(20, 33, 61, 0.08);
+  padding: 36px 36px 32px;
+}
+
+/* ===== Onglets Connexion / Créer un compte (identique à Login.css) ===== */
+.ca-tabs {
+  display: flex;
+  gap: 28px;
+  border-bottom: 1px solid #eef1f7;
+  margin-bottom: 28px;
+}
+
+.ca-tab {
+  background: none;
+  border: none;
+  padding: 0 0 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #9aa3b4;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  text-decoration: none;
+}
+
+.ca-tab-active {
+  color: #1657ff;
+  border-bottom-color: #1657ff;
+}
+
+.ca-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ca-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #14213d;
+}
+
+.form-input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #dde2ec;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #14213d;
+  background: #fbfcfe;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #1657ff;
+  box-shadow: 0 0 0 3px rgba(22, 87, 255, 0.12);
+  background: #ffffff;
+}
+
+/* ===== Téléphone ===== */
+.ca-phone-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+}
+
+.ca-phone-code {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid #dde2ec;
+  border-radius: 10px;
+  background: #fbfcfe;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #14213d;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ca-flag {
+  font-size: 1rem;
+}
+
+/* ===== Indicateurs de mot de passe ===== */
+.ca-password-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.ca-hint {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #9aa3b4;
+  background: #f3f5fa;
+  border-radius: 999px;
+  padding: 4px 10px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.ca-hint-valid {
+  color: #1a9c5a;
+  background: #e6f7ee;
+}
+
+/* ===== CGU ===== */
+.ca-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: #5b6478;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.ca-terms input {
+  margin-top: 3px;
+}
+
+.ca-terms a {
+  color: #1657ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.ca-terms a:hover {
+  text-decoration: underline;
+}
+
+.form-error {
+  background: #fdecec;
+  color: #d33f3f;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+}
+
+/* ===== Bouton principal (même style que .login-button de Login.css) ===== */
+.ca-submit-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  background: #1657ff;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.ca-submit-button:hover {
+  background: #0d47e0;
+}
+
+.ca-submit-button:active {
+  transform: translateY(1px);
+}
+
+.ca-login-link {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #5b6478;
+  margin-top: 20px;
+}
+
+.ca-login-link p {
+  margin: 0 0 6px;
+}
+
+.ca-login-link-button {
+  color: #1657ff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.ca-login-link-button:hover {
+  text-decoration: underline;
+}
+
+/* ===== Responsive (identique à Login.css) ===== */
+@media (max-width: 960px) {
+  .ca-main {
+    grid-template-columns: 1fr;
+    padding: 40px 24px 64px;
+    gap: 40px;
+  }
+
+  .ca-hero-title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .ca-navbar-links {
+    display: none;
+  }
+
+  .ca-card {
+    padding: 28px 24px;
+  }
+
+  .ca-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Accessibilité : focus visible clavier */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #1657ff;
+  outline-offset: 2px;
+}

@@ -1,0 +1,346 @@
+/* ===== Variables & Reset ===== */
+:root {
+  --color-navy: #0b1f4b;
+  --color-blue: #1d4fd8;
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 10px rgba(11, 31, 75, 0.08);
+  --shadow-lg: 0 8px 20px rgba(11, 31, 75, 0.12);
+  
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  
+  --text-muted: #9ca3af;
+  --text-secondary: #6b7280;
+}
+
+.four-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f6fb;
+  font-family: inherit;
+}
+.logo-white {
+  filter: brightness(0) invert(1);
+}
+/* ===== Sidebar ===== */
+.four-sidebar {
+  width: 240px;
+  background: var(--color-navy);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  flex-shrink: 0;
+}
+
+.four-sidebar-logo { padding: 0 0.5rem 1.5rem; }
+
+.four-sidebar-section {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #6b83b8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0 0.5rem 0.6rem;
+}
+
+.four-nav { display: flex; flex-direction: column; gap: 0.3rem; }
+
+.four-nav-secondary {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.four-nav-item, .four-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: none;
+  border: none;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.four-nav-item { color: #cbd5e1; }
+.four-nav-item:hover { background: rgba(255, 255, 255, 0.06); color: white; }
+.four-nav-item-active { background: var(--color-blue); color: white; }
+
+.four-logout { color: var(--text-muted); font-size: 0.85rem; margin-top: auto; }
+.four-logout:hover { color: white; }
+
+/* ===== Main & Topbar ===== */
+.four-main { flex: 1; padding: 2rem 2.5rem; overflow-x: hidden; }
+
+.four-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.four-greeting { font-size: 1.5rem; font-weight: 700; color: var(--color-navy); margin: 0; }
+.four-greeting-sub { color: var(--text-secondary); font-size: 0.9rem; margin: 0.2rem 0 0; }
+
+.four-topbar-actions { display: flex; align-items: center; gap: 0.75rem; }
+
+/* Regroupement des éléments avec fond blanc et ombre légère */
+.four-search, .four-icon-button, .four-user-chip {
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.four-search { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.9rem; color: var(--text-muted); }
+.four-search input { border: none; outline: none; font-size: 0.85rem; width: 160px; }
+
+.four-icon-button {
+  position: relative;
+  border: none;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-navy);
+  cursor: pointer;
+}
+
+.four-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.four-user-chip { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.9rem 0.4rem 0.4rem; cursor: pointer; transition: background 0.2s; }
+.four-user-chip:hover { background: #f8fafc; }
+
+.four-user-avatar {
+  width: 34px; height: 34px; border-radius: 50%; background: #eef3fc; color: var(--color-blue);
+  display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0;
+}
+
+.four-user-info { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.four-user-name { font-size: 0.9rem; font-weight: 600; color: var(--color-navy); white-space: nowrap; }
+.four-user-role { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+
+/* ===== Row 1: Stat cards & Shared Panel ===== */
+.four-stats-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+
+/* Regroupement des styles de base identiques pour les cartes */
+.four-stat-card, .four-panel {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.four-stat-card { padding: 1.1rem; }
+.four-panel { padding: 1.25rem; }
+
+.four-stat-icon {
+  width: 38px; height: 38px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center; color: white; margin-bottom: 0.75rem;
+}
+
+.four-stat-label { display: flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0.35rem; }
+.four-stat-value { font-size: 1.1rem; font-weight: 700; color: var(--color-navy); margin: 0 0 0.4rem; }
+.four-stat-sub { font-size: 0.72rem; color: var(--text-muted); margin: 0; }
+.four-stat-sub-up { color: #16a34a; }
+.four-stat-sub-down { color: #dc2626; }
+
+/* ===== Shared panel header ===== */
+.four-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.four-panel-header h3 { font-size: 0.98rem; font-weight: 700; color: var(--color-navy); margin: 0; }
+.four-link-button { background: none; border: none; color: var(--color-blue); font-size: 0.78rem; font-weight: 600; cursor: pointer; padding: 0; }
+.four-range-select { border: 1px solid #e5e7eb; border-radius: var(--radius-sm); padding: 0.4rem 0.6rem; font-size: 0.75rem; color: var(--text-secondary); background: white; cursor: pointer; }
+
+/* ===== Row 2: Chart / Orders ===== */
+.four-middle-row { display: grid; grid-template-columns: 1.6fr 1.3fr; gap: 1rem; margin-bottom: 1.25rem; align-items: stretch; }
+
+.four-trend-wrapper { position: relative; }
+.four-trend-svg { width: 100%; height: 200px; display: block; }
+
+.four-trend-tooltip {
+  position: absolute; transform: translate(-50%, -130%); background: white; border: 1px solid #e5e7eb;
+  border-radius: var(--radius-md); padding: 0.4rem 0.65rem; box-shadow: 0 6px 16px rgba(11, 31, 75, 0.12);
+  display: flex; flex-direction: column; align-items: center; pointer-events: none; white-space: nowrap;
+}
+.four-trend-tooltip-value { font-size: 0.78rem; font-weight: 700; color: var(--color-navy); }
+.four-trend-tooltip-date { font-size: 0.68rem; color: var(--text-muted); }
+.four-trend-labels { display: flex; justify-content: space-between; margin-top: 0.4rem; font-size: 0.68rem; color: var(--text-muted); }
+
+/* Orders table - Regroupement de la grille identique */
+.four-orders-head, .four-orders-row {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1.1fr 0.9fr 1fr;
+  gap: 0.5rem;
+}
+
+.four-orders-head {
+  font-size: 0.68rem; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.04em; padding: 0 0.2rem 0.4rem; border-bottom: 1px solid #f1f5f9;
+}
+
+.four-orders-table { display: flex; flex-direction: column; gap: 0.5rem; }
+.four-orders-body { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.7rem; }
+.four-orders-row { align-items: center; padding: 0 0.2rem; }
+
+.four-orders-id { font-size: 0.78rem; font-weight: 700; color: var(--color-blue); }
+.four-orders-client { font-size: 0.8rem; font-weight: 600; color: var(--color-navy); }
+.four-orders-total { font-size: 0.78rem; font-weight: 600; color: #374151; }
+.four-orders-date { font-size: 0.74rem; color: var(--text-muted); }
+
+.four-badge-pill { display: inline-flex; align-items: center; justify-content: center; padding: 0.3rem 0.6rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; width: fit-content; }
+.four-badge-pill-orange { background: #fef3c7; color: #b45309; }
+.four-badge-pill-blue { background: #dbeafe; color: var(--color-blue); }
+.four-badge-pill-purple { background: #ede9fe; color: #7c3aed; }
+.four-badge-pill-green { background: #dcfce7; color: #16a34a; }
+
+/* ===== Row 3: Activity / Donut / Quick Actions ===== */
+.four-bottom-row { display: grid; grid-template-columns: 1fr 1.1fr 1fr; gap: 1rem; }
+
+/* Timeline */
+.four-timeline-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.four-timeline-row { position: relative; display: flex; gap: 0.7rem; padding-bottom: 1.1rem; }
+.four-timeline-row:last-child { padding-bottom: 0; }
+
+.four-timeline-icon { width: 30px; height: 30px; min-width: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; z-index: 1; }
+.four-timeline-connector { position: absolute; left: 15px; top: 30px; bottom: 0; width: 2px; background: #eef1f7; }
+
+.four-timeline-info { flex: 1; padding-top: 0.1rem; }
+.four-timeline-title { font-size: 0.82rem; font-weight: 600; color: var(--color-navy); margin: 0; }
+.four-timeline-time { font-size: 0.7rem; color: var(--text-muted); margin: 0.15rem 0 0; }
+
+/* Category donut */
+.four-donut-wrapper { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
+.four-donut-svg { width: 140px; height: 140px; flex-shrink: 0; }
+.four-donut-total { font-size: 18px; font-weight: 700; fill: var(--color-navy); }
+.four-donut-currency { font-size: 10px; fill: var(--text-muted); }
+
+.four-legend { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 0.55rem; }
+.four-legend-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; }
+.four-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.four-legend-label { flex: 1; color: #374151; }
+.four-legend-percent { color: var(--color-navy); font-weight: 700; }
+.four-legend-amount { color: var(--text-muted); min-width: 70px; text-align: right; }
+
+/* ===== Quick Actions (Optimisation majeure des couleurs) ===== */
+.four-quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+
+.four-quick-action {
+  display: flex; align-items: center; gap: 0.55rem; border: none; border-radius: 12px;
+  padding: 0.65rem 0.8rem; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-align: left;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.four-quick-action:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+.four-quick-action-icon { width: 28px; height: 28px; min-width: 28px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: white; }
+
+/* Quick Actions Cards (Large) */
+.four-quick-actions-section { margin-bottom: 1.25rem; }
+.four-quick-actions-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
+
+.four-quick-action-card {
+  display: flex;
+  flex-direction: row;           
+  align-items: center;
+  justify-content: flex-start;   
+  gap: 0.75rem;
+  border: none;
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;        
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  min-height: 64px;              
+  transition: all 0.2s ease;
+}
+.four-quick-action-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+
+.four-quick-action-card-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  /* margin-bottom supprimé car layout horizontal */
+}
+.four-quick-action-card-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+/* === Couleurs unifiées pour Quick Actions (Petites et Grandes) === */
+/* Green */
+.four-quick-action-green, .four-quick-action-card-green { background: #ecfdf3; color: #16a34a; }
+.four-quick-action-green .four-quick-action-icon, .four-quick-action-card-green .four-quick-action-card-icon { background: #16a34a; }
+
+/* Blue */
+.four-quick-action-blue, .four-quick-action-card-blue { background: #eef3fc; color: var(--color-blue); }
+.four-quick-action-blue .four-quick-action-icon, .four-quick-action-card-blue .four-quick-action-card-icon { background: var(--color-blue); }
+
+/* Purple */
+.four-quick-action-purple, .four-quick-action-card-purple { background: #f3f0ff; color: #7c3aed; }
+.four-quick-action-purple .four-quick-action-icon, .four-quick-action-card-purple .four-quick-action-card-icon { background: #8b5cf6; }
+
+/* Orange */
+.four-quick-action-orange, .four-quick-action-card-orange { background: #fff7ed; color: #b45309; }
+.four-quick-action-orange .four-quick-action-icon, .four-quick-action-card-orange .four-quick-action-card-icon { background: #f59e0b; }
+
+/* Cyan */
+.four-quick-action-cyan, .four-quick-action-card-cyan { background: #ecfeff; color: #0e7490; }
+.four-quick-action-cyan .four-quick-action-icon, .four-quick-action-card-cyan .four-quick-action-card-icon { background: #06b6d4; }
+
+/* Teal */
+.four-quick-action-teal, .four-quick-action-card-teal { background: #ecfdf5; color: #0f766e; }
+.four-quick-action-teal .four-quick-action-icon, .four-quick-action-card-teal .four-quick-action-card-icon { background: #0ea5e9; }
+
+/* === Couleurs unifiées pour Stat Icons et Timeline Icons === */
+.four-stat-icon-green, .four-timeline-icon-green { background: #16a34a; }
+.four-stat-icon-blue, .four-timeline-icon-blue { background: var(--color-blue); }
+.four-stat-icon-purple, .four-timeline-icon-purple { background: #8b5cf6; }
+.four-stat-icon-orange, .four-timeline-icon-orange { background: #f59e0b; }
+.four-stat-icon-teal { background: #0ea5e9; }
+.four-stat-icon-cyan { background: #06b6d4; }
+
+/* ===== Responsive ===== */
+@media (max-width: 1400px) {
+  .four-stats-row { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 1300px) {
+  .four-middle-row, .four-bottom-row { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 860px) {
+  .four-sidebar { display: none; }
+  .four-stats-row { grid-template-columns: repeat(2, 1fr); }
+  .four-middle-row, .four-bottom-row { grid-template-columns: 1fr; }
+  .four-orders-head { display: none; }
+  .four-orders-row { grid-template-columns: 1fr 1fr; row-gap: 0.3rem; }
+}

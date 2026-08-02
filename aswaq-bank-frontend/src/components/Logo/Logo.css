@@ -1,0 +1,12 @@
+/* src/components/Logo.css */
+
+.logo-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-svg {
+  flex-shrink: 0;
+  display: block;
+}

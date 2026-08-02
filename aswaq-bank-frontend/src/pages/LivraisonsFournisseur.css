@@ -1,0 +1,894 @@
+.liv-four-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f6fb;
+  font-family: inherit;
+}
+
+/* ===== Sidebar ===== */
+.liv-four-sidebar {
+  width: 240px;
+  background: var(--color-navy, #0b1f4b);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  flex-shrink: 0;
+}
+
+.liv-four-sidebar-logo {
+  padding: 0 0.5rem 1.5rem;
+}
+.logo-white {
+  filter: brightness(0) invert(1);
+}
+.liv-four-sidebar-section {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #6b83b8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0 0.5rem 0.6rem;
+}
+
+.liv-four-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.liv-four-nav-secondary {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.liv-four-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.liv-four-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+}
+
+.liv-four-nav-item-active {
+  background: var(--color-blue, #1d4fd8);
+  color: white;
+}
+
+.liv-four-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.7rem 0.9rem;
+  margin-top: auto;
+}
+
+.liv-four-logout:hover {
+  color: white;
+}
+
+/* ===== Main ===== */
+.liv-four-main {
+  flex: 1;
+  padding: 2rem 2.5rem;
+  overflow-x: hidden;
+}
+
+.liv-four-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.liv-four-greeting {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-navy, #0b1f4b);
+  margin: 0;
+}
+
+.liv-four-greeting-sub {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0.2rem 0 0;
+}
+
+.liv-four-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.liv-four-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+  color: #9ca3af;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.liv-four-search input {
+  border: none;
+  outline: none;
+  font-size: 0.85rem;
+  width: 160px;
+}
+
+.liv-four-icon-button {
+  position: relative;
+  background: white;
+  border: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-navy, #0b1f4b);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.liv-four-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.liv-four-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: white;
+  padding: 0.4rem 0.9rem 0.4rem 0.4rem;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: background 0.2s;
+}
+
+.liv-four-user-chip:hover {
+  background: #f8fafc;
+}
+
+.liv-four-user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #eef3fc;
+  color: #1d4fd8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.liv-four-user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.liv-four-user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0b1f4b;
+  white-space: nowrap;
+}
+
+.liv-four-user-role {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+/* ===== Stat cards ===== */
+.liv-four-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.liv-four-stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.liv-four-stat-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-bottom: 0.75rem;
+}
+
+.liv-four-stat-icon-blue { background: var(--color-blue, #1d4fd8); }
+.liv-four-stat-icon-orange { background: #f59e0b; }
+.liv-four-stat-icon-purple { background: #8b5cf6; }
+.liv-four-stat-icon-green { background: #16a34a; }
+
+.liv-four-stat-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin-bottom: 0.35rem;
+}
+
+.liv-four-stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-navy, #0b1f4b);
+  margin: 0 0 0.4rem;
+}
+
+.liv-four-stat-sub {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ===== Shared panel ===== */
+.liv-four-panel {
+  background: white;
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.liv-four-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.liv-four-panel-header h3 {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--color-navy, #0b1f4b);
+  margin: 0;
+}
+
+.liv-four-link-button {
+  background: none;
+  border: none;
+  color: var(--color-blue, #1d4fd8);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ===== Action bar ===== */
+.liv-four-action-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.liv-four-action-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  color: #9ca3af;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  flex: 1;
+  min-width: 220px;
+}
+
+.liv-four-action-search input {
+  border: none;
+  outline: none;
+  font-size: 0.85rem;
+  width: 100%;
+  color: #374151;
+}
+
+.liv-four-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: white;
+  padding: 0.3rem;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  overflow-x: auto;
+}
+
+.liv-four-filter-chip {
+  border: none;
+  background: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.liv-four-filter-chip:hover {
+  color: var(--color-navy, #0b1f4b);
+}
+
+.liv-four-filter-chip-active {
+  background: var(--color-blue, #1d4fd8);
+  color: white;
+}
+
+.liv-four-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: none;
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.liv-four-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(11, 31, 75, 0.08);
+}
+
+.liv-four-btn-outline {
+  background: white;
+  color: var(--color-navy, #0b1f4b);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.liv-four-btn-solid {
+  background: var(--color-blue, #1d4fd8);
+  color: white;
+}
+
+/* ===== Table ===== */
+.liv-four-table-panel {
+  margin-bottom: 1.25rem;
+}
+
+.liv-four-table-wrapper {
+  overflow-x: auto;
+}
+
+.liv-four-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+.liv-four-table thead th {
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 0.5rem 0.6rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.liv-four-table tbody td {
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid #f8fafc;
+  font-size: 0.8rem;
+  color: #374151;
+  vertical-align: middle;
+}
+
+.liv-four-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.liv-four-table tbody tr:hover {
+  background: #fafbfe;
+}
+
+.liv-four-ref {
+  font-weight: 700;
+  color: var(--color-blue, #1d4fd8);
+}
+
+.liv-four-client {
+  font-weight: 600;
+  color: var(--color-navy, #0b1f4b);
+}
+
+.liv-four-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.liv-four-badge-pill-orange { background: #fef3c7; color: #b45309; }
+.liv-four-badge-pill-blue { background: #dbeafe; color: #1d4fd8; }
+.liv-four-badge-pill-purple { background: #ede9fe; color: #7c3aed; }
+.liv-four-badge-pill-green { background: #dcfce7; color: #16a34a; }
+
+.liv-four-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.liv-four-row-action-btn {
+  background: #f4f6fb;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-navy, #0b1f4b);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.liv-four-row-action-btn:hover {
+  background: #eef3fc;
+  color: var(--color-blue, #1d4fd8);
+}
+
+/* Pagination */
+.liv-four-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.liv-four-pagination-info {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.liv-four-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.liv-four-page-btn {
+  border: none;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.liv-four-page-btn:hover:not(:disabled) {
+  color: var(--color-navy, #0b1f4b);
+}
+
+.liv-four-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.liv-four-page-btn-active {
+  background: var(--color-blue, #1d4fd8);
+  color: white;
+}
+
+/* ===== Map placeholder ===== */
+.liv-four-map-panel {
+  margin-bottom: 1.25rem;
+}
+
+.liv-four-map {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(29, 79, 216, 0.06), rgba(29, 79, 216, 0.06)),
+    repeating-linear-gradient(0deg, #eef1f7 0px, #eef1f7 1px, transparent 1px, transparent 40px),
+    repeating-linear-gradient(90deg, #eef1f7 0px, #eef1f7 1px, transparent 1px, transparent 40px),
+    #f7f9fc;
+}
+
+.liv-four-map-marker {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--color-blue, #1d4fd8);
+  transform: translate(-50%, -100%) rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(11, 31, 75, 0.25);
+}
+
+.liv-four-map-marker-icon {
+  transform: rotate(45deg);
+  color: white;
+}
+
+.liv-four-map-marker-label {
+  position: absolute;
+  top: -1.6rem;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  background: white;
+  border-radius: 6px;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--color-navy, #0b1f4b);
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(11, 31, 75, 0.12);
+}
+
+.liv-four-map-note {
+  position: absolute;
+  bottom: 0.8rem;
+  right: 0.9rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.68rem;
+  color: #6b7280;
+}
+
+/* ===== Modal ===== */
+.liv-four-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 31, 75, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 50;
+}
+
+.liv-four-modal {
+  background: white;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 45px rgba(11, 31, 75, 0.25);
+}
+
+.liv-four-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  position: sticky;
+  top: 0;
+  background: white;
+  border-radius: 18px 18px 0 0;
+}
+
+.liv-four-modal-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-navy, #0b1f4b);
+}
+
+.liv-four-modal-close {
+  background: #f4f6fb;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-navy, #0b1f4b);
+  cursor: pointer;
+}
+
+.liv-four-modal-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.liv-four-modal-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.7rem;
+}
+
+.liv-four-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 1.2rem;
+}
+
+.liv-four-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.liv-four-modal-field-label {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.liv-four-modal-field-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-navy, #0b1f4b);
+}
+
+/* Products table inside modal */
+.liv-four-products-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.liv-four-products-table thead th {
+  text-align: left;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 0.4rem 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.liv-four-products-table tbody td {
+  padding: 0.55rem 0.4rem;
+  font-size: 0.78rem;
+  color: #374151;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.liv-four-products-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Workflow */
+.liv-four-workflow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.liv-four-workflow-btn {
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.liv-four-workflow-btn:hover:not(:disabled) {
+  border-color: var(--color-blue, #1d4fd8);
+  color: var(--color-blue, #1d4fd8);
+}
+
+.liv-four-workflow-btn-active {
+  background: var(--color-blue, #1d4fd8);
+  border-color: var(--color-blue, #1d4fd8);
+  color: white;
+}
+
+.liv-four-workflow-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Timeline (steps) */
+.liv-four-steps {
+  display: flex;
+  align-items: flex-start;
+}
+
+.liv-four-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+}
+
+.liv-four-step-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #eef1f7;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  z-index: 1;
+  transition: all 0.2s ease;
+}
+
+.liv-four-step-dot-done {
+  background: #16a34a;
+  color: white;
+}
+
+.liv-four-step-dot-current {
+  background: var(--color-blue, #1d4fd8);
+  color: white;
+}
+
+.liv-four-step-line {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: #eef1f7;
+  z-index: 0;
+}
+
+.liv-four-step-line-done {
+  background: #16a34a;
+}
+
+.liv-four-step:last-child .liv-four-step-line {
+  display: none;
+}
+
+.liv-four-step-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.liv-four-step-label-active {
+  color: var(--color-navy, #0b1f4b);
+}
+
+/* Transport block */
+.liv-four-transport-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 1.2rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1300px) {
+  .liv-four-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .liv-four-sidebar {
+    display: none;
+  }
+  .liv-four-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .liv-four-modal-grid,
+  .liv-four-transport-grid {
+    grid-template-columns: 1fr;
+  }
+  .liv-four-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .liv-four-steps {
+    flex-wrap: wrap;
+  }
+  .liv-four-step {
+    flex: 1 1 50%;
+    margin-bottom: 1rem;
+  }
+}
+.liv-four-toast {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: #0b1f4b;
+  color: white;
+  padding: 0.75rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 8px 24px rgba(11, 31, 75, 0.25);
+  z-index: 100;
+  animation: livFourToastIn 0.3s ease;
+}
+
+@keyframes livFourToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

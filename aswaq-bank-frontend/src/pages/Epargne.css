@@ -1,0 +1,451 @@
+/* src/pages/Epargne.css — classes scopées "epa-", réutilise dash-sidebar/dash-topbar */
+
+/* ===== Hero card BLANCHE SANS ICÔNE ===== */
+.epa-hero-card {
+  background: white;
+  border-radius: 20px;
+  padding: 1.75rem 2rem;
+  color: #0b1f4b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f5f9;
+  margin-bottom: 2rem;
+}
+.logo-white {
+  filter: brightness(0) invert(1);
+}
+.epa-hero-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.epa-hero-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.epa-hero-amount {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #0b1f4b;
+  margin-top: 0.25rem;
+}
+
+.epa-hero-amount small {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-left: 0.25rem;
+}
+
+.epa-hero-count {
+  background: #eef3fc;
+  color: #1d4fd8;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ===== Sections ===== */
+.epa-section {
+  margin-bottom: 2rem;
+}
+
+.epa-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.1rem;
+}
+
+.epa-section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-navy, #0b1f4b);
+  margin: 0 0 1.1rem;
+}
+
+.epa-section-header .epa-section-title {
+  margin: 0;
+}
+
+.epa-section-title-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.epa-section-title-icon svg {
+  color: var(--color-blue, #1d4fd8);
+}
+
+.epa-create-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--color-blue, #1d4fd8);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.epa-create-btn:hover {
+  background: var(--color-navy, #0b1f4b);
+}
+
+/* ===== Goal cards SANS ICÔNE ===== */
+.epa-goals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.epa-goal-card {
+  background: white;
+  border-radius: 18px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #f1f5f9;
+}
+
+.epa-goal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.9rem;
+}
+
+.epa-goal-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-navy, #0b1f4b);
+  margin: 0;
+}
+
+.epa-goal-menu {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.epa-icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: none;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.epa-icon-btn:hover {
+  background: #eef1f6;
+  color: var(--color-navy, #0b1f4b);
+}
+
+.epa-goal-amounts {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0 0 0.75rem;
+}
+
+.epa-goal-track {
+  height: 9px;
+  background: #eef1f6;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.epa-goal-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-navy, #0b1f4b), var(--color-blue, #1d4fd8));
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.epa-goal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.epa-goal-percent {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-blue, #1d4fd8);
+}
+
+.epa-goal-remaining {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.epa-goal-deadline {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0 0 1.1rem;
+}
+
+.epa-add-money-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--color-blue-light, #eef3fc);
+  color: var(--color-blue, #1d4fd8);
+  border: none;
+  padding: 0.7rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.epa-add-money-btn:hover:not(:disabled) {
+  background: var(--color-blue, #1d4fd8);
+  color: white;
+}
+
+.epa-add-money-btn:disabled {
+  background: #f1f5f9;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.epa-empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #9ca3af;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ===== Advice cards ===== */
+.epa-advice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.epa-advice-card {
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.epa-advice-good {
+  background: #ecfdf5;
+}
+
+.epa-advice-warning {
+  background: var(--color-blue-light, #eef3fc);
+}
+
+.epa-advice-goal {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-navy, #0b1f4b);
+  margin: 0 0 0.4rem;
+}
+
+.epa-advice-text {
+  font-size: 0.85rem;
+  color: #374151;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.epa-advice-text strong {
+  color: var(--color-navy, #0b1f4b);
+}
+
+/* ===== History ===== */
+.epa-history-panel {
+  background: white;
+  border-radius: 18px;
+  padding: 0.5rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #f1f5f9;
+}
+
+.epa-history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.epa-history-row:last-child {
+  border-bottom: none;
+}
+
+.epa-history-date {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-navy, #0b1f4b);
+  margin: 0;
+}
+
+.epa-history-goal {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0.1rem 0 0;
+}
+
+.epa-history-amount {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #16a34a;
+}
+
+.epa-history-empty {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  padding: 1.5rem 0;
+}
+
+/* ===== Modals ===== */
+.epa-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 31, 75, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.epa-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.epa-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.epa-modal-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-navy, #0b1f4b);
+  margin: 0;
+}
+
+.epa-modal-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.epa-modal-sub {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0 0 1.25rem;
+}
+
+.epa-quick-amounts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 1.1rem;
+}
+
+.epa-quick-amount-btn {
+  background: #f8fafc;
+  border: 2px solid #e5e7eb;
+  color: var(--color-navy, #0b1f4b);
+  padding: 0.65rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.epa-quick-amount-active {
+  border-color: var(--color-blue, #1d4fd8);
+  background: var(--color-blue-light, #eef3fc);
+  color: var(--color-blue, #1d4fd8);
+}
+
+.epa-modal-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-navy, #0b1f4b);
+  margin: 0.9rem 0 0.4rem;
+}
+
+.epa-modal-input {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.epa-modal-input:focus {
+  border-color: var(--color-blue, #1d4fd8);
+}
+
+.epa-modal-select {
+  cursor: pointer;
+}
+
+.epa-modal-submit {
+  width: 100%;
+  background: linear-gradient(135deg, var(--color-navy, #0b1f4b), var(--color-blue, #1d4fd8));
+  color: white;
+  border: none;
+  padding: 0.85rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .epa-goals-grid,
+  .epa-advice-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,145 @@
+/* src/pages/LegalPage.css — classes scopées "legal-" pour les pages CGU / Confidentialité */
+
+.legal-page {
+  min-height: 100vh;
+  background: transparent;
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.legal-container {
+  width: 100%;
+  max-width: 42rem;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(11, 31, 75, 0.15);
+  padding: 2.5rem;
+  border: 1px solid rgba(29, 79, 216, 0.1);
+  margin: 1rem 0;
+}
+
+.legal-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.legal-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-navy, #0b1f4b);
+  margin-bottom: 0.4rem;
+}
+
+.legal-updated {
+  color: var(--color-gray, #6b7280);
+  font-size: 0.85rem;
+}
+
+.legal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.legal-section h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-navy, #0b1f4b);
+  margin-bottom: 0.6rem;
+}
+
+.legal-section p {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: #374151;
+  margin: 0 0 0.5rem;
+}
+
+.legal-section ul {
+  margin: 0.5rem 0 0.5rem 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.legal-section li {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.legal-section strong {
+  color: var(--color-navy, #0b1f4b);
+}
+
+.legal-footer {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.legal-back-link {
+  color: var(--color-blue, #1d4fd8);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.legal-back-link:hover {
+  color: var(--color-navy, #0b1f4b);
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .legal-container {
+    padding: 1.75rem 1.25rem;
+  }
+  .legal-title {
+    font-size: 1.35rem;
+  }
+}
+.legal-annex-block {
+  background: #fafafa;
+  border-left: 3px solid var(--color-blue, #1d4fd8);
+  border-radius: 0 8px 8px 0;
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.legal-annex-block h3 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-navy, #0b1f4b);
+  margin-bottom: 0.4rem;
+}
+
+.legal-annex-block p {
+  margin: 0;
+}
+.legal-annex-badge {
+  display: inline-block;
+  background: var(--color-blue-light, #eef3fc);
+  color: var(--color-blue, #1d4fd8);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  margin-bottom: 0.75rem;
+}
+
+.legal-annex-block {
+  background: #fafafa;
+  border-left: 3px solid var(--color-blue, #1d4fd8);
+  border-radius: 0 8px 8px 0;
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.legal-annex-block p {
+  margin: 0;
+}

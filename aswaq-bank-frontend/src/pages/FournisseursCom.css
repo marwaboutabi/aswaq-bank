@@ -1,0 +1,126 @@
+.fourn-layout { display: flex; min-height: 100vh; background: #f4f6fb; font-family: inherit; }
+.fourn-sidebar { width: 240px; background: #0b1f4b; display: flex; flex-direction: column; padding: 1.5rem 1rem; position: fixed; height: 100vh; z-index: 100; }
+.fourn-sidebar-logo { padding: 0 0.5rem 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 1rem; }
+.fourn-nav { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
+.fourn-nav-item { display: flex; align-items: center; gap: 0.75rem; color: #cbd5e1; padding: 0.7rem 0.9rem; border-radius: 10px; text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: 0.2s; }
+.fourn-nav-item:hover { background: rgba(255, 255, 255, 0.06); color: white; }
+.fourn-nav-item-active { background: #1d4fd8; color: white; }
+.fourn-logout { display: flex; align-items: center; gap: 0.75rem; color: #94a3b8; padding: 0.7rem 0.9rem; margin-top: auto; border-top: 1px solid rgba(255, 255, 255, 0.1); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: 0.2s; }
+.fourn-logout:hover { color: white; }
+
+.fourn-main { flex: 1; margin-left: 240px; padding: 2rem 2.5rem; }
+.fourn-topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+.fourn-title { font-size: 1.75rem; font-weight: 700; color: #0b1f4b; margin: 0 0 0.25rem; }
+.fourn-subtitle { color: #6b7280; font-size: 0.9rem; margin: 0; }
+.fourn-topbar-actions { display: flex; align-items: center; gap: 0.75rem; }
+.fourn-icon-button { position: relative; background: white; border: none; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #0b1f4b; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.fourn-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; font-size: 0.65rem; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.fourn-user-chip { display: flex; align-items: center; gap: 0.6rem; background: white; padding: 0.4rem 0.9rem 0.4rem 0.4rem; border-radius: 999px; cursor: pointer; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); transition: 0.2s; }
+.fourn-user-chip:hover { background: #f8fafc; }
+.fourn-user-avatar { width: 34px; height: 34px; border-radius: 50%; background: #eef3fc; color: #1d4fd8; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+.fourn-user-info { display: flex; flex-direction: column; line-height: 1.2; }
+.fourn-user-name { font-size: 0.9rem; font-weight: 600; color: #0b1f4b; white-space: nowrap; }
+.fourn-user-role { font-size: 0.75rem; color: #9ca3af; white-space: nowrap; }
+
+.fourn-stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.fourn-stat-card { background: white; border-radius: 16px; padding: 1.25rem; display: flex; align-items: flex-start; gap: 1rem; border: 1px solid #f1f5f9; }
+.fourn-stat-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.fourn-stat-label { font-size: 13px; color: #6b7280; margin: 0 0 0.35rem; font-weight: 500; }
+.fourn-stat-value { font-size: 1.5rem; font-weight: 700; color: #0b1f4b; margin: 0 0 0.35rem; line-height: 1; }
+
+.fourn-panel { background: white; border-radius: 16px; padding: 1.5rem; border: 1px solid #f1f5f9; margin-bottom: 1.5rem; }
+.fourn-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+.fourn-panel-title { font-size: 1rem; font-weight: 700; color: #0b1f4b; margin: 0; }
+.fourn-search { display: flex; align-items: center; gap: 0.5rem; background: white; border: 1px solid #e5e7eb; border-radius: 10px; padding: 0.55rem 0.9rem; }
+.fourn-search input { border: none; outline: none; font-size: 14px; width: 100%; color: #0b1f4b; }
+.fourn-quick-actions-list { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.fourn-quick-action { display: flex; align-items: center; gap: 0.75rem; flex: 1 1 220px; padding: 0.85rem 1rem; border-radius: 10px; border: 1px solid #e2e8f0; background: white; color: #374151; cursor: pointer; font-weight: 600; transition: 0.2s; }
+.fourn-quick-action svg { color: #1d4fd8; }
+.fourn-quick-action:hover { background: #eff6ff; border-color: #1d4fd8; color: #1d4fd8; transform: translateY(-2px); }
+
+.fourn-table-wrapper { overflow-x: auto; }
+.fourn-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+.fourn-table th { text-align: left; padding: 0.85rem 1rem; font-size: 13px; font-weight: 600; color: #6b7280; border-bottom: 1px solid #e5e7eb; background: #f8fafc; }
+.fourn-table td { padding: 0.9rem 1rem; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #374151; }
+.fourn-table tbody tr:hover td { background-color: #f8fafc; }
+.fourn-supplier-cell { display: flex; align-items: center; gap: 0.75rem; }
+.fourn-avatar { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+.fourn-category-pill, .fourn-status-pill, .fourn-command-status { display: inline-flex; align-items: center; padding: 0.25rem 0.7rem; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+.fourn-actions { display: flex; gap: 0.4rem; }
+.fourn-action-btn { width: 30px; height: 30px; border-radius: 7px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; background: transparent; transition: 0.2s; }
+.fourn-action-edit { color: #1d4fd8; }
+.fourn-action-edit:hover { background: #dbeafe; }
+.fourn-action-delete { color: #dc2626; }
+.fourn-action-delete:hover { background: #fee2e2; }
+
+.fourn-modal-overlay { position: fixed; inset: 0; background: rgba(11, 31, 75, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 2rem; animation: fadeIn 0.2s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.fourn-modal { background: white; border-radius: 16px; width: 100%; max-width: 1100px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2); animation: slideUp 0.3s; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.fourn-modal-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 1.5rem 2rem; position: sticky; top: 0; background: white; z-index: 10; border-radius: 16px 16px 0 0; }
+.fourn-modal-title { font-size: 1.4rem; font-weight: 700; color: #0b1f4b; margin: 0 0 0.35rem; }
+.fourn-modal-subtitle { color: #64748b; font-size: 0.9rem; margin: 0; }
+.fourn-modal-close { background: none; border: none; padding: 0.5rem; cursor: pointer; color: #94a3b8; border-radius: 8px; transition: 0.2s; }
+.fourn-modal-close:hover { background: #f1f5f9; color: #0b1f4b; }
+.fourn-modal-body { padding: 2rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+.fourn-modal-section-full { grid-column: 1 / -1; }
+.fourn-section-title { display: flex; align-items: center; gap: 0.6rem; font-size: 1rem; font-weight: 700; color: #0b1f4b; margin: 0 0 1.25rem; }
+.fourn-section-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.fourn-section-icon-blue { background: #dbeafe; color: #1d4fd8; }
+.fourn-form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+.fourn-form-label { font-size: 0.85rem; font-weight: 600; color: #374151; }
+.fourn-input, .fourn-select, .fourn-textarea { width: 100%; padding: 0.7rem 0.9rem; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 0.9rem; color: #0b1f4b; outline: none; transition: 0.2s; background: white; }
+.fourn-input:focus, .fourn-select:focus, .fourn-textarea:focus { border-color: #1d4fd8; box-shadow: 0 0 0 3px rgba(29, 79, 216, 0.1); }
+.fourn-modal-footer { display: flex; justify-content: flex-end; gap: 1rem; padding: 1.5rem 2rem; background: #f8fafc; border-radius: 0 0 16px 16px; position: sticky; bottom: 0; }
+.fourn-btn-secondary, .fourn-btn-primary { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.85rem 1.5rem; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1.5px solid #e2e8f0; }
+.fourn-btn-secondary { background: white; color: #64748b; }
+.fourn-btn-secondary:hover { background: #f1f5f9; }
+.fourn-btn-primary { background: #1d4fd8; color: white; border: none; }
+.fourn-btn-primary:hover { background: #1641b8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(29, 79, 216, 0.3); }
+.fourn-btn-primary:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none; }
+.logo-white {
+  filter: brightness(0) invert(1);
+}
+.fourn-modal-xlarge { max-width: 1200px; }
+.fourn-supplier-info-card { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 1rem; margin-top: 1rem; }
+.fourn-empty-catalog { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 2rem; text-align: center; background: #f8fafc; border-radius: 16px; border: 2px dashed #e2e8f0; }
+.fourn-catalog-filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; align-items: center; flex-wrap: wrap; }
+.fourn-catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; max-height: 500px; overflow-y: auto; padding: 0.5rem; }
+.fourn-catalog-grid::-webkit-scrollbar { width: 6px; }
+.fourn-catalog-grid::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+.fourn-product-card { position: relative; background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 1.25rem; transition: 0.2s; display: flex; flex-direction: column; }
+.fourn-product-card:hover { border-color: #1d4fd8; box-shadow: 0 4px 12px rgba(29, 79, 216, 0.1); transform: translateY(-2px); }
+.fourn-product-card.in-cart { border-color: #16a34a; background: #f0fdf4; }
+.fourn-product-badge-top { position: absolute; top: 12px; right: 12px; background: #16a34a; color: white; font-size: 0.7rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 20px; display: flex; align-items: center; gap: 0.25rem; }
+.fourn-product-info { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+.fourn-product-name { font-weight: 700; color: #0b1f4b; font-size: 0.95rem; line-height: 1.3; padding-right: 100px; }
+.fourn-product-meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b; }
+.fourn-product-ref { font-family: monospace; background: #f1f5f9; padding: 0.1rem 0.4rem; border-radius: 4px; }
+.fourn-product-brand { font-weight: 600; color: #475569; }
+.fourn-product-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; }
+.fourn-product-price { display: flex; flex-direction: column; }
+.fourn-price-value { font-size: 1.2rem; font-weight: 800; color: #1d4fd8; line-height: 1; }
+.fourn-price-unit { font-size: 0.7rem; color: #64748b; font-weight: 600; }
+.fourn-add-btn { display: flex; align-items: center; gap: 0.3rem; background: #1d4fd8; color: white; border: none; padding: 0.5rem 0.9rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.fourn-add-btn:hover { background: #1641b8; transform: scale(1.05); }
+.fourn-product-qty-control { display: flex; align-items: center; background: white; border: 1.5px solid #16a34a; border-radius: 8px; overflow: hidden; }
+.fourn-product-qty-control .fourn-qty-btn { background: #16a34a; color: white; border: none; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+.fourn-product-qty-control .fourn-qty-btn:hover { background: #15803d; }
+.fourn-product-qty-control .fourn-qty-value { min-width: 30px; text-align: center; font-weight: 700; color: #16a34a; font-size: 0.9rem; }
+
+.fourn-cart-table { background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 1.5rem; }
+.fourn-cart-summary { background: #f8fafc; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; }
+.fourn-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; font-size: 0.9rem; color: #475569; }
+
+.fourn-toast { position: fixed; bottom: 2rem; right: 2rem; background: #0b1f4b; color: white; padding: 1rem 1.5rem; border-radius: 12px; display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 2000; animation: slideUp 0.3s; }
+
+@media (max-width: 1024px) {
+  .fourn-sidebar { width: 80px; padding: 1rem 0.75rem; }
+  .fourn-sidebar-logo, .fourn-nav-item span, .fourn-logout span, .fourn-user-info { display: none; }
+  .fourn-nav-item, .fourn-logout { justify-content: center; padding: 0.75rem; }
+  .fourn-main { margin-left: 80px; padding: 1.5rem; }
+  .fourn-modal-body { grid-template-columns: 1fr !important; }
+  .fourn-catalog-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .fourn-catalog-filters { flex-direction: column; align-items: stretch; }
+}

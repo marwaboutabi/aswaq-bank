@@ -1,0 +1,925 @@
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  Home, Package, Boxes, Users, ArrowLeftRight,
+  FileText,  LogOut, Bell, ChevronDown,
+  Wallet, UserPlus, Building, CheckCircle2, AlertCircle,
+  ArrowRight, MoreVertical, Edit2, Shield, ArrowLeft, CreditCard,
+  Check, Star,Bot,User
+} from 'lucide-react';
+import Logo from '../components/Logo/Logo';
+import './VirementCom.css';
+
+const NAV_ITEMS = [
+  { icon: Home, label: 'Accueil', to: '/acceuil-com' },
+  { icon: Package, label: 'Produits', to: '/produits' },
+  { icon: Boxes, label: 'Stock', to: '/stock' },
+  { icon: ArrowLeftRight, label: 'Paiements & Transactions', to: '/transactions-commerce' },
+  { icon: Users, label: 'Fournisseurs', to: '/fournisseurs', active: true },
+  { icon: Star, label: 'Fidélité & Tickets', to: '/fidelite-commerce' },
+  { icon: Bell, label: 'Notifications', to: '/notifications-com' },
+  
+  { icon: Bot, label: 'Assistant IA', to: '/assistant-commerce' },
+      { icon: User, label: 'Profil & Paramètres', to: '/parametres-commerce' },
+];
+
+const INITIAL_BENEFICIARIES = [
+  { id: 1, name: 'Société ElectroMax', account: 'MA98 7654 3210 9876 5432 10', bank: 'CIH Bank', type: 'Fournisseur' },
+  { id: 2, name: 'Imprimerie Al Amal', account: 'MA12 3456 7890 1234 5678 90', bank: 'Attijariwafa Bank', type: 'Fournisseur' },
+  { id: 3, name: 'Office National de l\'Électricité', account: 'MA77 1111 2222 3333 4444 55', bank: 'Bank of Africa', type: 'Facture' },
+];
+
+const RECENT_TRANSFERS = [
+  {
+    id: 1,
+    date: '23/07/2026',
+    time: '16:20',
+    beneficiary: 'Société ElectroMax',
+    beneficiaryType: 'Fournisseur',
+    initials: 'SE',
+    account: 'MA98 7654 3210 9876 5432 10',
+    bank: 'CIH Bank',
+    amount: -2450,
+    status: 'Réussi',
+    reference: 'VIR45873210',
+    color: '#eef3fc',
+    textColor: '#1d4fd8'
+  },
+];
+
+const MOTIF_OPTIONS = [
+  'Paiement fournisseur',
+  'Achat de matériel',
+  'Loyer',
+  'Remboursement',
+  'Paiement de salaire',
+  'Autre'
+];
+
+const BANK_OPTIONS = [
+  'Attijariwafa Bank',
+  'Bank of Africa',
+  'BMCE Bank',
+  'CIH Bank',
+  'Crédit Agricole',
+  'Société Générale',
+  'Banque Populaire',
+  'CFG Bank',
+  'Autre'
+];
+
+export default function VirementCom() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [beneficiaryType, setBeneficiaryType] = useState('saved');
+  
+  const [beneficiaries, setBeneficiaries] = useState(INITIAL_BENEFICIARIES);
+  const [selectedBeneficiary, setSelectedBeneficiary] = useState('');
+  
+  const [amount, setAmount] = useState('');
+  const [motif, setMotif] = useState('');
+  
+  const [newBeneficiary, setNewBeneficiary] = useState({
+    name: '',
+    type: 'Fournisseur',
+    bank: '',
+    account: ''
+  });
+
+  const [transferConfirmed, setTransferConfirmed] = useState(false);
+  const [transferReference, setTransferReference] = useState('');
+
+  const selectedBeneficiaryData = beneficiaries.find(b => b.id === parseInt(selectedBeneficiary));
+
+  const handleAddBeneficiary = () => {
+    if (!newBeneficiary.name || !newBeneficiary.bank || newBeneficiary.account.length < 24) {
+      return;
+    }
+    
+    const newId = Math.max(...beneficiaries.map(b => b.id), 0) + 1;
+    const addedBeneficiary = {
+      id: newId,
+      name: newBeneficiary.name,
+      type: newBeneficiary.type,
+      bank: newBeneficiary.bank,
+      account: newBeneficiary.account
+    };
+    
+    setBeneficiaries([...beneficiaries, addedBeneficiary]);
+    setSelectedBeneficiary(newId.toString());
+    setBeneficiaryType('saved');
+    
+    setNewBeneficiary({ name: '', type: 'Fournisseur', bank: '', account: '' });
+  };
+
+  const handleContinue = () => {
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    } else {
+      // Retour à la page précédente ou au tableau de bord
+      navigate(-1);
+    }
+  };
+
+  const handleConfirm = () => {
+    const ref = 'VIR' + Math.floor(Math.random() * 100000000);
+    setTransferReference(ref);
+    setTransferConfirmed(true);
+  };
+
+  const handleNewTransfer = () => {
+    setCurrentStep(1);
+    setSelectedBeneficiary('');
+    setAmount('');
+    setMotif('');
+    setTransferConfirmed(false);
+    setTransferReference('');
+  };
+
+  const formatAmount = (val) => {
+    return parseFloat(val || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  // ÉTAPE 1 : Formulaire
+  const renderStep1 = () => (
+    <div className="vir-grid">
+      <div className="vir-form-column">
+        <div className="vir-card">
+          <div className="vir-card-header-with-back">
+            <h2 className="vir-card-title">1. Informations du virement</h2>
+            <button 
+              type="button"
+              className="vir-back-btn"
+              onClick={handleBack}
+            >
+              <ArrowLeft size={18} />
+              Retour
+            </button>
+          </div>
+
+          <div className="vir-form-group">
+            <label className="vir-label">Compte à débiter *</label>
+            <div className="vir-account-select">
+              <div className="vir-account-info">
+                <Wallet size={18} className="vir-account-icon" />
+                <div>
+                  <p className="vir-account-name">Compte principal</p>
+                  <p className="vir-account-number">MA64 1234 5678 9012 3456 78</p>
+                </div>
+              </div>
+              <div className="vir-account-balance">
+                <span className="vir-balance-label">Solde disponible</span>
+                <span className="vir-balance-amount">45 230,00 MAD</span>
+              </div>
+              <ChevronDown size={16} className="vir-select-arrow" />
+            </div>
+          </div>
+
+          <div className="vir-form-group">
+            <label className="vir-label">Bénéficiaire *</label>
+            
+            <div className="vir-beneficiary-tabs">
+              <button
+                type="button"
+                className={`vir-tab ${beneficiaryType === 'saved' ? 'active' : ''}`}
+                onClick={() => setBeneficiaryType('saved')}
+              >
+                <Wallet size={16} />
+                Enregistré
+              </button>
+              <button
+                type="button"
+                className={`vir-tab ${beneficiaryType === 'new' ? 'active' : ''}`}
+                onClick={() => setBeneficiaryType('new')}
+              >
+                <UserPlus size={16} />
+                Nouveau
+              </button>
+            </div>
+
+            {beneficiaryType === 'saved' && (
+              <div className="vir-select-wrapper">
+                <select
+                  value={selectedBeneficiary}
+                  onChange={(e) => setSelectedBeneficiary(e.target.value)}
+                  className="vir-select"
+                >
+                  <option value="">Sélectionner un bénéficiaire</option>
+                  {beneficiaries.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} - {b.bank} ({b.type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {beneficiaryType === 'new' && (
+              <div className="vir-new-beneficiary-form">
+                <div className="vir-new-form-header">
+                  <UserPlus size={20} />
+                  <span>Ajouter un nouveau bénéficiaire</span>
+                </div>
+
+                <div className="vir-new-form-row">
+                  <div className="vir-form-group vir-form-group-half">
+                    <label className="vir-label">Nom du bénéficiaire *</label>
+                    <input
+                      type="text"
+                      value={newBeneficiary.name}
+                      onChange={(e) => setNewBeneficiary({...newBeneficiary, name: e.target.value})}
+                      className="vir-input"
+                      placeholder="Ex: Société ElectroMax"
+                    />
+                  </div>
+
+                  <div className="vir-form-group vir-form-group-half">
+                    <label className="vir-label">Type de bénéficiaire *</label>
+                    <select
+                      value={newBeneficiary.type}
+                      onChange={(e) => setNewBeneficiary({...newBeneficiary, type: e.target.value})}
+                      className="vir-select"
+                    >
+                      <option value="Fournisseur">Fournisseur</option>
+                      <option value="Client">Client</option>
+                      <option value="Facture">Facture</option>
+                      <option value="Partenaire">Partenaire</option>
+                      <option value="Salarié">Salarié</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="vir-form-group">
+                  <label className="vir-label">Banque *</label>
+                  <select
+                    value={newBeneficiary.bank}
+                    onChange={(e) => setNewBeneficiary({...newBeneficiary, bank: e.target.value})}
+                    className="vir-select"
+                  >
+                    <option value="">Sélectionner une banque</option>
+                    {BANK_OPTIONS.map((bank) => (
+                      <option key={bank} value={bank}>
+                        {bank}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="vir-form-group">
+                  <label className="vir-label">Numéro de compte (RIB) *</label>
+                  <input
+                    type="text"
+                    value={newBeneficiary.account}
+                    onChange={(e) => setNewBeneficiary({
+                      ...newBeneficiary, 
+                      account: e.target.value.replace(/[^0-9]/g, '').slice(0, 24)
+                    })}
+                    className="vir-input"
+                    placeholder="Saisir les 24 chiffres du RIB"
+                    maxLength={24}
+                  />
+                  <div className="vir-input-helper">
+                    <span className={newBeneficiary.account.length === 24 ? 'valid' : ''}>
+                      {newBeneficiary.account.length}/24 chiffres
+                    </span>
+                    {newBeneficiary.account.length === 24 && (
+                      <CheckCircle2 size={14} className="vir-helper-icon" />
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="vir-btn-primary vir-btn-add"
+                  onClick={handleAddBeneficiary}
+                  disabled={!newBeneficiary.name || !newBeneficiary.bank || newBeneficiary.account.length < 24}
+                >
+                  <Check size={18} />
+                  Enregistrer le bénéficiaire
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="vir-form-group">
+            <label className="vir-label">Montant *</label>
+            <div className="vir-amount-wrapper">
+              <input
+                type="text"
+                placeholder="0,00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ''))}
+                className="vir-input vir-amount-input"
+              />
+              <span className="vir-currency">MAD</span>
+            </div>
+          </div>
+
+          <div className="vir-form-group">
+            <label className="vir-label">Motif du virement *</label>
+            <div className="vir-select-wrapper">
+              <select
+                value={motif}
+                onChange={(e) => setMotif(e.target.value)}
+                className="vir-select"
+              >
+                <option value="">Sélectionner un motif</option>
+                {MOTIF_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="vir-btn-primary vir-btn-full"
+            onClick={handleContinue}
+            disabled={!selectedBeneficiary || !amount || !motif}
+          >
+            Continuer <ArrowRight size={18} />
+          </button>
+        </div>
+      </div>
+
+      <div className="vir-summary-column">
+        <div className="vir-card vir-summary-card">
+          <h2 className="vir-card-title">Résumé du virement</h2>
+
+          <div className="vir-summary-row">
+            <div className="vir-summary-label">
+              <Wallet size={16} />
+              Compte à débiter
+            </div>
+            <div className="vir-summary-value">
+              <p className="vir-summary-value-main">Compte principal</p>
+              <p className="vir-summary-value-sub">MA64 1234 5678 9012 3456 78</p>
+            </div>
+          </div>
+
+          <div className="vir-summary-row">
+            <div className="vir-summary-label">
+              <UserPlus size={16} />
+              Bénéficiaire
+            </div>
+            <div className="vir-summary-value">
+              <p className="vir-summary-value-main">
+                {selectedBeneficiaryData ? selectedBeneficiaryData.name : '-'}
+              </p>
+              {selectedBeneficiaryData && (
+                <p className="vir-summary-value-sub">{selectedBeneficiaryData.bank} - {selectedBeneficiaryData.type}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="vir-summary-row">
+            <div className="vir-summary-label">
+              <Wallet size={16} />
+              Montant
+            </div>
+            <div className="vir-summary-value">
+              <p className="vir-summary-value-main">
+                {amount ? `${formatAmount(amount)} MAD` : '-'}
+              </p>
+            </div>
+          </div>
+
+          <div className="vir-summary-row">
+            <div className="vir-summary-label">
+              <FileText size={16} />
+              Motif
+            </div>
+            <div className="vir-summary-value">
+              <p className="vir-summary-value-main">
+                {motif || '-'}
+              </p>
+            </div>
+          </div>
+
+          <div className="vir-summary-row">
+            <div className="vir-summary-label">
+              <CheckCircle2 size={16} />
+              Frais
+            </div>
+            <div className="vir-summary-value vir-summary-value-green">
+              <p className="vir-summary-value-main">0,00 MAD</p>
+            </div>
+          </div>
+
+          <div className="vir-summary-divider" />
+
+          <div className="vir-summary-row vir-summary-total">
+            <div className="vir-summary-label">Total à débiter</div>
+            <div className="vir-summary-value vir-summary-value-blue">
+              <p className="vir-summary-value-main">
+                {amount ? `${formatAmount(amount)} MAD` : '0,00 MAD'}
+              </p>
+            </div>
+          </div>
+
+          <div className="vir-info-box">
+            <AlertCircle size={16} className="vir-info-icon" />
+            <p className="vir-info-text">
+              Les virements sont généralement traités instantanément ou sous 24h selon la banque du bénéficiaire.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ÉTAPE 2 : Vérification
+  const renderStep2 = () => (
+    <div className="vir-verify-container">
+      <div className="vir-verify-main">
+        <div className="vir-card">
+          <div className="vir-card-header-with-back">
+            <h2 className="vir-card-title">2. Vérification des informations</h2>
+            <button 
+              type="button"
+              className="vir-back-btn"
+              onClick={handleBack}
+            >
+              <ArrowLeft size={18} />
+              Retour
+            </button>
+          </div>
+          <p className="vir-verify-subtitle">
+            Veuillez vérifier les informations ci-dessous avant de continuer.
+          </p>
+
+          <div className="vir-verify-list">
+            <div className="vir-verify-item">
+              <div className="vir-verify-icon">
+                <Wallet size={20} />
+              </div>
+              <div className="vir-verify-content">
+                <span className="vir-verify-label">Compte à débiter</span>
+                <div className="vir-verify-value">
+                  <p className="vir-verify-value-main">Compte principal</p>
+                  <p className="vir-verify-value-sub">MA64 1234 5678 9012 3456 78</p>
+                </div>
+              </div>
+              <button 
+                className="vir-edit-btn"
+                onClick={() => setCurrentStep(1)}
+              >
+                <Edit2 size={14} />
+                Modifier
+              </button>
+            </div>
+
+            <div className="vir-verify-item">
+              <div className="vir-verify-icon">
+                <UserPlus size={20} />
+              </div>
+              <div className="vir-verify-content">
+                <span className="vir-verify-label">Bénéficiaire</span>
+                <div className="vir-verify-value">
+                  <p className="vir-verify-value-main">{selectedBeneficiaryData?.name}</p>
+                  <p className="vir-verify-value-sub">{selectedBeneficiaryData?.account}</p>
+                </div>
+              </div>
+              <button 
+                className="vir-edit-btn"
+                onClick={() => setCurrentStep(1)}
+              >
+                <Edit2 size={14} />
+                Modifier
+              </button>
+            </div>
+
+            <div className="vir-verify-item">
+              <div className="vir-verify-icon">
+                <Building size={20} />
+              </div>
+              <div className="vir-verify-content">
+                <span className="vir-verify-label">Banque du bénéficiaire</span>
+                <div className="vir-verify-value">
+                  <p className="vir-verify-value-main">{selectedBeneficiaryData?.bank}</p>
+                </div>
+              </div>
+              <button 
+                className="vir-edit-btn"
+                onClick={() => setCurrentStep(1)}
+              >
+                <Edit2 size={14} />
+                Modifier
+              </button>
+            </div>
+
+            <div className="vir-verify-item">
+              <div className="vir-verify-icon">
+                <CreditCard size={20} />
+              </div>
+              <div className="vir-verify-content">
+                <span className="vir-verify-label">Montant</span>
+                <div className="vir-verify-value">
+                  <p className="vir-verify-value-main">{formatAmount(amount)} MAD</p>
+                </div>
+              </div>
+              <button 
+                className="vir-edit-btn"
+                onClick={() => setCurrentStep(1)}
+              >
+                <Edit2 size={14} />
+                Modifier
+              </button>
+            </div>
+
+            <div className="vir-verify-item">
+              <div className="vir-verify-icon">
+                <FileText size={20} />
+              </div>
+              <div className="vir-verify-content">
+                <span className="vir-verify-label">Motif du virement</span>
+                <div className="vir-verify-value">
+                  <p className="vir-verify-value-main">{motif}</p>
+                </div>
+              </div>
+              <button 
+                className="vir-edit-btn"
+                onClick={() => setCurrentStep(1)}
+              >
+                <Edit2 size={14} />
+                Modifier
+              </button>
+            </div>
+          </div>
+
+          <div className="vir-info-box vir-info-box-warning">
+            <AlertCircle size={16} className="vir-info-icon" />
+            <div className="vir-info-content">
+              <p className="vir-info-text">
+                En confirmant, vous acceptez que ce virement soit exécuté immédiatement.
+                Cette action est irréversible.
+              </p>
+            </div>
+          </div>
+
+          <div className="vir-verify-actions">
+            <button 
+              className="vir-btn-secondary"
+              onClick={handleBack}
+            >
+              <ArrowLeft size={18} />
+              Retour
+            </button>
+            <button 
+              className="vir-btn-primary vir-btn-confirm"
+              onClick={handleContinue}
+            >
+              <Shield size={18} />
+              Confirmer le virement
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="vir-summary-sidebar">
+        <div className="vir-card vir-summary-card">
+          <h2 className="vir-card-title">Résumé du virement</h2>
+
+          <div className="vir-summary-row">
+            <div className="vir-summary-label">
+              <Wallet size={16} />
+              Compte à débiter
+            </div>
+            <div className="vir-summary-value">
+              <p className="vir-summary-value-main">Compte principal</p>
+              <p className="vir-summary-value-sub">MA64 1234 5678 9012 3456 78</p>
+            </div>
+          </div>
+
+          <div className="vir-summary-row">
+            <div className="vir-summary-label">
+              <UserPlus size={16} />
+              Bénéficiaire
+            </div>
+            <div className="vir-summary-value">
+              <p className="vir-summary-value-main">{selectedBeneficiaryData?.name}</p>
+            </div>
+          </div>
+
+          <div className="vir-summary-row">
+            <div className="vir-summary-label">
+              <CreditCard size={16} />
+              Compte bénéficiaire
+            </div>
+            <div className="vir-summary-value">
+              <p className="vir-summary-value-sub">{selectedBeneficiaryData?.account}</p>
+            </div>
+          </div>
+
+          <div className="vir-summary-row">
+            <div className="vir-summary-label">
+              <Building size={16} />
+              Banque bénéficiaire
+            </div>
+            <div className="vir-summary-value">
+              <p className="vir-summary-value-main">{selectedBeneficiaryData?.bank}</p>
+            </div>
+          </div>
+
+          <div className="vir-summary-row">
+            <div className="vir-summary-label">
+              <CreditCard size={16} />
+              Montant
+            </div>
+            <div className="vir-summary-value vir-summary-value-red">
+              <p className="vir-summary-value-main">- {formatAmount(amount)} MAD</p>
+            </div>
+          </div>
+
+          <div className="vir-summary-row">
+            <div className="vir-summary-label">
+              <Wallet size={16} />
+              Frais
+            </div>
+            <div className="vir-summary-value">
+              <p className="vir-summary-value-main">0,00 MAD</p>
+            </div>
+          </div>
+
+          <div className="vir-summary-divider" />
+
+          <div className="vir-summary-row vir-summary-total">
+            <div className="vir-summary-label">Total à débiter</div>
+            <div className="vir-summary-value vir-summary-value-red">
+              <p className="vir-summary-value-main">
+                {formatAmount(amount)} MAD
+              </p>
+            </div>
+          </div>
+
+          <div className="vir-security-box">
+            <div className="vir-security-icon">
+              <Shield size={24} />
+            </div>
+            <div className="vir-security-content">
+              <h3 className="vir-security-title">Vos transactions sont sécurisées</h3>
+              <p className="vir-security-text">
+                Vos virements sont protégés par un cryptage avancé et soumis à une authentification forte.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ÉTAPE 3 : Confirmation
+  const renderStep3 = () => (
+    <div className="vir-confirm-container">
+      <div className="vir-confirm-card">
+        {transferConfirmed ? (
+          <div className="vir-success-content">
+            <div className="vir-success-icon">
+              <CheckCircle2 size={64} />
+            </div>
+            <h2 className="vir-success-title">Virement effectué avec succès !</h2>
+            <p className="vir-success-subtitle">
+              Votre virement a été traité avec succès et sera exécuté sous 24h.
+            </p>
+            
+            <div className="vir-success-details">
+              <div className="vir-success-row">
+                <span className="vir-success-label">Référence du virement</span>
+                <span className="vir-success-value">{transferReference}</span>
+              </div>
+              <div className="vir-success-row">
+                <span className="vir-success-label">Bénéficiaire</span>
+                <span className="vir-success-value">{selectedBeneficiaryData?.name}</span>
+              </div>
+              <div className="vir-success-row">
+                <span className="vir-success-label">Montant débité</span>
+                <span className="vir-success-value vir-amount-red">{formatAmount(amount)} MAD</span>
+              </div>
+              <div className="vir-success-row">
+                <span className="vir-success-label">Date d'exécution</span>
+                <span className="vir-success-value">{new Date().toLocaleDateString('fr-FR')}</span>
+              </div>
+            </div>
+
+            <div className="vir-success-actions">
+              <button 
+                className="vir-btn-primary"
+                onClick={handleNewTransfer}
+              >
+                Effectuer un autre virement
+              </button>
+              <Link to="/transactions-commerce" className="vir-btn-secondary">
+                Voir mes transactions
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="vir-confirm-content">
+            <div className="vir-card-header-with-back">
+              <h2 className="vir-card-title">3. Confirmation du virement</h2>
+              <button 
+                type="button"
+                className="vir-back-btn"
+                onClick={handleBack}
+              >
+                <ArrowLeft size={18} />
+                Retour
+              </button>
+            </div>
+            <p className="vir-confirm-subtitle">
+              Dernière étape avant l'exécution de votre virement
+            </p>
+
+            <div className="vir-confirm-info">
+              <div className="vir-confirm-icon">
+                <Shield size={40} />
+              </div>
+              <p className="vir-confirm-text">
+                Vous êtes sur le point d'effectuer un virement de <strong>{formatAmount(amount)} MAD</strong> vers <strong>{selectedBeneficiaryData?.name}</strong>.
+              </p>
+            </div>
+
+            <div className="vir-confirm-warning">
+              <AlertCircle size={20} />
+              <p>Cette action est irréversible. Une fois confirmé, le virement sera exécuté immédiatement.</p>
+            </div>
+
+            <div className="vir-verify-actions">
+              <button 
+                className="vir-btn-secondary"
+                onClick={handleBack}
+              >
+                <ArrowLeft size={18} />
+                Retour
+              </button>
+              <button 
+                className="vir-btn-primary vir-btn-confirm"
+                onClick={handleConfirm}
+              >
+                <Check size={18} />
+                Confirmer et exécuter
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="vir-layout">
+      <aside className="vir-sidebar">
+        <div className="vir-sidebar-logo">
+          <Logo size={100}className="mb-6 logo-white" />
+        </div>
+
+
+        <nav className="vir-nav">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.to;
+            return (
+              <Link
+                key={item.label}
+                to={item.to}
+                state={location.state}
+                className={`vir-nav-item ${isActive ? 'vir-nav-item-active' : ''}`}
+              >
+                <Icon size={18} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <a href="/" className="vir-logout">
+          <LogOut size={18} />
+          Déconnexion
+        </a>
+      </aside>
+
+      <main className="vir-main">
+        <header className="vir-header">
+          <div>
+            <h1 className="vir-title">Effectuer un virement</h1>
+            <p className="vir-subtitle">Transférez de l'argent en toute sécurité</p>
+          </div>
+
+          <div className="vir-header-actions">
+            <button type="button" className="vir-icon-button">
+              <Bell size={18} />
+              <span className="vir-badge">3</span>
+            </button>
+            <div className="vir-user-chip">
+              <div className="vir-user-avatar">MB</div>
+              <div className="vir-user-info">
+                <span className="vir-user-name">Marwa Boutabi</span>
+                <span className="vir-user-role">Commerçant</span>
+              </div>
+              <ChevronDown size={16} />
+            </div>
+          </div>
+        </header>
+
+        <div className="vir-stepper">
+          <div className={`vir-step ${currentStep >= 1 ? 'active' : ''} ${currentStep > 1 ? 'completed' : ''}`}>
+            <div className="vir-step-circle">
+              {currentStep > 1 ? <CheckCircle2 size={16} /> : '1'}
+            </div>
+            <span className="vir-step-label">Informations</span>
+          </div>
+          <div className={`vir-step-line ${currentStep >= 2 ? 'active' : ''}`} />
+          <div className={`vir-step ${currentStep >= 2 ? 'active' : ''} ${currentStep > 2 ? 'completed' : ''}`}>
+            <div className="vir-step-circle">
+              {currentStep > 2 ? <CheckCircle2 size={16} /> : '2'}
+            </div>
+            <span className="vir-step-label">Vérification</span>
+          </div>
+          <div className={`vir-step-line ${currentStep >= 3 ? 'active' : ''}`} />
+          <div className={`vir-step ${currentStep >= 3 ? 'active' : ''}`}>
+            <div className="vir-step-circle">3</div>
+            <span className="vir-step-label">Confirmation</span>
+          </div>
+        </div>
+
+        {currentStep === 1 && renderStep1()}
+        {currentStep === 2 && renderStep2()}
+        {currentStep === 3 && renderStep3()}
+
+        {currentStep < 3 && (
+          <div className="vir-panel">
+            <div className="vir-panel-header">
+              <h2 className="vir-panel-title">Virements récents</h2>
+              <button type="button" className="vir-link-btn">
+                Voir tout <ArrowRight size={16} />
+              </button>
+            </div>
+
+            <div className="vir-table-wrapper">
+              <table className="vir-table">
+                <thead>
+                  <tr>
+                    <th>Date & heure</th>
+                    <th>Bénéficiaire</th>
+                    <th>Compte bénéficiaire</th>
+                    <th>Montant</th>
+                    <th>Statut</th>
+                    <th>Référence</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {RECENT_TRANSFERS.map((transfer) => (
+                    <tr key={transfer.id}>
+                      <td>
+                        <p className="vir-table-date">{transfer.date} - {transfer.time}</p>
+                      </td>
+                      <td>
+                        <div className="vir-beneficiary-cell">
+                          <div className="vir-beneficiary-avatar" style={{ background: transfer.color, color: transfer.textColor }}>
+                            {transfer.initials}
+                          </div>
+                          <div>
+                            <p className="vir-beneficiary-name">{transfer.beneficiary}</p>
+                            <p className="vir-beneficiary-type">{transfer.beneficiaryType}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <p className="vir-account-cell">{transfer.account}</p>
+                        <p className="vir-bank-cell">{transfer.bank}</p>
+                      </td>
+                      <td className="vir-amount-negative">{transfer.amount.toLocaleString('fr-FR')} MAD</td>
+                      <td>
+                        <span className="vir-status-badge vir-status-success">
+                          <CheckCircle2 size={12} />
+                          {transfer.status}
+                        </span>
+                      </td>
+                      <td className="vir-reference">{transfer.reference}</td>
+                      <td>
+                        <button className="vir-table-action">
+                          <MoreVertical size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft, Bell, ChevronDown, Send,
   User, Shield, Wallet, FileText, Lock, Check,
   Search, ChevronRight, Info, CreditCard, Eye, EyeOff,
-  Building2, Calendar
+  Building2, Calendar, AlertCircle
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
+import api from '../services/api';
 import './SendMoney.css';
 
 const MAIN_STEPS = [
@@ -18,12 +19,12 @@ const MAIN_STEPS = [
   { icon: Check, label: 'Confirmation' },
 ];
 
-// Données par défaut
 const DEFAULT_TRANSFER = {
   beneficiary: {
     name: 'BOUTABI Said',
     bank: 'Aswaq Bank',
     account: '•••• •••• •••• 7890',
+    rib: '',
   },
   amount: 1000,
   reason: 'Loyer',
@@ -40,6 +41,24 @@ export default function SendMoneyAuth() {
 
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [senderAccountNumber, setSenderAccountNumber] = useState('');
+  const [isLoadingAccount, setIsLoadingAccount] = useState(true);
+
+  useEffect(() => {
+    api.get('/accounts/me')
+      .then((res) => {
+        setSenderAccountNumber(res.data.accountNumber);
+      })
+      .catch((err) => {
+        console.error("Impossible de récupérer le compte de l'utilisateur", err);
+        setErrorMessage("Impossible de récupérer votre compte. Veuillez vous reconnecter.");
+      })
+      .finally(() => {
+        setIsLoadingAccount(false);
+      });
+  }, []);
 
   const isFormValid = password.length >= 6;
 
@@ -48,39 +67,59 @@ export default function SendMoneyAuth() {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'Aujourd\'hui';
+    if (!dateString) return "Aujourd'hui";
     const date = new Date(dateString);
     const today = new Date();
-    
-    if (date.toDateString() === today.toDateString()) {
-      return 'Aujourd\'hui';
+    if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+  const handleConfirm = async () => {
+    if (!isFormValid || isSubmitting) return;
+if (!senderAccountNumber || !transferData.beneficiary?.id) {
+  setErrorMessage("Données de virement incomplètes. Merci de recommencer depuis le début.");
+  return;
+}
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const response = await api.post('/transactions/transfer', {
+  senderAccountNumber: senderAccountNumber,
+  beneficiaryId: transferData.beneficiary.id,
+  amount: transferData.amount,
+  description: transferData.reason,
+});
+
+      const transferWithRef = {
+        ...transferData,
+        reference: response.data.transactionReference,
+        timestamp: response.data.transactionDate,
+      };
+
+      navigate('/envoyer-argent/success', { state: { transferData: transferWithRef } });
+
+    } catch (error) {
+      console.error(error);
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        setErrorMessage("Session expirée, veuillez vous reconnecter.");
+      } else if (error.response?.data) {
+        setErrorMessage(
+          typeof error.response.data === 'string'
+            ? error.response.data
+            : error.response.data.message || "Une erreur est survenue."
+        );
+      } else {
+        setErrorMessage("Impossible de contacter le serveur. Vérifiez que le backend est démarré.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    return date.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
   };
 
-const handleConfirm = () => {
-  if (!isFormValid) return;
-  
-  // Générer une référence de transaction unique
-  const now = new Date();
-  const reference = `TRX-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`;
-  
-  const transferWithRef = {
-    ...transferData,
-    reference: reference,
-    timestamp: now.toISOString(),
-  };
-
-  navigate('/envoyer-argent/success', { state: { transferData: transferWithRef } });
-};
   return (
     <div className="dash-layout">
-      {/* Sidebar */}
       <aside className="dash-sidebar">
         <div className="dash-sidebar-logo"><Logo size={100} className="mb-6" /></div>
         <nav className="dash-nav">
@@ -102,9 +141,7 @@ const handleConfirm = () => {
         <a href="/" className="dash-logout"><span>Déconnexion</span></a>
       </aside>
 
-      {/* Main */}
       <main className="dash-main send-money-main">
-        {/* Header */}
         <header className="sm-topbar">
           <button type="button" className="sm-back" onClick={() => navigate('/envoyer-argent/authentification')}>
             <ArrowLeft size={18} /> Retour
@@ -123,7 +160,6 @@ const handleConfirm = () => {
           </div>
         </header>
 
-        {/* Page header */}
         <div className="sm-page-header">
           <div className="sm-page-icon"><Send size={22} /></div>
           <div>
@@ -132,7 +168,6 @@ const handleConfirm = () => {
           </div>
         </div>
 
-        {/* Stepper : Étape 5 active */}
         <section className="sm-stepper-card">
           <h2 className="sm-stepper-title">
             <span>Étape 5 sur 6 :</span> Authentification
@@ -140,8 +175,8 @@ const handleConfirm = () => {
           <div className="sm-stepper">
             {MAIN_STEPS.map((step, idx) => {
               const Icon = step.icon;
-              const isDone = idx < 4; // Étapes 1-4 terminées
-              const isActive = idx === 4; // Étape 5 active
+              const isDone = idx < 4;
+              const isActive = idx === 4;
               return (
                 <div key={step.label} className="sm-step">
                   {idx > 0 && <div className="sm-step-line" />}
@@ -155,9 +190,7 @@ const handleConfirm = () => {
           </div>
         </section>
 
-        {/* Grid : Authentification + Récapitulatif */}
         <div className="sm-grid">
-          {/* Carte gauche : Authentification */}
           <section className="sm-beneficiaries-panel sm-auth-panel">
             <h3 className="sm-auth-title">Confirmation de sécurité</h3>
 
@@ -168,7 +201,6 @@ const handleConfirm = () => {
               </p>
             </div>
 
-            {/* Formulaire mot de passe */}
             <div className="sm-input-group">
               <label className="sm-input-label">Mot de passe de votre compte</label>
               <div className="sm-password-wrapper">
@@ -199,7 +231,13 @@ const handleConfirm = () => {
               </label>
             </div>
 
-            {/* Boîte d'information */}
+            {errorMessage && (
+              <div className="sm-verification-info-box sm-verification-info-box-error">
+                <AlertCircle size={18} className="sm-verification-info-icon" />
+                <p className="sm-verification-info-text">{errorMessage}</p>
+              </div>
+            )}
+
             <div className="sm-verification-info-box">
               <Info size={18} className="sm-verification-info-icon" />
               <p className="sm-verification-info-text">
@@ -207,14 +245,12 @@ const handleConfirm = () => {
               </p>
             </div>
 
-            {/* Note de sécurité */}
             <div className="sm-security-note">
               <Shield size={14} className="sm-security-note-icon" />
               <span>Votre mot de passe n'est jamais enregistré ni affiché.</span>
             </div>
           </section>
 
-          {/* Carte droite : Récapitulatif du virement */}
           <aside className="sm-tips-panel sm-auth-summary-panel">
             <div className="sm-tips-header">
               <div className="sm-tips-icon"><Wallet size={18} /></div>
@@ -260,30 +296,33 @@ const handleConfirm = () => {
                 <div className="sm-auth-summary-icon"><CreditCard size={16} /></div>
                 <div className="sm-auth-summary-content">
                   <span className="sm-auth-summary-label">Compte débité</span>
-                  <span className="sm-auth-summary-value">Compte courant</span>
+                  <span className="sm-auth-summary-value">
+                    {isLoadingAccount ? 'Chargement...' : (senderAccountNumber || 'Non disponible')}
+                  </span>
                 </div>
               </div>
             </div>
           </aside>
         </div>
 
-        {/* Boutons : Retour + Confirmer */}
         <footer className="sm-footer sm-footer-two-buttons">
           <button
             type="button"
             className="sm-btn-modify"
             onClick={() => navigate('/envoyer-argent/authentification')}
+            disabled={isSubmitting}
           >
             <ArrowLeft size={16} /> Retour
           </button>
           <button
-  type="button"
-  className="sm-continue-btn"
-  disabled={!isFormValid}
-  onClick={handleConfirm}
->
-  Confirmer le virement <ChevronRight size={18} />
-</button>
+            type="button"
+            className="sm-continue-btn"
+            disabled={!isFormValid || isSubmitting || isLoadingAccount}
+            onClick={handleConfirm}
+          >
+            {isSubmitting ? 'Traitement en cours...' : 'Confirmer le virement'}
+            <ChevronRight size={18} />
+          </button>
         </footer>
       </main>
     </div>

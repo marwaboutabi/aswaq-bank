@@ -36,19 +36,20 @@ export default function Login() {
             email: formData.email,
             password: formData.password
         });
+const { token, role } = response.data;
 
+localStorage.setItem("token", token);
+localStorage.setItem("role", role);
 
-        // récupération du JWT
-        const token = response.data.token;
-
-
-        // stockage du token
-        localStorage.setItem("token", token);
-
-
-        setError("");
-
-        navigate('/acceuil-com');
+if (role === "CLIENT") {
+    navigate("/dashboard-client");
+} else if (role === "COMMERCANT") {
+    navigate("/acceuiL-com");
+} else if (role === "FOURNISSEUR") {
+    navigate("/accueil-fournisseur");
+} else {
+    navigate("/");
+}
 
 
     } catch (error) {

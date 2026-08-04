@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, ArrowLeftRight, Receipt, Star, PiggyBank, PieChart,
@@ -9,19 +9,8 @@ import {
 import Logo from '../components/Logo/Logo';
 import './TransactionsClient.css';
 import './DashboardClient.css';
+import api from '../services/api';
 
-const TRANSACTIONS = [
-  { id: 1, name: 'Carrefour Market', type: 'Paiement', category: 'Alimentation', amount: -250, date: '2026-07-23', time: '14:30', reference: 'TRX845621', status: 'completed' },
-  { id: 2, name: 'Virement de Sara Ali', type: 'Virement reçu', category: 'Virement', amount: 2000, date: '2026-07-23', time: '11:20', reference: 'VIR45874', status: 'completed' },
-  { id: 3, name: 'Paiement QR - Café Milano', type: 'Paiement QR', category: 'Restaurant', amount: -85, date: '2026-07-22', time: '18:45', reference: 'QR842156', status: 'completed' },
-  { id: 4, name: 'Station Total', type: 'Paiement', category: 'Carburant', amount: -300, date: '2026-07-22', time: '09:15', reference: 'TRX842001', status: 'completed' },
-  { id: 5, name: 'Virement vers Ahmad', type: 'Virement envoyé', category: 'Virement', amount: -1500, date: '2026-07-21', time: '16:05', reference: 'VIR45820', status: 'completed' },
-  { id: 6, name: 'Retrait DAB - Agence Centre', type: 'Retrait', category: 'Retrait', amount: -500, date: '2026-07-20', time: '10:30', reference: 'RET841500', status: 'completed' },
-  { id: 7, name: 'Dépôt de chèque', type: 'Dépôt', category: 'Dépôt', amount: 3500, date: '2026-07-19', time: '14:00', reference: 'DEP841200', status: 'completed' },
-  { id: 8, name: 'Marjane Hypermarket', type: 'Paiement', category: 'Alimentation', amount: -420, date: '2026-07-18', time: '17:20', reference: 'TRX840900', status: 'completed' },
-  { id: 9, name: 'Salaire - Aswaq Bank SARL', type: 'Virement reçu', category: 'Salaire', amount: 12500, date: '2026-07-15', time: '09:00', reference: 'VIR45700', status: 'completed' },
-  { id: 10, name: 'Paiement QR - Pharmacie Al Amal', type: 'Paiement QR', category: 'Santé', amount: -180, date: '2026-07-14', time: '11:45', reference: 'QR840500', status: 'completed' },
-];
 
 const TRANSACTION_TYPES = [
   'Toutes',
@@ -58,6 +47,69 @@ const NAV_ITEMS = [
 export default function TransactionsClient() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [transactions, setTransactions] = useState([]);
+const [loading, setLoading] = useState(true);
+
+const loadTransactions = async () => {
+  try {
+
+    setLoading(true);
+
+    const { data } = await api.get("/transactions/my");
+
+    console.log(data);
+
+    const mapped = data.map((tx) => ({
+
+      id: tx.id,
+
+      name:
+        tx.otherAccountNumber ||
+        tx.description ||
+        "Transaction",
+
+      type:
+        tx.type === "TRANSFER"
+          ? (tx.incoming ? "Virement reçu" : "Virement envoyé")
+          : tx.type === "DEPOSIT"
+          ? "Dépôt"
+          : tx.type === "WITHDRAWAL"
+          ? "Retrait"
+          : tx.type,
+
+      category: tx.type,
+
+      amount: tx.incoming
+        ? Number(tx.amount)
+        : -Number(tx.amount),
+
+      date: tx.transactionDate?.split("T")[0],
+
+      time: tx.transactionDate?.split("T")[1]?.substring(0,5),
+
+      reference: tx.transactionReference,
+
+      status: tx.status
+
+    }));
+
+    setTransactions(mapped);
+
+  } catch (e) {
+
+    console.error(e);
+
+  } finally {
+
+    setLoading(false);
+
+  }
+
+};
+
+useEffect(() => {
+  loadTransactions();
+}, []);
 
   // États pour les filtres
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,26 +123,38 @@ export default function TransactionsClient() {
   const [setDownloadComplete] = useState(false);
 
   // Filtrage des transactions
-  const filteredTransactions = useMemo(() => {
-    return TRANSACTIONS.filter((tx) => {
-      // Filtre recherche
-      const matchesSearch = searchQuery === '' ||
-        tx.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.category.toLowerCase().includes(searchQuery.toLowerCase());
+const filteredTransactions = useMemo(() => {
+  return transactions.filter((tx) => {
+    const matchesSearch =
+      searchQuery === "" ||
+      tx.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tx.reference?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tx.category?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Filtre type
-      const matchesType = typeFilter === 'Toutes' || tx.type === typeFilter;
+    const matchesType =
+      typeFilter === "Toutes" ||
+      tx.type === typeFilter;
 
-      // Filtre dates
-      const txDate = tx.date;
-      const matchesDateFrom = dateFrom === '' || txDate >= dateFrom;
-      const matchesDateTo = dateTo === '' || txDate <= dateTo;
+    const matchesDateFrom =
+      !dateFrom || tx.date >= dateFrom;
 
-      return matchesSearch && matchesType && matchesDateFrom && matchesDateTo;
-    });
-  }, [searchQuery, dateFrom, dateTo, typeFilter]);
+    const matchesDateTo =
+      !dateTo || tx.date <= dateTo;
 
+    return (
+      matchesSearch &&
+      matchesType &&
+      matchesDateFrom &&
+      matchesDateTo
+    );
+  });
+}, [
+  transactions,
+  searchQuery,
+  dateFrom,
+  dateTo,
+  typeFilter
+]);
   
 
   const formatDate = (dateStr) => {
@@ -154,7 +218,9 @@ export default function TransactionsClient() {
       }, 2000);
     }, 2000);
   };
-
+console.log("transactions =", transactions);
+console.log("filteredTransactions =", filteredTransactions);
+console.log("typeFilter =", typeFilter);
   return (
     <div className="dash-layout">
       {/* Sidebar */}

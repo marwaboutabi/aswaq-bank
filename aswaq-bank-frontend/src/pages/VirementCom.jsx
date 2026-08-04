@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Package, Boxes, Users, ArrowLeftRight,
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './VirementCom.css';
+import api from "../services/api";
 
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/acceuil-com' },
@@ -18,33 +19,8 @@ const NAV_ITEMS = [
   { icon: Users, label: 'Fournisseurs', to: '/fournisseurs', active: true },
   { icon: Star, label: 'Fidélité & Tickets', to: '/fidelite-commerce' },
   { icon: Bell, label: 'Notifications', to: '/notifications-com' },
-  
   { icon: Bot, label: 'Assistant IA', to: '/assistant-commerce' },
-      { icon: User, label: 'Profil & Paramètres', to: '/parametres-commerce' },
-];
-
-const INITIAL_BENEFICIARIES = [
-  { id: 1, name: 'Société ElectroMax', account: 'MA98 7654 3210 9876 5432 10', bank: 'CIH Bank', type: 'Fournisseur' },
-  { id: 2, name: 'Imprimerie Al Amal', account: 'MA12 3456 7890 1234 5678 90', bank: 'Attijariwafa Bank', type: 'Fournisseur' },
-  { id: 3, name: 'Office National de l\'Électricité', account: 'MA77 1111 2222 3333 4444 55', bank: 'Bank of Africa', type: 'Facture' },
-];
-
-const RECENT_TRANSFERS = [
-  {
-    id: 1,
-    date: '23/07/2026',
-    time: '16:20',
-    beneficiary: 'Société ElectroMax',
-    beneficiaryType: 'Fournisseur',
-    initials: 'SE',
-    account: 'MA98 7654 3210 9876 5432 10',
-    bank: 'CIH Bank',
-    amount: -2450,
-    status: 'Réussi',
-    reference: 'VIR45873210',
-    color: '#eef3fc',
-    textColor: '#1d4fd8'
-  },
+  { icon: User, label: 'Profil & Paramètres', to: '/parametres-commerce' },
 ];
 
 const MOTIF_OPTIONS = [
@@ -73,44 +49,149 @@ export default function VirementCom() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [beneficiaryType, setBeneficiaryType] = useState('saved');
-  
-  const [beneficiaries, setBeneficiaries] = useState(INITIAL_BENEFICIARIES);
+  const [recentTransfers, setRecentTransfers] = useState([]);
+
+  useEffect(() => {
+    loadBeneficiaries();
+    loadAccounts();
+    loadRecentTransfers();
+  }, []);
+
+  const loadRecentTransfers = async () => {
+    try {
+      const response = await api.get("/transactions/my");
+
+      const data = response.data
+        .filter(tx => tx.type === "TRANSFER")
+        .map(tx => {
+          // FIX 4 : sécurisation du split sur transactionDate
+          const [datePart, timePart] = (tx.transactionDate || "").split("T");
+          return {
+            id: tx.id,
+            beneficiary:
+              (tx.receiverAccount?.user?.firstName || "") +
+              " " +
+              (tx.receiverAccount?.user?.lastName || ""),
+            beneficiaryType: "Bénéficiaire",
+            initials:
+              (tx.receiverAccount?.user?.firstName?.charAt(0) || "") +
+              (tx.receiverAccount?.user?.lastName?.charAt(0) || ""),
+            account: tx.receiverAccount?.accountNumber,
+            bank: "ASWAQ BANK",
+            amount: -Number(tx.amount),
+            status: tx.status,
+            reference: tx.transactionReference,
+            date: datePart || "",
+            time: timePart ? timePart.substring(0, 5) : ""
+          };
+        });
+
+      setRecentTransfers(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const [beneficiaries, setBeneficiaries] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAccount, setSelectedAccount] = useState("");
+
+  const loadBeneficiaries = async () => {
+    try {
+      const res = await api.get("/beneficiaries");
+      setBeneficiaries(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadAccounts = async () => {
+    try {
+      const res = await api.get("/bank-accounts/my");
+      setAccounts(res.data);
+
+      if (res.data.length > 0) {
+        setSelectedAccount(res.data[0].accountNumber);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const [selectedBeneficiary, setSelectedBeneficiary] = useState('');
-  
   const [amount, setAmount] = useState('');
   const [motif, setMotif] = useState('');
-  
+
   const [newBeneficiary, setNewBeneficiary] = useState({
     name: '',
     type: 'Fournisseur',
-    bank: '',
+    bank: 'ASWAQ BANK', // les bénéficiaires sont toujours des comptes internes Aswaq Bank
     account: ''
   });
+
+  // vérification du compte bénéficiaire par RIB (titulaire + solde)
+  const [accountLookup, setAccountLookup] = useState(null); // { balance, holderName }
+  const [lookupError, setLookupError] = useState('');
+  const [lookupLoading, setLookupLoading] = useState(false);
 
   const [transferConfirmed, setTransferConfirmed] = useState(false);
   const [transferReference, setTransferReference] = useState('');
 
   const selectedBeneficiaryData = beneficiaries.find(b => b.id === parseInt(selectedBeneficiary));
 
-  const handleAddBeneficiary = () => {
-    if (!newBeneficiary.name || !newBeneficiary.bank || newBeneficiary.account.length < 24) {
+  // FIX 3 : compte courant réel (au lieu du texte codé en dur)
+  const currentAccount = accounts.find(a => a.accountNumber === selectedAccount);
+
+  // Recherche automatique du compte dès que le RIB fait 24 chiffres
+  useEffect(() => {
+    const lookupAccount = async () => {
+      if (newBeneficiary.account.length !== 24) {
+        setAccountLookup(null);
+        setLookupError('');
+        return;
+      }
+      setLookupLoading(true);
+      setLookupError('');
+      try {
+        // ⚠️ endpoint à confirmer côté backend
+        const res = await api.get(`/bank-accounts/lookup/${newBeneficiary.account}`);
+        const holderName = `${res.data.user?.firstName || ''} ${res.data.user?.lastName || ''}`.trim();
+        setAccountLookup({ balance: res.data.balance, holderName });
+      } catch (err) {
+        console.error(err);
+        setAccountLookup(null);
+        setLookupError("Aucun compte Aswaq Bank trouvé pour ce RIB.");
+      } finally {
+        setLookupLoading(false);
+      }
+    };
+
+    lookupAccount();
+  }, [newBeneficiary.account]);
+
+  // FIX 1 : persistance backend du nouveau bénéficiaire
+  const handleAddBeneficiary = async () => {
+    if (!newBeneficiary.name || newBeneficiary.account.length < 24 || !accountLookup) {
       return;
     }
-    
-    const newId = Math.max(...beneficiaries.map(b => b.id), 0) + 1;
-    const addedBeneficiary = {
-      id: newId,
-      name: newBeneficiary.name,
-      type: newBeneficiary.type,
-      bank: newBeneficiary.bank,
-      account: newBeneficiary.account
-    };
-    
-    setBeneficiaries([...beneficiaries, addedBeneficiary]);
-    setSelectedBeneficiary(newId.toString());
-    setBeneficiaryType('saved');
-    
-    setNewBeneficiary({ name: '', type: 'Fournisseur', bank: '', account: '' });
+
+    try {
+      const res = await api.post("/beneficiaries", {
+        name: newBeneficiary.name,
+        type: newBeneficiary.type,
+        bank: 'ASWAQ BANK',
+        account: newBeneficiary.account
+      });
+
+      setBeneficiaries([...beneficiaries, res.data]);
+      setSelectedBeneficiary(res.data.id.toString());
+      setBeneficiaryType('saved');
+      setNewBeneficiary({ name: '', type: 'Fournisseur', bank: 'ASWAQ BANK', account: '' });
+      setAccountLookup(null);
+    } catch (err) {
+      console.error(err);
+      alert(JSON.stringify(err.response?.data));
+    }
   };
 
   const handleContinue = () => {
@@ -123,15 +204,32 @@ export default function VirementCom() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
-      // Retour à la page précédente ou au tableau de bord
       navigate(-1);
     }
   };
 
-  const handleConfirm = () => {
-    const ref = 'VIR' + Math.floor(Math.random() * 100000000);
-    setTransferReference(ref);
-    setTransferConfirmed(true);
+  const handleConfirm = async () => {
+    try {
+      // FIX 2 : conversion virgule -> point avant envoi au backend
+      const normalizedAmount = Number(String(amount).replace(',', '.'));
+
+      const response = await api.post("/transactions/transfer", {
+        senderAccountNumber: selectedAccount,
+        beneficiaryId: Number(selectedBeneficiary),
+        amount: normalizedAmount,
+        description: motif
+      });
+
+      setTransferReference(response.data.transactionReference);
+      setTransferConfirmed(true);
+      loadRecentTransfers();
+      loadAccounts(); // pour rafraîchir le solde affiché après le virement
+    } catch (err) {
+      console.log(err);
+      console.log(err.response);
+      console.log(err.response?.data);
+      alert(JSON.stringify(err.response?.data));
+    }
   };
 
   const handleNewTransfer = () => {
@@ -144,7 +242,9 @@ export default function VirementCom() {
   };
 
   const formatAmount = (val) => {
-    return parseFloat(val || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    // FIX 2 (bis) : formatage cohérent même si la virgule est utilisée
+    const normalized = String(val || 0).replace(',', '.');
+    return parseFloat(normalized || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   // ÉTAPE 1 : Formulaire
@@ -154,7 +254,7 @@ export default function VirementCom() {
         <div className="vir-card">
           <div className="vir-card-header-with-back">
             <h2 className="vir-card-title">1. Informations du virement</h2>
-            <button 
+            <button
               type="button"
               className="vir-back-btn"
               onClick={handleBack}
@@ -170,13 +270,27 @@ export default function VirementCom() {
               <div className="vir-account-info">
                 <Wallet size={18} className="vir-account-icon" />
                 <div>
-                  <p className="vir-account-name">Compte principal</p>
-                  <p className="vir-account-number">MA64 1234 5678 9012 3456 78</p>
+                  <select
+                    className="vir-select"
+                    value={selectedAccount}
+                    onChange={(e) => setSelectedAccount(e.target.value)}
+                  >
+                    {accounts.map(account => (
+                      <option
+                        key={account.id}
+                        value={account.accountNumber}
+                      >
+                        {account.accountNumber}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="vir-account-balance">
                 <span className="vir-balance-label">Solde disponible</span>
-                <span className="vir-balance-amount">45 230,00 MAD</span>
+                <span className="vir-balance-amount">
+                  {currentAccount ? `${formatAmount(currentAccount.balance)} MAD` : '-'}
+                </span>
               </div>
               <ChevronDown size={16} className="vir-select-arrow" />
             </div>
@@ -184,7 +298,7 @@ export default function VirementCom() {
 
           <div className="vir-form-group">
             <label className="vir-label">Bénéficiaire *</label>
-            
+
             <div className="vir-beneficiary-tabs">
               <button
                 type="button"
@@ -234,7 +348,7 @@ export default function VirementCom() {
                     <input
                       type="text"
                       value={newBeneficiary.name}
-                      onChange={(e) => setNewBeneficiary({...newBeneficiary, name: e.target.value})}
+                      onChange={(e) => setNewBeneficiary({ ...newBeneficiary, name: e.target.value })}
                       className="vir-input"
                       placeholder="Ex: Société ElectroMax"
                     />
@@ -244,7 +358,7 @@ export default function VirementCom() {
                     <label className="vir-label">Type de bénéficiaire *</label>
                     <select
                       value={newBeneficiary.type}
-                      onChange={(e) => setNewBeneficiary({...newBeneficiary, type: e.target.value})}
+                      onChange={(e) => setNewBeneficiary({ ...newBeneficiary, type: e.target.value })}
                       className="vir-select"
                     >
                       <option value="Fournisseur">Fournisseur</option>
@@ -258,19 +372,11 @@ export default function VirementCom() {
                 </div>
 
                 <div className="vir-form-group">
-                  <label className="vir-label">Banque *</label>
-                  <select
-                    value={newBeneficiary.bank}
-                    onChange={(e) => setNewBeneficiary({...newBeneficiary, bank: e.target.value})}
-                    className="vir-select"
-                  >
-                    <option value="">Sélectionner une banque</option>
-                    {BANK_OPTIONS.map((bank) => (
-                      <option key={bank} value={bank}>
-                        {bank}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="vir-label">Banque</label>
+                  <div className="vir-input" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f5f5f5', cursor: 'not-allowed' }}>
+                    <Building size={16} />
+                    ASWAQ BANK
+                  </div>
                 </div>
 
                 <div className="vir-form-group">
@@ -279,7 +385,7 @@ export default function VirementCom() {
                     type="text"
                     value={newBeneficiary.account}
                     onChange={(e) => setNewBeneficiary({
-                      ...newBeneficiary, 
+                      ...newBeneficiary,
                       account: e.target.value.replace(/[^0-9]/g, '').slice(0, 24)
                     })}
                     className="vir-input"
@@ -290,17 +396,38 @@ export default function VirementCom() {
                     <span className={newBeneficiary.account.length === 24 ? 'valid' : ''}>
                       {newBeneficiary.account.length}/24 chiffres
                     </span>
-                    {newBeneficiary.account.length === 24 && (
+                    {newBeneficiary.account.length === 24 && !lookupLoading && accountLookup && (
                       <CheckCircle2 size={14} className="vir-helper-icon" />
                     )}
                   </div>
+
+                  {lookupLoading && (
+                    <p className="vir-info-text" style={{ marginTop: 6 }}>Vérification du compte...</p>
+                  )}
+
+                  {lookupError && (
+                    <div className="vir-info-box vir-info-box-warning" style={{ marginTop: 8 }}>
+                      <AlertCircle size={16} className="vir-info-icon" />
+                      <p className="vir-info-text">{lookupError}</p>
+                    </div>
+                  )}
+
+                  {accountLookup && (
+                    <div className="vir-info-box" style={{ marginTop: 8 }}>
+                      <CheckCircle2 size={16} className="vir-info-icon" />
+                      <div className="vir-info-content">
+                        <p className="vir-info-text"><strong>{accountLookup.holderName}</strong></p>
+                        <p className="vir-info-text">Solde disponible : {formatAmount(accountLookup.balance)} MAD</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <button
                   type="button"
                   className="vir-btn-primary vir-btn-add"
                   onClick={handleAddBeneficiary}
-                  disabled={!newBeneficiary.name || !newBeneficiary.bank || newBeneficiary.account.length < 24}
+                  disabled={!newBeneficiary.name || newBeneficiary.account.length < 24 || !accountLookup}
                 >
                   <Check size={18} />
                   Enregistrer le bénéficiaire
@@ -362,8 +489,7 @@ export default function VirementCom() {
               Compte à débiter
             </div>
             <div className="vir-summary-value">
-              <p className="vir-summary-value-main">Compte principal</p>
-              <p className="vir-summary-value-sub">MA64 1234 5678 9012 3456 78</p>
+              <p className="vir-summary-value-main">{currentAccount?.accountNumber || '-'}</p>
             </div>
           </div>
 
@@ -445,7 +571,7 @@ export default function VirementCom() {
         <div className="vir-card">
           <div className="vir-card-header-with-back">
             <h2 className="vir-card-title">2. Vérification des informations</h2>
-            <button 
+            <button
               type="button"
               className="vir-back-btn"
               onClick={handleBack}
@@ -466,11 +592,10 @@ export default function VirementCom() {
               <div className="vir-verify-content">
                 <span className="vir-verify-label">Compte à débiter</span>
                 <div className="vir-verify-value">
-                  <p className="vir-verify-value-main">Compte principal</p>
-                  <p className="vir-verify-value-sub">MA64 1234 5678 9012 3456 78</p>
+                  <p className="vir-verify-value-main">{currentAccount?.accountNumber || '-'}</p>
                 </div>
               </div>
-              <button 
+              <button
                 className="vir-edit-btn"
                 onClick={() => setCurrentStep(1)}
               >
@@ -490,7 +615,7 @@ export default function VirementCom() {
                   <p className="vir-verify-value-sub">{selectedBeneficiaryData?.account}</p>
                 </div>
               </div>
-              <button 
+              <button
                 className="vir-edit-btn"
                 onClick={() => setCurrentStep(1)}
               >
@@ -509,7 +634,7 @@ export default function VirementCom() {
                   <p className="vir-verify-value-main">{selectedBeneficiaryData?.bank}</p>
                 </div>
               </div>
-              <button 
+              <button
                 className="vir-edit-btn"
                 onClick={() => setCurrentStep(1)}
               >
@@ -528,7 +653,7 @@ export default function VirementCom() {
                   <p className="vir-verify-value-main">{formatAmount(amount)} MAD</p>
                 </div>
               </div>
-              <button 
+              <button
                 className="vir-edit-btn"
                 onClick={() => setCurrentStep(1)}
               >
@@ -547,7 +672,7 @@ export default function VirementCom() {
                   <p className="vir-verify-value-main">{motif}</p>
                 </div>
               </div>
-              <button 
+              <button
                 className="vir-edit-btn"
                 onClick={() => setCurrentStep(1)}
               >
@@ -568,14 +693,14 @@ export default function VirementCom() {
           </div>
 
           <div className="vir-verify-actions">
-            <button 
+            <button
               className="vir-btn-secondary"
               onClick={handleBack}
             >
               <ArrowLeft size={18} />
               Retour
             </button>
-            <button 
+            <button
               className="vir-btn-primary vir-btn-confirm"
               onClick={handleContinue}
             >
@@ -596,8 +721,7 @@ export default function VirementCom() {
               Compte à débiter
             </div>
             <div className="vir-summary-value">
-              <p className="vir-summary-value-main">Compte principal</p>
-              <p className="vir-summary-value-sub">MA64 1234 5678 9012 3456 78</p>
+              <p className="vir-summary-value-main">{currentAccount?.accountNumber || '-'}</p>
             </div>
           </div>
 
@@ -691,7 +815,7 @@ export default function VirementCom() {
             <p className="vir-success-subtitle">
               Votre virement a été traité avec succès et sera exécuté sous 24h.
             </p>
-            
+
             <div className="vir-success-details">
               <div className="vir-success-row">
                 <span className="vir-success-label">Référence du virement</span>
@@ -712,7 +836,7 @@ export default function VirementCom() {
             </div>
 
             <div className="vir-success-actions">
-              <button 
+              <button
                 className="vir-btn-primary"
                 onClick={handleNewTransfer}
               >
@@ -727,7 +851,7 @@ export default function VirementCom() {
           <div className="vir-confirm-content">
             <div className="vir-card-header-with-back">
               <h2 className="vir-card-title">3. Confirmation du virement</h2>
-              <button 
+              <button
                 type="button"
                 className="vir-back-btn"
                 onClick={handleBack}
@@ -755,14 +879,14 @@ export default function VirementCom() {
             </div>
 
             <div className="vir-verify-actions">
-              <button 
+              <button
                 className="vir-btn-secondary"
                 onClick={handleBack}
               >
                 <ArrowLeft size={18} />
                 Retour
               </button>
-              <button 
+              <button
                 className="vir-btn-primary vir-btn-confirm"
                 onClick={handleConfirm}
               >
@@ -780,9 +904,8 @@ export default function VirementCom() {
     <div className="vir-layout">
       <aside className="vir-sidebar">
         <div className="vir-sidebar-logo">
-          <Logo size={100}className="mb-6 logo-white" />
+          <Logo size={100} className="mb-6 logo-white" />
         </div>
-
 
         <nav className="vir-nav">
           {NAV_ITEMS.map((item) => {
@@ -879,7 +1002,7 @@ export default function VirementCom() {
                   </tr>
                 </thead>
                 <tbody>
-                  {RECENT_TRANSFERS.map((transfer) => (
+                  {recentTransfers.map((transfer) => (
                     <tr key={transfer.id}>
                       <td>
                         <p className="vir-table-date">{transfer.date} - {transfer.time}</p>

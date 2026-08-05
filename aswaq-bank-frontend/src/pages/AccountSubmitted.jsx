@@ -13,6 +13,7 @@ const PROGRESS_TICK_MS = 3000;
 
 export default function AccountSubmitted() {
   const [status, setStatus] = useState('verifying');
+  const [generatedPin, setGeneratedPin] = useState('');
   const [progress, setProgress] = useState(0);
   const registerSentRef = useRef(false);
 
@@ -30,11 +31,17 @@ useEffect(() => {
     const { confirmationMotDePasse, emailVerifie, ...payload } = getRegistrationData();
 
     api.post('/auth/register', payload)
-      .then(() => {
-        sessionStorage.removeItem('accountData');
-        setProgress(100);
-        setStatus('success');
-      })
+      .then((response) => {
+
+    sessionStorage.removeItem('accountData');
+
+    setGeneratedPin(response.data.generatedCardPin);
+
+    setProgress(100);
+
+    setStatus('success');
+
+})
       .catch(() => {
         setProgress(100);
         setStatus('issue');
@@ -141,7 +148,34 @@ useEffect(() => {
                 <p className="submitted-card-subtitle">
                   Votre compte a été créé avec succès !
                 </p>
+                <div
+    style={{
+        background: "#fff8e6",
+        border: "2px solid #d4af37",
+        borderRadius: "12px",
+        padding: "20px",
+        marginTop: "20px",
+        textAlign: "center"
+    }}
+>
+    <h3>🔐 Code PIN de votre carte bancaire</h3>
 
+    <div
+        style={{
+            fontSize: "34px",
+            fontWeight: "bold",
+            letterSpacing: "8px",
+            margin: "20px 0"
+        }}
+    >
+        {generatedPin}
+    </div>
+
+    <p style={{ color: "#c0392b", fontWeight: "bold" }}>
+        ⚠️ Ce code ne sera plus jamais affiché.
+        Veuillez le mémoriser.
+    </p>
+</div>
                 <div className="submitted-status-badge submitted-status-success">
                   <span className="submitted-status-dot submitted-status-dot-success" />
                   Statut : Compte vérifié

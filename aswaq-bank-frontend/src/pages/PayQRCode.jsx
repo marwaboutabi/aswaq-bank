@@ -8,6 +8,9 @@ import {
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './PayQRCode.css';
+import { Html5QrcodeScanner } from "html5-qrcode";
+import { useRef } from "react";
+import api from "../services/api";
 
 const NAV_ITEMS = [
   { icon: 'Home', label: 'Accueil', to: '/dashboard-client' },
@@ -29,13 +32,7 @@ const STEPS = [
   { label: 'Confirmer le paiement' },
 ];
 
-const SCANNED_BENEFICIARY = {
-  name: 'Café Milano',
-  type: 'Commerçant vérifié',
-  bank: 'Aswaq Bank',
-  iban: 'MA64 0112 3456 7890 1234 5678',
-  verified: true,
-};
+
 
 const QUICK_AMOUNTS = [50, 100, 200, 500];
 
@@ -46,7 +43,9 @@ export default function PayQRCode() {
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [showCamera, setShowCamera] = useState(false);
+const scannerRef = useRef(null);
 
+const [beneficiary, setBeneficiary] = useState(null);
   const availableBalance = 12450.00;
   const fees = 0;
   const total = parseFloat(amount || 0) + fees;
@@ -60,13 +59,83 @@ export default function PayQRCode() {
       return () => clearTimeout(timer);
     }
   }, [scanning]);
+  useEffect(() => {
 
-  const handleStartScan = () => {
+    if (showCamera) {
+
+        const timer = setTimeout(() => {
+            startScanner();
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }
+
+}, [showCamera]);
+
+useEffect(() => {
+    return () => {
+        if (scannerRef.current) {
+            scannerRef.current.clear();
+            scannerRef.current = null;
+        }
+    };
+}, []);
+const startScanner = () => {
+
+    if(scannerRef.current){
+        return;
+    }
+
+    scannerRef.current = new Html5QrcodeScanner(
+        "reader",
+        {
+            fps:10,
+            qrbox:250
+        },
+        false
+    );
+
+    scannerRef.current.render(
+
+        (decodedText) => {
+
+    try {
+        const data = JSON.parse(decodedText);
+
+        setBeneficiary(data);
+
+       if (scannerRef.current) {
+    scannerRef.current.clear();
+    scannerRef.current = null;
+}
+
+        setShowCamera(false);
+        setCurrentStep(2);
+
+    } catch (error) {
+        alert("QR Code invalide");
+    }
+
+},
+
+        ()=>{}
+
+    );
+
+};
+ const handleStartScan = () => {
+
     setShowCamera(true);
-    setTimeout(() => {
-      setScanning(true);
-    }, 300);
-  };
+
+};
+const handleCloseCamera = async () => {
+    if (scannerRef.current) {
+        await scannerRef.current.clear();
+        scannerRef.current = null;
+    }
+
+    setShowCamera(false);
+};
 
   const handleImportImage = () => {
     setScanning(true);
@@ -78,10 +147,32 @@ export default function PayQRCode() {
     }
   };
 
-  const handleConfirmPayment = () => {
-    alert('✅ Paiement de ' + amount + ' MAD effectué avec succès à ' + SCANNED_BENEFICIARY.name);
-    navigate('/dashboard-client');
-  };
+  const handleConfirmPayment = async () => {
+    try {
+
+        await api.post("/transactions/qr-payment", {
+            receiverRib: beneficiary.rib,
+            amount: Number(amount),
+            description: reason || "Paiement QR"
+        });
+
+        alert(
+            "✅ Paiement effectué avec succès à " +
+            beneficiary.name
+        );
+
+        navigate("/dashboard-client");
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            error.response?.data?.message ||
+            "Le paiement a échoué."
+        );
+    }
+};
 
   const formatAmount = (val) => {
     return parseFloat(val).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -160,22 +251,8 @@ export default function PayQRCode() {
                   </div>
                 ) : (
                   <div className="pq-camera-view">
-                    <div className="pq-camera-frame">
-                      <div className="pq-camera-corners">
-                        <div className="pq-corner pq-corner-tl" />
-                        <div className="pq-corner pq-corner-tr" />
-                        <div className="pq-corner pq-corner-bl" />
-                        <div className="pq-corner pq-corner-br" />
-                      </div>
-                      {scanning && <div className="pq-scan-line" />}
-                      <div className="pq-camera-overlay">
-                        <QrCode size={40} color="white" />
-                        <p className="pq-camera-text">
-                          {scanning ? 'Scan en cours...' : 'Positionnez le QR Code dans le cadre'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+    <div id="reader"></div>
+</div>
                 )}
 
                 {!showCamera ? (
@@ -183,9 +260,13 @@ export default function PayQRCode() {
                     <Camera size={16} /> Activer la caméra
                   </button>
                 ) : (
-                  <button type="button" className="pq-secondary-btn pq-full" onClick={() => setShowCamera(false)}>
-                    Fermer la caméra
-                  </button>
+                  <button
+    type="button"
+    className="pq-secondary-btn pq-full"
+    onClick={handleCloseCamera}
+>
+    Fermer la caméra
+</button>
                 )}
 
                 <div className="pq-divider">OU</div>
@@ -241,27 +322,27 @@ export default function PayQRCode() {
                       <Store size={20} />
                     </div>
                     <div>
-                      <p className="pq-beneficiary-name">{SCANNED_BENEFICIARY.name}</p>
-                      {SCANNED_BENEFICIARY.verified && (
-                        <p className="pq-beneficiary-verified">
-                          Commerçant vérifié <CheckCircle2 size={12} />
-                        </p>
-                      )}
+                      <p className="pq-beneficiary-name">{beneficiary?.name}</p>
+{beneficiary?.verified && (
+    <p className="pq-beneficiary-verified">
+        Commerçant vérifié <CheckCircle2 size={12} />
+    </p>
+)}
                     </div>
                   </div>
 
                   <div className="pq-beneficiary-details">
                     <div className="pq-detail-row">
                       <span className="pq-detail-label">Nom du bénéficiaire</span>
-                      <span className="pq-detail-value">{SCANNED_BENEFICIARY.name}</span>
+                      <span className="pq-detail-value">{beneficiary?.name}</span>
                     </div>
                     <div className="pq-detail-row">
                       <span className="pq-detail-label">Banque</span>
-                      <span className="pq-detail-value">{SCANNED_BENEFICIARY.bank}</span>
+                      <span className="pq-detail-value">{beneficiary?.bank}</span>
                     </div>
                     <div className="pq-detail-row">
                       <span className="pq-detail-label">Compte / IBAN</span>
-                      <span className="pq-detail-value pq-iban">{SCANNED_BENEFICIARY.iban}</span>
+                      <span className="pq-detail-value pq-iban">{beneficiary?.rib}</span>
                     </div>
                   </div>
 
@@ -312,8 +393,8 @@ export default function PayQRCode() {
                       <Store size={20} />
                     </div>
                     <div>
-                      <p className="pq-beneficiary-name">{SCANNED_BENEFICIARY.name}</p>
-                      {SCANNED_BENEFICIARY.verified && (
+                      <p className="pq-beneficiary-name">{beneficiary?.name}</p>
+                      {beneficiary?.verified && (
                         <p className="pq-beneficiary-verified">
                           Commerçant vérifié <CheckCircle2 size={12} />
                         </p>
@@ -324,11 +405,11 @@ export default function PayQRCode() {
                   <div className="pq-beneficiary-details">
                     <div className="pq-detail-row">
                       <span className="pq-detail-label">Banque</span>
-                      <span className="pq-detail-value">{SCANNED_BENEFICIARY.bank}</span>
+                      <span className="pq-detail-value">{beneficiary?.bank}</span>
                     </div>
                     <div className="pq-detail-row">
                       <span className="pq-detail-label">Compte / IBAN</span>
-                      <span className="pq-detail-value pq-iban">{SCANNED_BENEFICIARY.iban}</span>
+                      <span className="pq-detail-value pq-iban">{beneficiary?.rib}</span>
                     </div>
                   </div>
 
@@ -420,11 +501,11 @@ export default function PayQRCode() {
                 <div className="pq-summary-list">
                   <div className="pq-summary-row">
                     <span className="pq-summary-label">Vous payez à</span>
-                    <span className="pq-summary-value pq-summary-value-bold">{SCANNED_BENEFICIARY.name}</span>
+                    <span className="pq-summary-value pq-summary-value-bold">{beneficiary?.name}</span>
                   </div>
                   <div className="pq-summary-row">
                     <span className="pq-summary-label">Compte / IBAN</span>
-                    <span className="pq-summary-value pq-iban">{SCANNED_BENEFICIARY.iban}</span>
+                    <span className="pq-summary-value pq-iban">{beneficiary?.rib}</span>
                   </div>
                   <div className="pq-summary-row">
                     <span className="pq-summary-label">Montant</span>

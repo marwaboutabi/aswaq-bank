@@ -39,9 +39,8 @@ export default function SendMoneyAuth() {
   const location = useLocation();
   const transferData = location.state?.transferData || DEFAULT_TRANSFER;
 
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const [pin, setPin] = useState('');
+const [showPin, setShowPin] = useState(false);  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [senderAccountNumber, setSenderAccountNumber] = useState('');
   const [isLoadingAccount, setIsLoadingAccount] = useState(true);
@@ -60,8 +59,7 @@ export default function SendMoneyAuth() {
       });
   }, []);
 
-  const isFormValid = password.length >= 6;
-
+const isFormValid = /^\d{4}$/.test(pin);
   const formatAmount = (amount) => {
     return amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
@@ -90,6 +88,7 @@ if (!senderAccountNumber || !transferData.beneficiary?.id) {
   beneficiaryId: transferData.beneficiary.id,
   amount: transferData.amount,
   description: transferData.reason,
+  pin: pin
 });
 
       const transferWithRef = {
@@ -202,32 +201,37 @@ if (!senderAccountNumber || !transferData.beneficiary?.id) {
             </div>
 
             <div className="sm-input-group">
-              <label className="sm-input-label">Mot de passe de votre compte</label>
-              <div className="sm-password-wrapper">
+<label className="sm-input-label">
+    Code PIN de votre carte bancaire
+</label>              <div className="sm-password-wrapper">
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="sm-password-input"
-                />
+    type={showPin ? "text" : "password"}
+    placeholder="••••"
+    value={pin}
+    maxLength={4}
+    onChange={(e) => {
+        const value = e.target.value.replace(/\D/g, "");
+        setPin(value);
+    }}
+    className="sm-password-input"
+/>
                 <button
                   type="button"
                   className="sm-password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPin(!showPin)}
                   tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
               <label className="sm-checkbox-label">
                 <input
                   type="checkbox"
-                  checked={showPassword}
-                  onChange={(e) => setShowPassword(e.target.checked)}
+                  checked={showPin}
+                  onChange={(e) => setShowPin(e.target.checked)}
                 />
                 <span className="sm-checkbox-custom" />
-                Afficher le mot de passe
+                Afficher le code PIN
               </label>
             </div>
 

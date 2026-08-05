@@ -1,29 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Search, Bell, ChevronDown, Send,
-  Copy, Download, Share2, Info, CheckCircle2,
-  Clock, Building2, Mail, Wallet, Calendar,
-  User, FileText, Check,
-  // Icônes du menu client
-  Home, CreditCard, ArrowLeftRight, Receipt, Star, PiggyBank, PieChart, Bot
+  ArrowLeft,
+  Search,
+  Bell,
+  ChevronDown,
+  Copy,
+  Download,
+  Share2,
+  Info,
+  CheckCircle2,
+  Clock,
+  Building2,
+  User,
+  Check,
+  Home,
+  CreditCard,
+  ArrowLeftRight,
+  Receipt,
+  Star,
+  PiggyBank,
+  PieChart,
+  Bot
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './ReceiveMoney.css';
+import { QRCodeCanvas } from 'qrcode.react';
+import axios from 'axios';
 
-// Données simulées
-const USER_DATA = {
-  name: 'Marwa Boutabi',
-  iban: 'MA64 0112 3456 7890 1234 5678',
-  account: '•••• •••• •••• 4589',
-};
-
-const TRANSACTIONS_RECEIVED = [
-  { id: 1, date: '23/07/2026', time: '14:32', sender: 'Ahmed B.', initials: 'AB', reference: 'TRX845621', amount: 450, status: 'Reçu' },
-  { id: 2, date: '21/07/2026', time: '11:18', sender: 'Fatima Z.', initials: 'FZ', reference: 'TRX845112', amount: 1200, status: 'Reçu' },
-  { id: 3, date: '19/07/2026', time: '09:45', sender: 'Salaire', initials: '💼', reference: 'VIR45874', amount: 8000, status: 'Reçu', type: 'Virement salaire' },
-  { id: 4, date: '17/07/2026', time: '16:20', sender: 'Youssef M.', initials: 'YM', reference: 'TRX842221', amount: 300, status: 'Reçu' },
-];
 
 // ===== MENU ESPACE CLIENT =====
 const NAV_ITEMS = [
@@ -40,55 +44,119 @@ const NAV_ITEMS = [
 ];
 
 export default function ReceiveMoney() {
+  const [userData, setUserData] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
-  const [requestForm, setRequestForm] = useState({
-    recipient: '',
-    amount: '',
-    reason: '',
-  });
+  const [transactionsReceived, setTransactionsReceived] = useState([]);
+const [loadingTransactions, setLoadingTransactions] = useState(true);
+ useEffect(() => {
 
+    const token = localStorage.getItem("token");
+
+    axios.get(
+      "http://localhost:8080/api/transactions/received",
+      {
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      }
+    )
+    .then(response => {
+
+        setTransactionsReceived(response.data);
+
+    })
+    .catch(error => {
+
+        console.log("Erreur récupération transactions :", error);
+
+    })
+    .finally(()=>{
+        setLoadingTransactions(false);
+    });
+
+}, []); 
+useEffect(() => {
+
+    axios.get("http://localhost:8080/api/receive-money/info", {
+        headers:{
+            Authorization:
+            `Bearer ${localStorage.getItem("token")}`
+        }
+    })
+    .then(response => {
+
+        setUserData(response.data);
+
+    })
+    .catch(error => {
+
+        console.log("Erreur récupération compte :", error);
+
+    });
+
+}, []);
   const handleCopyIBAN = () => {
-    navigator.clipboard.writeText(USER_DATA.iban.replace(/\s/g, ''));
+    navigator.clipboard.writeText(userData?.rib?.replace(/\s/g, '') || '');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownloadQR = () => {
-    alert('Téléchargement du QR Code...');
-  };
+
+  const canvas = document.querySelector(".rm-qr-code canvas");
+
+  if (!canvas) {
+    return;
+  }
+
+  const url = canvas.toDataURL("image/png");
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "AswaqBank-QR.png";
+
+  link.click();
+};
 
   const handleShareQR = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Mon IBAN Aswaq Bank',
-        text: `Voici mon IBAN pour recevoir un virement : ${USER_DATA.iban}`,
-      });
-    } else {
-      handleCopyIBAN();
-    }
-  };
 
-  const handleSendRequest = () => {
-    if (!requestForm.recipient || !requestForm.amount) {
-      alert('Veuillez remplir le destinataire et le montant.');
-      return;
-    }
-    alert(`Demande de paiement envoyée à ${requestForm.recipient} pour ${requestForm.amount} MAD`);
-    setRequestForm({ recipient: '', amount: '', reason: '' });
-  };
+  const qrData = JSON.stringify({
+    bank:"Aswaq Bank",
+    rib:userData?.rib,
+    name:`${userData?.nom} ${userData?.prenom}`
+  });
+
+  if(navigator.share){
+
+    navigator.share({
+      title:"Mon QR Aswaq Bank",
+      text:qrData
+    });
+
+  } else {
+    handleCopyIBAN();
+  }
+};
+  
 
   const formatAmount = (amount) => {
-    return amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
+
+  if (!amount) return "0.00";
+
+  return Number(amount).toLocaleString('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
 
   return (
     <div className="dash-layout">
       {/* Sidebar */}
       <aside className="dash-sidebar">
         <div className="dash-sidebar-logo">
-          <Logo size={100} className="mb-6" className="mb-6 logo-white"/>
+          <Logo size={100}  className="mb-6 logo-white"/>
         </div>
         <nav className="dash-nav">
           {NAV_ITEMS.map((item) => {
@@ -158,8 +226,9 @@ export default function ReceiveMoney() {
             <p className="rm-card-desc">Partagez votre IBAN pour recevoir des virements depuis d'autres comptes.</p>
             
             <div className="rm-iban-display">
-              <span className="rm-iban-text">{USER_DATA.iban}</span>
-              <button type="button" className="rm-copy-iban-btn" onClick={handleCopyIBAN}>
+<span className="rm-iban-text">
+ {userData?.rib || "Chargement..."}
+</span>              <button type="button" className="rm-copy-iban-btn" onClick={handleCopyIBAN}>
                 {copied ? <Check size={16} /> : <Copy size={16} />}
               </button>
             </div>
@@ -179,40 +248,21 @@ export default function ReceiveMoney() {
 
             <div className="rm-qr-display">
               <div className="rm-qr-code">
-                <svg viewBox="0 0 100 100" className="rm-qr-svg">
-                  <rect width="100" height="100" fill="white" />
-                  <rect x="5" y="5" width="25" height="25" fill="#0b1f4b" />
-                  <rect x="10" y="10" width="15" height="15" fill="white" />
-                  <rect x="13" y="13" width="9" height="9" fill="#0b1f4b" />
-                  
-                  <rect x="70" y="5" width="25" height="25" fill="#0b1f4b" />
-                  <rect x="75" y="10" width="15" height="15" fill="white" />
-                  <rect x="78" y="13" width="9" height="9" fill="#0b1f4b" />
-                  
-                  <rect x="5" y="70" width="25" height="25" fill="#0b1f4b" />
-                  <rect x="10" y="75" width="15" height="15" fill="white" />
-                  <rect x="13" y="78" width="9" height="9" fill="#0b1f4b" />
-                  
-                  {[35, 45, 55, 65].map((x) =>
-                    [35, 45, 55, 65].map((y) => (
-                      <rect key={`${x}-${y}`} x={x} y={y} width="6" height="6" fill="#0b1f4b" />
-                    ))
-                  )}
-                  {[35, 45, 55, 65].map((x) =>
-                    [5, 15, 25, 75, 85, 95].map((y) => (
-                      <rect key={`${x}-${y}-v`} x={x} y={y} width="6" height="6" fill="#0b1f4b" />
-                    ))
-                  )}
-                  {[5, 15, 25, 75, 85, 95].map((x) =>
-                    [35, 45, 55, 65].map((y) => (
-                      <rect key={`${x}-${y}-h`} x={x} y={y} width="6" height="6" fill="#0b1f4b" />
-                    ))
-                  )}
-                  
-                  <circle cx="50" cy="50" r="12" fill="white" />
-                  <circle cx="50" cy="50" r="10" fill="#1d4fd8" />
-                  <text x="50" y="54" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">A</text>
-                </svg>
+                <QRCodeCanvas
+ value={
+   userData?.rib
+   ? JSON.stringify({
+       type: "ASWAQ_TRANSFER",
+       bank: "Aswaq Bank",
+       rib: userData.rib,
+       name: `${userData.nom} ${userData.prenom}`
+     })
+   : ""
+ }
+ size={180}
+ level="H"
+ includeMargin={true}
+/>
               </div>
             </div>
 
@@ -246,51 +296,7 @@ export default function ReceiveMoney() {
 
         {/* 2 cartes du bas */}
         <div className="rm-bottom-cards">
-          {/* Demander un paiement */}
-          <div className="rm-card rm-request-card">
-            <h3 className="rm-card-title">Demander un paiement</h3>
-            <p className="rm-card-desc">Envoyez une demande de paiement à un contact.</p>
-
-            <div className="rm-form-group">
-              <label className="rm-form-label">Destinataire (email ou IBAN)</label>
-              <input
-                type="text"
-                placeholder="ex : exemple@mail.com ou MA64 0112 3456 7890 1234 5678"
-                value={requestForm.recipient}
-                onChange={(e) => setRequestForm({...requestForm, recipient: e.target.value})}
-                className="rm-form-input"
-              />
-            </div>
-
-            <div className="rm-form-group">
-              <label className="rm-form-label">Montant</label>
-              <div className="rm-amount-input-wrapper">
-                <input
-                  type="text"
-                  placeholder="0,00"
-                  value={requestForm.amount}
-                  onChange={(e) => setRequestForm({...requestForm, amount: e.target.value.replace(/[^0-9.,]/g, '')})}
-                  className="rm-form-input rm-amount-input"
-                />
-                <span className="rm-amount-currency">MAD</span>
-              </div>
-            </div>
-
-            <div className="rm-form-group">
-              <label className="rm-form-label">Motif (optionnel)</label>
-              <input
-                type="text"
-                placeholder="Ex : remboursement, facture, etc."
-                value={requestForm.reason}
-                onChange={(e) => setRequestForm({...requestForm, reason: e.target.value})}
-                className="rm-form-input"
-              />
-            </div>
-
-            <button type="button" className="rm-send-request-btn" onClick={handleSendRequest}>
-              <Send size={16} /> Envoyer la demande
-            </button>
-          </div>
+        
 
           {/* Historique des fonds reçus */}
           <div className="rm-card rm-history-card">
@@ -311,23 +317,22 @@ export default function ReceiveMoney() {
                   </tr>
                 </thead>
                 <tbody>
-                  {TRANSACTIONS_RECEIVED.map((tx) => (
-                    <tr key={tx.id}>
+{transactionsReceived.map((tx) => (
+                      <tr key={tx.id}>
                       <td className="rm-history-date">
-                        {tx.date} - {tx.time}
-                      </td>
+   {new Date(tx.transactionDate).toLocaleDateString("fr-FR")}
+</td>
                       <td>
                         <div className="rm-sender-info">
                           <div className="rm-sender-avatar">
-                            {tx.initials}
-                          </div>
+{tx.senderName?.substring(0,2).toUpperCase()}                          </div>
                           <div className="rm-sender-details">
-                            <span className="rm-sender-name">{tx.sender}</span>
+                            <span className="rm-sender-name">{tx.senderName}</span>
                             {tx.type && <span className="rm-sender-type">{tx.type}</span>}
                           </div>
                         </div>
                       </td>
-                      <td className="rm-history-ref">{tx.reference}</td>
+                      <td className="rm-history-ref">{tx.transactionReference}</td>
                       <td className="rm-history-amount">+ {formatAmount(tx.amount)} MAD</td>
                       <td>
                         <span className="rm-status-badge rm-status-received">

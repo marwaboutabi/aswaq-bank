@@ -36,6 +36,7 @@ export default function Login() {
             email: formData.email,
             password: formData.password
         });
+        
 const { token, role } = response.data;
 
 localStorage.setItem("token", token);

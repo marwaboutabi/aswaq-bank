@@ -63,6 +63,7 @@ import CatalogueFournisseur from './pages/CatalogueFournisseur';
 import ProfilFournisseur from './pages/ProfilFournisseur';
 import NotificationsFournisseur from './pages/NotificationsFournisseur';
 import AssistantFournisseur from './pages/AssistantFournisseur';
+import InformationsCommercant from './pages/InformationsCommercant';
 
 function HomePage() {
   const { lang } = useLanguage();
@@ -153,6 +154,7 @@ export default function App() {
           <Route path="/profil-fournisseur" element={<ProfilFournisseur />} />
           <Route path="/notifications-fournisseur" element={<NotificationsFournisseur />} />
           <Route path="/assistant-fournisseur" element={<AssistantFournisseur />} />
+          <Route path="/informations-commercant" element={<InformationsCommercant />} />
 
         </Routes>
       </BrowserRouter>

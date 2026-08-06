@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Package, Boxes, ArrowLeftRight, Users, Star, Bot, LogOut,
@@ -10,17 +10,9 @@ import {
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './PaiementsCom.css';
+import api from "../services/api";
 
-const TRANSACTIONS = [
-  { id: 1, date: '22/07/2025', time: '10:45', type: 'Paiement reçu', typeTone: 'green', partner: 'Client Ahmed', email: 'ahmed@email.com', method: 'QR Code', amount: 250, status: 'Réussi', statusTone: 'green' },
-  { id: 2, date: '22/07/2025', time: '09:32', type: 'Paiement reçu', typeTone: 'green', partner: 'Client Sara', email: 'sara@email.com', method: 'Carte bancaire', amount: 180, status: 'Réussi', statusTone: 'green' },
-  { id: 3, date: '22/07/2025', time: '11:20', type: 'Virement envoyé', typeTone: 'blue', partner: 'Fournisseur Atlas', email: 'atlas.supply@email.com', method: 'Virement bancaire', amount: -1200, status: 'Réussi', statusTone: 'green' },
-  { id: 4, date: '21/07/2025', time: '16:15', type: 'Remboursement', typeTone: 'orange', partner: 'Client Yassine', email: 'yassine@email.com', method: 'Portefeuille', amount: -50, status: 'Réussi', statusTone: 'green' },
-  { id: 5, date: '21/07/2025', time: '14:05', type: 'Paiement reçu', typeTone: 'green', partner: 'Client Mariam', email: 'mariam@email.com', method: 'QR Code', amount: 340, status: 'Réussi', statusTone: 'green' },
-  { id: 6, date: '20/07/2025', time: '12:08', type: 'Virement envoyé', typeTone: 'blue', partner: 'Fournisseur TechPro', email: 'techpro@email.com', method: 'Virement bancaire', amount: -250, status: 'En attente', statusTone: 'orange' },
-  { id: 7, date: '19/07/2025', time: '18:47', type: 'Paiement reçu', typeTone: 'green', partner: 'Client Othmane', email: 'othmane@email.com', method: 'Espèces', amount: 150, status: 'Réussi', statusTone: 'green' },
-  { id: 8, date: '19/07/2025', time: '09:30', type: 'Virement reçu', typeTone: 'purple', partner: 'Société Dar Al Baraka', email: 'compta@daralbaraka.ma', method: 'Virement bancaire', amount: 2000, status: 'Réussi', statusTone: 'green' },
-];
+
 
 const TYPE_OPTIONS = ['Tous les types', 'Paiement reçu', 'Paiement envoyé', 'Virement reçu', 'Virement envoyé', 'Remboursement'];
 const PERIOD_OPTIONS = [
@@ -50,6 +42,7 @@ const NAV_ITEMS = [
 const PAGE_SIZE = 10;
 
 export default function PaiementsCom() {
+    const [transactions, setTransactions] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -72,7 +65,74 @@ export default function PaiementsCom() {
     includeRef: true,
     exportMode: 'filtered', // 'filtered' ou 'selected'
   });
+useEffect(() => {
+  loadTransactions();
+}, []);
 
+
+const loadTransactions = async () => {
+  try {
+    const res = await api.get("/transactions/my");
+
+console.log("TRANSACTIONS API :", res.data);
+    const data = res.data.map(tx => {
+
+      const [datePart, timePart] =
+        (tx.transactionDate || "").split("T");
+
+      const isReceived =
+        tx.receiverAccount?.user?.role === "COMMERÇANT";
+
+      return {
+        id: tx.id,
+
+        date: datePart || "",
+        time: timePart ? timePart.substring(0,5) : "",
+
+        type:
+  tx.incoming
+    ? "Paiement reçu"
+    : "Virement envoyé",
+
+typeTone:
+  tx.incoming
+    ? "green"
+    : "blue",
+
+        partner:
+  tx.otherAccountNumber || "Compte inconnu",
+
+email:
+  "",
+
+        method:
+          "Virement bancaire",
+
+        amount:
+  tx.incoming
+    ? tx.amount
+    : -tx.amount,
+
+        status:
+          tx.status || "Réussi",
+
+        statusTone:
+          tx.status === "SUCCESS"
+          ? "green"
+          : "orange"
+      };
+
+    });
+
+    setTransactions(data);
+
+  } catch(error) {
+    console.error(
+      "Erreur historique :",
+      error
+    );
+  }
+};
   // Transaction Selection State
   const [selectedTransactions, setSelectedTransactions] = useState([]);
 
@@ -94,8 +154,7 @@ export default function PaiementsCom() {
   ];
 
   const filteredTransactions = useMemo(() => {
-    return TRANSACTIONS.filter(t => {
-      const matchSearch = !search || 
+return transactions.filter(t => {      const matchSearch = !search || 
         t.partner.toLowerCase().includes(search.toLowerCase()) ||
         t.email.toLowerCase().includes(search.toLowerCase()) ||
         t.method.toLowerCase().includes(search.toLowerCase());

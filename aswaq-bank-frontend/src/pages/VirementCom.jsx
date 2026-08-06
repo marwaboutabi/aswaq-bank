@@ -69,9 +69,9 @@ export default function VirementCom() {
           return {
             id: tx.id,
             beneficiary:
-              (tx.receiverAccount?.user?.firstName || "") +
+              (tx.receiverAccount?.user?.prenom || "") +
               " " +
-              (tx.receiverAccount?.user?.lastName || ""),
+              ((tx.receiverAccount?.user?.nom || "")),
             beneficiaryType: "Bénéficiaire",
             initials:
               (tx.receiverAccount?.user?.firstName?.charAt(0) || "") +
@@ -95,6 +95,9 @@ export default function VirementCom() {
   const [beneficiaries, setBeneficiaries] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState("");
+  // NOUVEAU : état de chargement des comptes, pour ne plus afficher un select vide/cassé
+  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [accountsError, setAccountsError] = useState('');
 
   const loadBeneficiaries = async () => {
     try {
@@ -106,22 +109,37 @@ export default function VirementCom() {
   };
 
   const loadAccounts = async () => {
-    try {
-      const res = await api.get("/bank-accounts/my");
-      setAccounts(res.data);
+  try {
+    setAccountsLoading(true);
+    setAccountsError('');
 
-      if (res.data.length > 0) {
-        setSelectedAccount(res.data[0].accountNumber);
-      }
-    } catch (err) {
-      console.error(err);
+const res = await api.get("/accounts/me");
+    console.log("Réponse comptes :", res.data);
+
+    const accountsData = Array.isArray(res.data)
+      ? res.data
+      : [res.data];
+
+    setAccounts(accountsData);
+
+    if (accountsData.length > 0) {
+      setSelectedAccount(prev => prev || accountsData[0].accountNumber);
     }
-  };
+
+  } catch (err) {
+    console.error(err);
+    setAccountsError("Impossible de charger vos comptes.");
+    setAccounts([]);
+  } finally {
+    setAccountsLoading(false);
+  }
+};
 
   const [selectedBeneficiary, setSelectedBeneficiary] = useState('');
   const [amount, setAmount] = useState('');
   const [motif, setMotif] = useState('');
-
+const [pin, setPin] = useState("");
+const [pinError, setPinError] = useState("");
   const [newBeneficiary, setNewBeneficiary] = useState({
     name: '',
     type: 'Fournisseur',
@@ -180,8 +198,7 @@ export default function VirementCom() {
         name: newBeneficiary.name,
         type: newBeneficiary.type,
         bank: 'ASWAQ BANK',
-        account: newBeneficiary.account
-      });
+rib: newBeneficiary.account      });
 
       setBeneficiaries([...beneficiaries, res.data]);
       setSelectedBeneficiary(res.data.id.toString());
@@ -209,7 +226,15 @@ export default function VirementCom() {
   };
 
   const handleConfirm = async () => {
-    try {
+
+  if(pin.length !== 4){
+    setPinError("Veuillez saisir un PIN de 4 chiffres.");
+    return;
+  }
+
+  setPinError("");
+
+  try {
       // FIX 2 : conversion virgule -> point avant envoi au backend
       const normalizedAmount = Number(String(amount).replace(',', '.'));
 
@@ -217,7 +242,8 @@ export default function VirementCom() {
         senderAccountNumber: selectedAccount,
         beneficiaryId: Number(selectedBeneficiary),
         amount: normalizedAmount,
-        description: motif
+        description: motif,
+        pin: pin
       });
 
       setTransferReference(response.data.transactionReference);
@@ -247,6 +273,9 @@ export default function VirementCom() {
     return parseFloat(normalized || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  // NOUVEAU : RIB lisible par blocs de 4 chiffres, sans toucher à la valeur réelle
+  const formatRib = (rib) => (rib ? rib.replace(/(.{4})/g, '$1 ').trim() : '');
+
   // ÉTAPE 1 : Formulaire
   const renderStep1 = () => (
     <div className="vir-grid">
@@ -267,32 +296,51 @@ export default function VirementCom() {
           <div className="vir-form-group">
             <label className="vir-label">Compte à débiter *</label>
             <div className="vir-account-select">
-              <div className="vir-account-info">
+              <div className="vir-account-info" style={{ flex: 1, minWidth: 0 }}>
                 <Wallet size={18} className="vir-account-icon" />
-                <div>
-                  <select
-                    className="vir-select"
-                    value={selectedAccount}
-                    onChange={(e) => setSelectedAccount(e.target.value)}
-                  >
-                    {accounts.map(account => (
-                      <option
-                        key={account.id}
-                        value={account.accountNumber}
-                      >
-                        {account.accountNumber}
-                      </option>
-                    ))}
-                  </select>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {accountsLoading ? (
+                    <span className="vir-select">
+                      Chargement des comptes...
+                    </span>
+                  ) : accountsError ? (
+                    <span className="vir-select">
+                      {accountsError}
+                    </span>
+                  ) : accounts.length === 0 ? (
+                    <span className="vir-select">
+                      Aucun compte disponible
+                    </span>
+                  ) : (
+                    <select
+                      className="vir-select"
+                      value={selectedAccount}
+                      onChange={(e) => setSelectedAccount(e.target.value)}
+                    >
+                      {accounts.map(account => (
+                        <option
+                          key={account.id}
+                          value={account.accountNumber}
+                        >
+                          {formatRib(account.accountNumber)}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
               <div className="vir-account-balance">
                 <span className="vir-balance-label">Solde disponible</span>
                 <span className="vir-balance-amount">
-                  {currentAccount ? `${formatAmount(currentAccount.balance)} MAD` : '-'}
+                  {accountsLoading
+                    ? '...'
+                    : currentAccount
+                      ? `${formatAmount(currentAccount.balance)} MAD`
+                      : '-'}
                 </span>
               </div>
-              <ChevronDown size={16} className="vir-select-arrow" />
+              {/* La flèche est déjà intégrée dans .vir-select (background-image en CSS) :
+                  on ne l'affiche donc plus ici pour éviter le doublon visible dans la capture. */}
             </div>
           </div>
 
@@ -863,7 +911,39 @@ export default function VirementCom() {
             <p className="vir-confirm-subtitle">
               Dernière étape avant l'exécution de votre virement
             </p>
+<div className="vir-form-group">
 
+<label className="vir-label">
+  Code PIN de sécurité *
+</label>
+
+<input
+  type="password"
+  maxLength="4"
+  value={pin}
+  onChange={(e)=> {
+    const value = e.target.value.replace(/\D/g,'');
+    setPin(value);
+    setPinError("");
+  }}
+  className="vir-input"
+  placeholder="••••"
+/>
+
+<p className="vir-input-helper">
+  Saisissez votre PIN à 4 chiffres pour confirmer le paiement.
+</p>
+
+{pinError && (
+  <div className="vir-info-box vir-info-box-warning">
+    <AlertCircle size={16}/>
+    <p className="vir-info-text">
+      {pinError}
+    </p>
+  </div>
+)}
+
+</div>
             <div className="vir-confirm-info">
               <div className="vir-confirm-icon">
                 <Shield size={40} />
@@ -887,9 +967,10 @@ export default function VirementCom() {
                 Retour
               </button>
               <button
-                className="vir-btn-primary vir-btn-confirm"
-                onClick={handleConfirm}
-              >
+ className="vir-btn-primary vir-btn-confirm"
+ onClick={handleConfirm}
+ disabled={pin.length !== 4}
+>
                 <Check size={18} />
                 Confirmer et exécuter
               </button>

@@ -7,11 +7,42 @@ import {
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './ProduitsCom.css';
+import api from '../services/api';
 
 const INITIAL_PRODUCTS = [];
 
-const CATEGORIES = ['Toutes', 'Boissons', 'Boulangerie', 'Épicerie', 'Produits laitiers', 'Fruits & Légumes'];
-
+const CATEGORIES = [
+  'Toutes',
+  'Boissons',
+  'Épicerie',
+  'Produits laitiers',
+  'Fruits & Légumes',
+  'Viandes & Volailles',
+  'Poissons & Fruits de mer',
+  'Boulangerie',
+  'Pâtisserie',
+  'Surgelés',
+  'Conserves',
+  'Snacks',
+  'Confiserie',
+  'Hygiène',
+  'Beauté & Cosmétiques',
+  'Entretien de la maison',
+  'Bébé',
+  'Animalerie',
+  'Maison & Cuisine',
+  'Électronique',
+  'Papeterie',
+  'Jouets',
+  'Vêtements',
+  'Chaussures',
+  'Sport & Loisirs',
+  'Bricolage',
+  'Jardinage',
+  'Automobile',
+  'Santé & Parapharmacie',
+  'Autre'
+];
 const CATEGORY_STYLES = {
   Boissons: { bg: '#dbeafe', color: '#1d4fd8' },
   Boulangerie: { bg: '#ede9fe', color: '#7c3aed' },
@@ -54,9 +85,21 @@ export default function ProduitsCom() {
     code: '', 
     category: 'Boissons', 
     price: '', 
-    description: '',
-    image: null
+    description: ''
   });
+  useEffect(() => {
+  loadProducts();
+}, []);
+
+
+const loadProducts = async () => {
+  try {
+    const response = await api.get("/products");
+    setProducts(response.data);
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   const searchRef = useRef(null);
 
@@ -82,9 +125,11 @@ export default function ProduitsCom() {
     });
 
     if (sortBy === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
-    if (sortBy === 'price') list = [...list].sort((a, b) => parseFloat(a.price.replace(',', '.')) - parseFloat(b.price.replace(',', '.')));
-    if (sortBy === 'recent') list = [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
-
+    if (sortBy === 'price') list = [...list].sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+if (sortBy === 'recent')
+    list = [...list].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
     return list;
   }, [products, search, categoryFilter, sortBy]);
 
@@ -100,21 +145,28 @@ export default function ProduitsCom() {
     setSearch(e.target.value);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Voulez-vous vraiment supprimer ce produit ?')) {
-      setProducts(prev => prev.filter(p => p.id !== id));
-    }
-  };
+  const handleDelete = async (id) => {
+  if (!window.confirm("Voulez-vous vraiment supprimer ce produit ?")) {
+    return;
+  }
+
+  try {
+    await api.delete(`/products/${id}`);
+    await loadProducts();
+  } catch (error) {
+    console.error(error);
+    alert("Impossible de supprimer le produit.");
+  }
+};
 
   const openAddModal = () => {
     setEditingProduct(null);
     setFormData({
       name: '',
-      code: '',
       category: 'Boissons',
       price: '',
-      description: '',
-      image: null,
+      description: ''
+      
     });
     setShowModal(true);
   };
@@ -123,50 +175,56 @@ export default function ProduitsCom() {
     setEditingProduct(product);
     setFormData({
       name: product.name,
-      code: product.code,
       category: product.category,
       price: product.price,
       description: product.description || '',
-      image: product.image || null,
     });
     setShowModal(true);
   };
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
+const handleFormSubmit = async (e) => {
+      e.preventDefault();
 
-    if (!formData.name || !formData.code || !formData.price) {
-      alert('Veuillez remplir les champs obligatoires');
-      return;
-    }
+    if (!formData.name || !formData.price) {
+    alert("Veuillez remplir les champs obligatoires");
+    return;
+}
+
+    try {
 
     if (editingProduct) {
-      const updatedProduct = {
-        ...editingProduct,
-        name: formData.name,
-        code: formData.code,
-        category: formData.category,
-        price: formData.price,
-        description: formData.description,
-      };
-      setProducts(prev => prev.map(p => p.id === editingProduct.id ? updatedProduct : p));
+
+        await api.put(`/products/${editingProduct.id}`, {
+            name: formData.name,
+            category: formData.category,
+            price: parseFloat(formData.price),
+            description: formData.description
+        });
+        
+
     } else {
-      const newProduct = {
-        id: Date.now(),
-        name: formData.name,
-        code: formData.code,
-        category: formData.category,
-        price: formData.price,
-        description: formData.description,
-        image: formData.image,
-        date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }),
-      };
-      setProducts(prev => [...prev, newProduct]);
+
+        await api.post("/products", {
+            name: formData.name,
+            category: formData.category,
+            price: parseFloat(formData.price),
+            description: formData.description
+        });
+
     }
+
+    await loadProducts();
+
+    
+
+} catch (error) {
+    console.error(error);
+    alert("Impossible d'enregistrer le produit.");
+}
 
     setShowModal(false);
     setEditingProduct(null);
-    setFormData({ name: '', code: '', category: 'Boissons', price: '', description: '', image: null });
+    setFormData({ name: '', category: 'Boissons', price: '', description: ''});
   };
 
   const handleLogout = (e) => {
@@ -309,7 +367,6 @@ export default function ProduitsCom() {
             <table className="prod-table">
               <thead>
                 <tr>
-                  <th>Image</th>
                   <th>Nom du produit</th>
                   <th>Catégorie</th>
                   <th>Prix de vente</th>
@@ -338,15 +395,7 @@ export default function ProduitsCom() {
                     const catStyle = CATEGORY_STYLES[p.category] || { bg: '#f1f5f9', color: '#475569' };
                     return (
                       <tr key={p.id}>
-                        <td>
-                          <div className="prod-image-placeholder">
-                            {p.image ? (
-                              <img src={p.image} alt={p.name} />
-                            ) : (
-                              <Box size={24} />
-                            )}
-                          </div>
-                        </td>
+                        
                         <td>
                           <p className="prod-name">{p.name}</p>
                           <p className="prod-code">Code : {p.code}</p>
@@ -361,7 +410,7 @@ export default function ProduitsCom() {
                         </td>
                         <td className="prod-price">{p.price} MAD</td>
                         <td className="prod-description">{p.description || '-'}</td>
-                        <td className="prod-date">{p.date}</td>
+                        <td className="prod-date">{new Date(p.createdAt).toLocaleDateString("fr-FR")}</td>
                         <td>
                           <div className="prod-actions">
                             <button
@@ -482,18 +531,6 @@ export default function ProduitsCom() {
                   />
                 </div>
 
-                <div className="prod-form-group">
-                  <label className="prod-form-label">
-                    Code produit *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    className="prod-form-input"
-                    required
-                  />
-                </div>
 
                 <div className="prod-form-group">
                   <label className="prod-form-label">
@@ -577,15 +614,7 @@ export default function ProduitsCom() {
             </div>
 
             <div className="prod-view-content">
-              <div className="prod-view-image">
-                {viewingProduct.image ? (
-                  <img src={viewingProduct.image} alt={viewingProduct.name} />
-                ) : (
-                  <div className="prod-view-placeholder">
-                    <Box size={48} />
-                  </div>
-                )}
-              </div>
+              
               
               <div className="prod-view-info">
                 <h3 className="prod-view-name">{viewingProduct.name}</h3>
@@ -607,8 +636,9 @@ export default function ProduitsCom() {
                 </div>
                 <div className="prod-view-item">
                   <span className="prod-view-label">Date d'ajout</span>
-                  <span className="prod-view-value">{viewingProduct.date}</span>
-                </div>
+<span className="prod-view-value">
+  {new Date(viewingProduct.createdAt).toLocaleDateString("fr-FR")}
+</span>                </div>
               </div>
             </div>
 

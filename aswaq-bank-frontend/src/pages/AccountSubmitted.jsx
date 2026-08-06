@@ -29,7 +29,7 @@ useEffect(() => {
     }, step);
 
     const { confirmationMotDePasse, emailVerifie, ...payload } = getRegistrationData();
-
+console.log(payload);
     api.post('/auth/register', payload)
       .then((response) => {
 

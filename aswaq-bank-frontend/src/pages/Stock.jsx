@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './Stock.css';
+import api from "../services/api";
 
 const INITIAL_PRODUCTS = [
   { id: 1, name: 'Lait 1L', code: 'PRD001', category: 'Boissons', price: '12,00 MAD', stock: 35, status: 'En stock', date: '10 Juil 2026' },
@@ -56,8 +57,7 @@ export default function Stock() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [search, setSearch] = useState('');
+const [products, setProducts] = useState([]);  const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('Toutes');
   const [sortBy, setSortBy] = useState('name');
@@ -128,7 +128,31 @@ export default function Stock() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+useEffect(() => {
+  loadProducts();
+}, []);
 
+const loadProducts = async () => {
+  try {
+    const response = await api.get("/products");
+
+    const data = response.data.map(product => ({
+      id: product.id,
+      name: product.name,
+      code: product.code,
+      category: product.category,
+price: `${parseFloat(product.price).toFixed(2).replace(".", ",")} MAD`,      stock: product.stock,
+      status: getStatusFromStock(product.stock),
+      date: new Date(product.createdAt).toLocaleDateString("fr-FR"),
+    }));
+
+    setProducts(data);
+
+  } catch (error) {
+    console.error(error);
+    alert("Impossible de charger les produits.");
+  }
+};
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
     setShowSuggestions(true);
@@ -139,11 +163,25 @@ export default function Stock() {
     setShowSuggestions(false);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Voulez-vous vraiment supprimer ce produit ?')) {
-      setProducts(prev => prev.filter(p => p.id !== id));
-    }
-  };
+  const handleDelete = async (id) => {
+
+  if (!window.confirm("Voulez-vous vraiment supprimer ce produit ?"))
+    return;
+
+  try {
+
+    await api.delete(`/products/${id}`);
+
+    await loadProducts();
+
+  } catch (error) {
+
+    console.error(error);
+    alert("Erreur lors de la suppression.");
+
+  }
+
+};
 
   const openEditModal = (product) => {
     setEditingProduct(product);
@@ -157,30 +195,37 @@ export default function Stock() {
     setShowModal(true);
   };
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
+  const handleFormSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!formData.name || !formData.code || !formData.price || !formData.stock) {
-      alert('Veuillez remplir tous les champs');
-      return;
-    }
+  try {
 
-    const updatedProduct = {
-      ...editingProduct,
-      name: formData.name,
-      code: formData.code,
-      category: formData.category,
-      price: `${formData.price.replace('.', ',')} MAD`,
+    await api.put(`/products/${editingProduct.id}`, {
+      name: editingProduct.name,
+      category: editingProduct.category,
+      price: parseFloat(formData.price),
       stock: parseInt(formData.stock),
-      status: getStatusFromStock(formData.stock),
-    };
+      description: editingProduct.description || ""
+    });
 
-    setProducts(prev => prev.map(p => p.id === editingProduct.id ? updatedProduct : p));
+    await loadProducts();
 
     setShowModal(false);
     setEditingProduct(null);
-    setFormData({ name: '', code: '', category: 'Boissons', price: '', stock: '' });
-  };
+
+    setFormData({
+      name: "",
+      code: "",
+      category: "Boissons",
+      price: "",
+      stock: ""
+    });
+
+  } catch (error) {
+    console.error(error);
+    alert("Erreur lors de la modification du produit");
+  }
+};
 
   const handleLogout = (e) => {
     e.preventDefault();

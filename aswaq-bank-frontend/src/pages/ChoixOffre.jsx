@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo/Logo';
 import './ChoixOffre.css';
 import { saveRegistrationData } from '../utils/registrationStorage';
+
 const OFFERS = [
   {
     id: 'personnel',
@@ -25,14 +26,29 @@ const OFFERS = [
   },
 ];
 
+// Mapping offre choisie -> rôle backend (sans préfixe ROLE_, ajouté automatiquement par Spring Security)
+const ROLE_MAP = {
+  personnel: 'CLIENT',
+  commercant: 'COMMERCANT',
+  fournisseur: 'FOURNISSEUR',
+};
+
 export default function ChoixOffre() {
-  
+
 const navigate = useNavigate();
 const [selected, setSelected] = useState('personnel');
 
   const handleContinue = () => {
-    saveRegistrationData({ offre: selected });
-    navigate('/verifier-contact');
+    saveRegistrationData({
+      offre: selected,
+      role: ROLE_MAP[selected],
+    });
+
+    if (selected === 'commercant') {
+      navigate('/informations-commercant');
+    } else {
+      navigate('/verifier-contact');
+    }
   };
 
   const features = [
@@ -151,7 +167,7 @@ const [selected, setSelected] = useState('personnel');
               </Link>
             </div>
           </div>
-          
+
         </section>
       </main>
     </div>

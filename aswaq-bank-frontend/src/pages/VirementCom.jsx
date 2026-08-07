@@ -60,6 +60,7 @@ export default function VirementCom() {
   const loadRecentTransfers = async () => {
     try {
       const response = await api.get("/transactions/my");
+      console.log("Transactions :", response.data);
 
       const data = response.data
         .filter(tx => tx.type === "TRANSFER")
@@ -68,18 +69,28 @@ export default function VirementCom() {
           const [datePart, timePart] = (tx.transactionDate || "").split("T");
           return {
             id: tx.id,
-            beneficiary:
-              (tx.receiverAccount?.user?.prenom || "") +
-              " " +
-              ((tx.receiverAccount?.user?.nom || "")),
-            beneficiaryType: "Bénéficiaire",
-            initials:
-              (tx.receiverAccount?.user?.firstName?.charAt(0) || "") +
-              (tx.receiverAccount?.user?.lastName?.charAt(0) || ""),
-            account: tx.receiverAccount?.accountNumber,
+           beneficiary: tx.otherUserName,
+
+initials: tx.otherUserName
+  ? tx.otherUserName
+      .split(" ")
+      .map(n => n.charAt(0))
+      .join("")
+      .substring(0, 2)
+      .toUpperCase()
+  : "",
+
+account: tx.otherAccountNumber,
             bank: "ASWAQ BANK",
-            amount: -Number(tx.amount),
-            status: tx.status,
+            amount: tx.incoming ? Number(tx.amount) : -Number(tx.amount),
+
+status: tx.incoming
+    ? "Paiement reçu"
+    : "Paiement envoyé",
+
+badgeClass: tx.incoming
+    ? "vir-status-success"
+    : "vir-status-danger",
             reference: tx.transactionReference,
             date: datePart || "",
             time: timePart ? timePart.substring(0, 5) : ""
@@ -1090,9 +1101,7 @@ rib: newBeneficiary.account      });
                       </td>
                       <td>
                         <div className="vir-beneficiary-cell">
-                          <div className="vir-beneficiary-avatar" style={{ background: transfer.color, color: transfer.textColor }}>
-                            {transfer.initials}
-                          </div>
+                          
                           <div>
                             <p className="vir-beneficiary-name">{transfer.beneficiary}</p>
                             <p className="vir-beneficiary-type">{transfer.beneficiaryType}</p>
@@ -1103,13 +1112,21 @@ rib: newBeneficiary.account      });
                         <p className="vir-account-cell">{transfer.account}</p>
                         <p className="vir-bank-cell">{transfer.bank}</p>
                       </td>
-                      <td className="vir-amount-negative">{transfer.amount.toLocaleString('fr-FR')} MAD</td>
-                      <td>
-                        <span className="vir-status-badge vir-status-success">
-                          <CheckCircle2 size={12} />
-                          {transfer.status}
-                        </span>
-                      </td>
+<td
+  className={
+    transfer.amount >= 0
+      ? "vir-amount-positive"
+      : "vir-amount-negative"
+  }
+>
+  {transfer.amount > 0 ? "+" : ""}
+  {transfer.amount.toLocaleString("fr-FR")} MAD
+</td>                      <td>
+  <span className={`vir-status-badge ${transfer.badgeClass}`}>
+    <CheckCircle2 size={12} />
+    {transfer.status}
+  </span>
+</td>
                       <td className="vir-reference">{transfer.reference}</td>
                       <td>
                         <button className="vir-table-action">

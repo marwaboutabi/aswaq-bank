@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate  } from 'react-router-dom';
 import {
   Home, ArrowLeftRight, ShoppingBag, Receipt, Star, PiggyBank, PieChart,
@@ -9,6 +9,7 @@ import {
 import Logo from '../components/Logo/Logo';
 import './Fidelite.css';
 import './DashboardClient.css';
+import loyaltyService from "../services/loyaltyService";
 
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/dashboard-client' },
@@ -30,12 +31,7 @@ const LEVELS = [
   { name: 'Platine', threshold: 3000 },
 ];
 
-const ACTIVITIES = [
-  { id: 1, icon: ShoppingCart, name: 'Achat chez Aswaq Market', date: '20 juillet 2026 · 14:35', points: 45, type: 'earned' },
-  { id: 2, icon: QrCode, name: 'Paiement QR Code', date: '19 juillet 2026 · 11:20', points: 20, type: 'earned' },
-  { id: 3, icon: RotateCcw, name: 'Utilisation de points', date: '18 juillet 2026 · 16:10', points: 100, type: 'spent' },
-  { id: 4, icon: Coffee, name: 'Achat chez Café Central', date: '15 juillet 2026 · 09:45', points: 35, type: 'earned' },
-];
+
 
 const REWARDS = [
   { id: 1, icon: Gift, title: '50 MAD de réduction', cost: 500, tone: 'green' },
@@ -52,8 +48,80 @@ const PARTNERS = [
 export default function Fidelite() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [points] = useState(1250);
-  const [activeTab, setActiveTab] = useState(null);
+const [points, setPoints] = useState(0);
+const [level, setLevel] = useState("Bronze");  const [activeTab, setActiveTab] = useState(null);
+const [activities,setActivities] = useState([]);
+
+
+useEffect(() => {
+
+const loadHistory = async()=>{
+
+try{
+
+const data = await loyaltyService.getHistory();
+
+
+const formatted = data.map(item => ({
+    id:item.id,
+    name:item.description,
+    date:new Date(item.createdAt)
+        .toLocaleDateString("fr-FR"),
+    points:Math.abs(item.points),
+    type:item.type === "EARNED"
+        ? "earned"
+        : "spent"
+}));
+
+
+setActivities(formatted);
+
+
+}catch(error){
+
+console.error(
+"Erreur historique fidélité",
+error
+);
+
+}
+
+};
+
+
+loadHistory();
+
+
+},[]);
+useEffect(() => {
+
+    const loadLoyalty = async () => {
+
+        try {
+
+            const data = await loyaltyService.getMyPoints();
+
+
+            setPoints(data.points);
+            setLevel(data.level);
+
+
+        } catch(error){
+
+            console.error(
+                "Erreur chargement fidélité",
+                error
+            );
+
+        }
+
+    };
+
+
+    loadLoyalty();
+
+
+}, []);
 
   const currentLevelIndex = [...LEVELS].reverse().findIndex((l) => points >= l.threshold);
   const currentLevel = LEVELS[LEVELS.length - 1 - currentLevelIndex];
@@ -257,7 +325,7 @@ export default function Fidelite() {
               <h2 className="fid-panel-title">Dernières activités</h2>
             </div>
             <div className="fid-activity-list">
-              {ACTIVITIES.map((a) => {
+              {activities.map((a) => {
                 const Icon = a.icon;
                 return (
                   <div key={a.id} className="fid-activity-row">

@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './RecevoirPaiementCom.css';
+import api from "../services/api";
+import { QRCodeSVG } from "qrcode.react";
 
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/acceuil-com' },
@@ -121,10 +123,30 @@ export default function RecevoirPaiementCom() {
   
   // Données de la transaction (simulées)
   const [transactionData, setTransactionData] = useState(null);
-  
+  const [payments, setPayments] = useState([]);
   const timerRef = useRef(null);
   const simulationRef = useRef(null);
 
+  useEffect(() => {
+
+    api.get("/transactions/my")
+        .then(response => {
+
+            const received = response.data.filter(
+                tx => tx.incoming === true
+            );
+
+            setPayments(received);
+
+        })
+        .catch(error => {
+            console.error(
+                "Erreur récupération paiements reçus",
+                error
+            );
+        });
+
+}, []);
   // Formatage du montant
   const formatAmount = (val) => {
     if (!val) return '0,00';
@@ -155,27 +177,82 @@ export default function RecevoirPaiementCom() {
   };
 
   // Gestion de la génération du QR Code
-  const handleGenerateQR = () => {
+ const handleGenerateQR = async () => {
+
     if (!isValidAmount()) return;
-    
-    setPaymentState('generating');
-    
-    // Simulation de la création de la demande (appel API)
-    setTimeout(() => {
-      const ref = generateReference();
-      setReference(ref);
-      setTransactionData({
-        reference: ref,
-        amount: formatAmount(amount),
-        description: description || 'Achat en magasin',
-        merchant: 'Marwa Boutabi',
-        createdAt: new Date(),
-        expiresAt: new Date(Date.now() + QR_VALIDITY_SECONDS * 1000)
-      });
-      setPaymentState('waiting');
-      setTimeLeft(QR_VALIDITY_SECONDS);
-    }, 1500);
-  };
+
+
+    try {
+
+        setPaymentState('generating');
+
+
+        const response = await api.post(
+            "/payment-requests/create",
+            null,
+            {
+                params: {
+                    amount: amount.replace(',', '.'),
+                    description: description || "Achat en magasin"
+                }
+            }
+        );
+
+
+        const paymentRequest = response.data;
+console.log("Réponse backend :", paymentRequest);
+
+        setReference(paymentRequest.reference);
+
+
+        setTransactionData({
+
+            reference: paymentRequest.reference,
+
+            amount: formatAmount(paymentRequest.amount),
+
+            description: paymentRequest.description 
+                || "Achat en magasin",
+
+            merchant: "Marwa Boutabi",
+
+            createdAt: new Date(),
+
+            expiresAt: new Date(
+                Date.now() + QR_VALIDITY_SECONDS * 1000
+            )
+
+        });
+
+
+        setPaymentState('waiting');
+
+        setTimeLeft(QR_VALIDITY_SECONDS);
+
+
+
+    } catch(error) {
+
+
+        console.error(
+            "Erreur création paiement",
+            error
+        );
+
+
+        alert(
+            "Erreur lors de la création du paiement"
+        );
+
+
+        setPaymentState('create');
+
+    }
+
+};
+
+
+        
 
   // Compte à rebours
   useEffect(() => {
@@ -194,28 +271,57 @@ export default function RecevoirPaiementCom() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [paymentState]);
+  }, [paymentState]);//
 
-  // Simulation de réception du paiement
   useEffect(() => {
-    if (paymentState === 'waiting') {
-      // Simulation : paiement reçu après 8-12 secondes
-      const delay = Math.floor(Math.random() * 4000) + 8000;
-      simulationRef.current = setTimeout(() => {
-        setTransactionData((prev) => prev ? {
-          ...prev,
-          paidBy: 'Ahmed Benali',
-          paidAt: new Date()
-        } : prev);
-        setPaymentState('success');
-        if (timerRef.current) clearInterval(timerRef.current);
-      }, delay);
-    }
-    return () => {
-      if (simulationRef.current) clearTimeout(simulationRef.current);
-    };
-  }, [paymentState]);
 
+    if (paymentState !== "waiting" || !reference) return;
+
+    const interval = setInterval(async () => {
+
+        try {
+
+            const response = await api.get(
+                `/payment-requests/${reference}`
+            );
+
+            const payment = response.data;
+
+            if (payment.status === "COMPLETED") {
+
+                setTransactionData(prev => ({
+                    ...prev,
+                    paidAt: new Date()
+                }));
+
+                setPaymentState("success");
+
+                clearInterval(interval);
+
+            }
+
+            if (payment.status === "REJECTED") {
+
+    clearInterval(interval);
+
+    setPaymentState("expired");
+
+}
+
+        } catch (err) {
+
+            console.error(
+                "Erreur vérification paiement",
+                err
+            );
+
+        }
+
+    }, 2000);
+
+    return () => clearInterval(interval);
+
+}, [paymentState, reference]);
   // Copier la référence
   const copyReference = () => {
     navigator.clipboard.writeText(reference);
@@ -535,9 +641,16 @@ export default function RecevoirPaiementCom() {
                     <p className="rp-qr-subtitle">Demandez à votre client de scanner ce QR Code</p>
                   </div>
 
-                  <div className="rp-qr-content">
-                    <RealisticQRCode size={220} />
-                  </div>
+                 <div className="rp-qr-content">
+    <QRCodeSVG
+        value={`http://localhost:3000/pay/${reference}`}
+        size={220}
+        bgColor="#FFFFFF"
+        fgColor="#0b1f4b"
+        level="H"
+        includeMargin={true}
+    />
+</div>
 
                   <div className="rp-qr-info">
                     <div className="rp-qr-info-row">
@@ -700,38 +813,90 @@ export default function RecevoirPaiementCom() {
                   <th></th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <p className="rp-table-date">27/07/2026 - 13:28</p>
-                  </td>
-                  <td>
-                    <div className="rp-client-info">
-                      <div className="rp-client-avatar">AB</div>
-                      <span>Ahmed Benali</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="rp-method-cell">
-                      <QrCode size={14} />
-                      <span>QR Code</span>
-                    </div>
-                  </td>
-                  <td className="rp-amount-positive">+250,00 MAD</td>
-                  <td>
-                    <span className="rp-status-badge rp-status-success">
-                      <CheckCircle2 size={12} />
-                      Réussi
-                    </span>
-                  </td>
-                  <td className="rp-reference">#PAY-25452</td>
-                  <td>
-                    <button className="rp-table-action">
-                      <ChevronDown size={16} />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
+            <tbody>
+
+{payments.map((payment) => (
+
+<tr key={payment.id}>
+
+<td>
+<p className="rp-table-date">
+{new Date(payment.createdAt).toLocaleString('fr-FR')}
+</p>
+</td>
+
+
+<td>
+<div className="rp-client-info">
+
+<div className="rp-client-avatar">
+CL
+</div>
+
+<span>
+{payment.senderName || "Client"}
+</span>
+
+</div>
+</td>
+
+
+<td>
+
+<div className="rp-method-cell">
+
+<QrCode size={14}/>
+
+<span>
+{payment.type === "QR_PAYMENT"
+? "QR Code"
+: "Virement"}
+</span>
+
+</div>
+
+</td>
+
+
+<td className="rp-amount-positive">
+
++
+{payment.amount} MAD
+
+</td>
+
+
+<td>
+
+<span className="rp-status-badge rp-status-success">
+
+<CheckCircle2 size={12}/>
+
+Réussi
+
+</span>
+
+</td>
+
+
+<td className="rp-reference">
+
+#{payment.transactionReference}
+
+</td>
+
+
+<td>
+<ChevronDown size={16}/>
+</td>
+
+
+</tr>
+
+))}
+
+
+</tbody>
             </table>
           </div>
         </div>

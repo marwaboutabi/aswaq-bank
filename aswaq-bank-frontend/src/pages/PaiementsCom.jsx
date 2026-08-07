@@ -68,6 +68,9 @@ export default function PaiementsCom() {
 useEffect(() => {
   loadTransactions();
 }, []);
+useEffect(() => {
+    console.log("STATE transactions :", transactions);
+}, [transactions]);
 
 
 const loadTransactions = async () => {
@@ -80,8 +83,7 @@ console.log("TRANSACTIONS API :", res.data);
       const [datePart, timePart] =
         (tx.transactionDate || "").split("T");
 
-      const isReceived =
-        tx.receiverAccount?.user?.role === "COMMERÇANT";
+      
 
       return {
         id: tx.id,
@@ -89,42 +91,49 @@ console.log("TRANSACTIONS API :", res.data);
         date: datePart || "",
         time: timePart ? timePart.substring(0,5) : "",
 
-        type:
-  tx.incoming
-    ? "Paiement reçu"
-    : "Virement envoyé",
+        type: tx.incoming
+  ? "Paiement reçu"
+  : "Paiement envoyé",
 
-typeTone:
-  tx.incoming
-    ? "green"
-    : "blue",
+typeTone: tx.incoming ? "green" : "red",
 
-        partner:
-  tx.otherAccountNumber || "Compte inconnu",
+       partner:
+    tx.otherUserName || tx.otherAccountNumber || "Compte inconnu",
 
 email:
   "",
 
         method:
-          "Virement bancaire",
+    tx.type === "QR_PAYMENT"
+      ? "QR Code"
+      : "Virement bancaire",
 
         amount:
   tx.incoming
     ? tx.amount
     : -tx.amount,
 
-        status:
-          tx.status || "Réussi",
+       status:
+  tx.status === "SUCCESS"
+    ? "Réussi"
+    : tx.status === "PENDING"
+    ? "En attente"
+    : "Échec",
 
         statusTone:
-          tx.status === "SUCCESS"
-          ? "green"
-          : "orange"
+    tx.status === "SUCCESS"
+      ? "green"
+      : tx.status === "PENDING"
+      ? "orange"
+      : "red",
+
+  reference: tx.transactionReference || "-"
       };
 
     });
 
     setTransactions(data);
+    console.log("DATA MAPPÉE :", data);
 
   } catch(error) {
     console.error(
@@ -149,7 +158,6 @@ email:
   const quickActions = [
     { icon: QrCode, label: 'Recevoir un paiement', sub: 'QR Code', bg: '#1d4fd8', to: '/recevoir-paiement' },
     { icon: Send, label: 'Effectuer un virement', sub: 'Vers un compte', bg: '#1d4fd8', to: '/virement' },
-    { icon: Link2, label: 'Demander un paiement', sub: 'Envoyer un lien', bg: '#1d4fd8', to: '/demander-paiement' },
     { icon: Download, label: 'Exporter les transactions', sub: 'PDF / Excel', bg: '#1d4fd8', action: () => setShowExportModal(true) },
   ];
 
@@ -161,8 +169,7 @@ return transactions.filter(t => {      const matchSearch = !search ||
       const matchType = typeFilter === 'Tous les types' || t.type === typeFilter;
       return matchSearch && matchType;
     });
-  }, [search, typeFilter]);
-
+}, [transactions, search, typeFilter]);
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / PAGE_SIZE));
   const paginatedTransactions = filteredTransactions.slice(
     (currentPage - 1) * PAGE_SIZE,

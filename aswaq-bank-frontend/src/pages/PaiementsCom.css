@@ -19,6 +19,10 @@
   top: 0;
   overflow-y: auto;
 }
+.pay-type-red {
+  background: #fee2e2;
+  color: #dc2626;
+}
 .logo-white {
   filter: brightness(0) invert(1);
 }

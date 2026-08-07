@@ -48,8 +48,9 @@ const scannerRef = useRef(null);
 const [beneficiary, setBeneficiary] = useState(null);
   const availableBalance = 12450.00;
   const fees = 0;
-  const total = parseFloat(amount || 0) + fees;
-
+const total = Number(
+    amount.replace(",", ".") || 0
+) + fees;
   useEffect(() => {
     if (scanning) {
       const timer = setTimeout(() => {
@@ -80,8 +81,7 @@ useEffect(() => {
         }
     };
 }, []);
-const startScanner = () => {
-
+const startScanner = async () => {
     if(scannerRef.current){
         return;
     }
@@ -97,24 +97,73 @@ const startScanner = () => {
 
     scannerRef.current.render(
 
-        (decodedText) => {
-
+async (decodedText) => {
     try {
-        const data = JSON.parse(decodedText);
 
-        setBeneficiary(data);
+    // Le QR contient une URL du type :
+    // http://localhost:3000/pay/PAY-XXXXX
 
-       if (scannerRef.current) {
-    scannerRef.current.clear();
-    scannerRef.current = null;
+    const value = decodedText.split("/").pop();
+
+try {
+
+    // Nouveau QR commerçant
+    if (value.startsWith("PAY-")) {
+
+        const response = await api.get(`/payment-requests/${value}`);
+
+        const payment = response.data;
+
+        setBeneficiary({
+    type: "merchant",
+    reference: payment.reference,
+    name: payment.merchantName,
+    rib: payment.merchantRib,
+    bank: payment.bank,
+    amount: payment.amount,
+    description: payment.description,
+    status: payment.status,
+    expiresAt: payment.expiresAt,
+    verified: true,
+    isMerchantPayment: true
+});
+setAmount(payment.amount.toString());
+
+    } else {
+
+        // Ancien QR (QR RIB)
+        const response = await api.get(
+            `/receive-money/info?rib=${value}`
+        );
+
+        setBeneficiary({
+            type: "classic",
+            ...response.data
+        });
+
+    }
+
+    if (scannerRef.current) {
+        await scannerRef.current.clear();
+        scannerRef.current = null;
+    }
+
+    setShowCamera(false);
+    setCurrentStep(2);
+
+} catch (error) {
+
+    console.error(error);
+    alert("QR Code invalide ou demande introuvable");
 }
 
-        setShowCamera(false);
-        setCurrentStep(2);
+} catch (error) {
 
-    } catch (error) {
-        alert("QR Code invalide");
-    }
+    console.error(error);
+
+    alert("QR Code invalide ou demande introuvable");
+
+}
 
 },
 
@@ -146,13 +195,40 @@ const handleCloseCamera = async () => {
       setCurrentStep(currentStep + 1);
     }
   };
-
+const getNumericAmount = () => {
+    return Number(
+        amount.replace(",", ".")
+    );
+};
   const handleConfirmPayment = async () => {
+
+    if (!beneficiary) {
+        alert("Bénéficiaire introuvable");
+        return;
+    }
+    if (
+    beneficiary.expiresAt &&
+    new Date(beneficiary.expiresAt) < new Date()
+) {
+    alert("QR Code expiré. Veuillez demander un nouveau QR Code.");
+    return;
+}
+
+    if (!beneficiary.rib) {
+        alert("Compte bénéficiaire invalide");
+        return;
+    }
+
+    if (!amount || Number(amount) <= 0) {
+        alert("Montant invalide");
+        return;
+    }
+
     try {
 
         await api.post("/transactions/qr-payment", {
             receiverRib: beneficiary.rib,
-            amount: Number(amount),
+amount: getNumericAmount(),
             description: reason || "Paiement QR"
         });
 
@@ -178,8 +254,14 @@ const handleCloseCamera = async () => {
     return parseFloat(val).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const isStep3Valid = amount !== '' && parseFloat(amount) > 0 && parseFloat(amount) <= availableBalance;
+const numericAmount = Number(
+    amount.replace(",", ".")
+);
 
+const isStep3Valid =
+    amount !== '' &&
+    numericAmount > 0 &&
+    numericAmount <= availableBalance;
   return (
     <div className="dash-layout">
       <aside className="dash-sidebar">

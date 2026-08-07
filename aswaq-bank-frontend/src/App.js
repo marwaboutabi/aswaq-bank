@@ -52,7 +52,6 @@ import ReceiveMoney from './pages/ReceiveMoney';
 import PayQRCode from './pages/PayQRCode';
 import RecevoirPaiementCom from './pages/RecevoirPaiementCom';
 import VirementCom from './pages/VirementCom';
-import DemanderPaiement from './pages/DemanderPaiement';
 //fournisseur
 import AccueilFournisseur from './pages/AccueilFournisseur';
 import ProduitsFournisseur from './pages/ProduitsFournisseur';
@@ -144,7 +143,6 @@ export default function App() {
           <Route path="/payer-qr" element={<PayQRCode />} />
           <Route path="/recevoir-paiement" element={<RecevoirPaiementCom />} />
           <Route path="/virement" element={<VirementCom />} />
-          <Route path="/demander-paiement" element={<DemanderPaiement />} />
           <Route path="/accueil-fournisseur" element={<AccueilFournisseur />} />
           <Route path="/produits-fournisseur" element={<ProduitsFournisseur />} />
           <Route path="/commandes-fournisseur" element={<CommandesRecuesFournisseur />} />

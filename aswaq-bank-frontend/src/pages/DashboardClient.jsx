@@ -91,7 +91,7 @@ export default function Dashboard() {
       {/* Sidebar */}
       <aside className="dash-sidebar">
         <div className="dash-sidebar-logo">
-          <Logo size={100} className="mb-6" className="mb-6 logo-white"/>
+          <Logo size={100}  className="mb-6 logo-white"/>
         </div>
 
         <nav className="dash-nav">

@@ -20,6 +20,10 @@ const loyaltyService = {
         const response = await api.get("/loyalty/rewards");
         return response.data;
     },
+    convertPoints: async () => {
+    const response = await api.post("/loyalty/convert");
+    return response.data;
+},
 
 
     redeem: async (rewardId) => {

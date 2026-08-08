@@ -10,6 +10,7 @@ import Logo from '../components/Logo/Logo';
 import './Fidelite.css';
 import './DashboardClient.css';
 import loyaltyService from "../services/loyaltyService";
+import { QRCodeSVG } from "qrcode.react";
 
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/dashboard-client' },
@@ -49,9 +50,12 @@ export default function Fidelite() {
   const location = useLocation();
   const navigate = useNavigate();
 const [points, setPoints] = useState(0);
-const [level, setLevel] = useState("Bronze");  const [activeTab, setActiveTab] = useState(null);
-const [activities,setActivities] = useState([]);
-
+const [level, setLevel] = useState("Bronze");
+const [activeTab, setActiveTab] = useState(null);
+const [activities, setActivities] = useState([]);
+const [converting, setConverting] = useState(false);
+const [conversionMessage, setConversionMessage] = useState("");
+const [myRewards, setMyRewards] = useState([]);
 
 useEffect(() => {
 
@@ -122,6 +126,30 @@ useEffect(() => {
 
 
 }, []);
+useEffect(() => {
+
+    const loadRewards = async () => {
+
+        try {
+
+            const data = await loyaltyService.getRewards();
+
+            setMyRewards(data);
+
+        } catch (error) {
+
+            console.error(
+                "Erreur chargement récompenses",
+                error
+            );
+
+        }
+
+    };
+
+    loadRewards();
+
+}, []);
 
   const currentLevelIndex = [...LEVELS].reverse().findIndex((l) => points >= l.threshold);
   const currentLevel = LEVELS[LEVELS.length - 1 - currentLevelIndex];
@@ -139,7 +167,64 @@ useEffect(() => {
     { key: 'historique', icon: Clock, title: 'Historique', desc: 'Voir mes mouvements' },
     { key: 'partenaires', icon: Store, title: 'Partenaires', desc: 'Où gagner des points' },
   ];
+const handleConvertPoints = async () => {
 
+    if (points < 500) {
+        setConversionMessage(
+            "Vous devez avoir au moins 500 points pour obtenir cette récompense."
+        );
+        return;
+    }
+
+    try {
+
+        setConverting(true);
+        setConversionMessage("");
+
+        const reward = await loyaltyService.convertPoints();
+        setMyRewards((prev) => [reward, ...prev]);
+
+        // Mettre immédiatement à jour les points
+        setPoints((prev) => prev - 500);
+
+        // Recharger l'historique
+        const history = await loyaltyService.getHistory();
+
+        const formatted = history.map(item => ({
+            id: item.id,
+            name: item.description,
+            date: new Date(item.createdAt)
+                .toLocaleDateString("fr-FR"),
+            points: Math.abs(item.points),
+            type: item.type === "EARNED"
+                ? "earned"
+                : "spent"
+        }));
+
+        setActivities(formatted);
+
+        setConversionMessage(
+            `Félicitations ! Votre bon de ${reward.rewardAmount} MAD a été créé.`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Erreur conversion points",
+            error
+        );
+
+        setConversionMessage(
+            error.response?.data?.message ||
+            "Impossible de convertir vos points."
+        );
+
+    } finally {
+
+        setConverting(false);
+
+    }
+};
   return (
     <div className="dash-layout">
       {/* Sidebar */}
@@ -317,7 +402,93 @@ useEffect(() => {
             </div>
           </div>
         )}
+{/* ===== Mes bons d'achat ===== */}
+{myRewards.length > 0 && (
+  <div className="fid-panel" style={{ marginBottom: '20px' }}>
 
+    <div className="fid-panel-header">
+      <h2 className="fid-panel-title">Mes bons d'achat</h2>
+    </div>
+
+    <div className="fid-popular-list">
+
+      {myRewards.map((reward) => (
+
+        <div
+          key={reward.id}
+          className="fid-popular-row"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '20px'
+          }}
+        >
+
+          {/* Icône */}
+          <div className="fid-popular-icon fid-tone-green">
+            <Gift size={18} />
+          </div>
+
+          {/* Informations du bon */}
+          <div
+            className="fid-popular-info"
+            style={{ flex: 1 }}
+          >
+
+            <p className="fid-popular-name">
+              Bon d'achat de {reward.rewardAmount} MAD
+            </p>
+
+            <p className="fid-popular-desc">
+              Code : <strong>{reward.code}</strong>
+            </p>
+
+            <p className="fid-popular-desc">
+              {reward.status === "AVAILABLE"
+                ? "Disponible"
+                : reward.status === "USED"
+                ? "Utilisé"
+                : "Expiré"}
+            </p>
+
+          </div>
+
+          {/* Points utilisés */}
+          <span className="fid-partner-points">
+            {reward.pointsUsed} pts
+          </span>
+
+          {/* QR CODE */}
+          {reward.status === "AVAILABLE" && reward.code && (
+            <div
+              style={{
+                background: '#ffffff',
+                padding: '10px',
+                borderRadius: '12px',
+                border: '1px solid #e5e7eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '110px',
+                minHeight: '110px'
+              }}
+            >
+              <QRCodeSVG
+                value={String(reward.code)}
+                size={90}
+                level="M"
+              />
+            </div>
+          )}
+
+        </div>
+
+      ))}
+
+    </div>
+
+  </div>
+)}
         {/* ===== Deux colonnes : Activités + Récompenses populaires ===== */}
         <div className="fid-bottom-grid">
           <div className="fid-panel">
@@ -354,7 +525,14 @@ useEffect(() => {
               </button>
             </div>
             <div className="fid-popular-list">
-              {REWARDS.map((r) => {
+
+    {conversionMessage && (
+        <div className="fid-info-panel">
+            {conversionMessage}
+        </div>
+    )}
+
+    {REWARDS.map((r) => {
                 const Icon = r.icon;
                 const canRedeem = points >= r.cost;
                 const missing = r.cost - points;
@@ -366,8 +544,14 @@ useEffect(() => {
                       <p className="fid-popular-desc">Coût : {r.cost.toLocaleString('fr-FR')} pts</p>
                     </div>
                     {canRedeem ? (
-                      <button type="button" className="fid-redeem-btn">Échanger</button>
-                    ) : (
+<button
+        type="button"
+        className="fid-redeem-btn"
+        onClick={handleConvertPoints}
+        disabled={converting}
+    >
+        {converting ? "Conversion..." : "Échanger"}
+    </button>                    ) : (
                       <span className="fid-missing-points">
                         Il vous manque {missing.toLocaleString('fr-FR')} pts
                       </span>

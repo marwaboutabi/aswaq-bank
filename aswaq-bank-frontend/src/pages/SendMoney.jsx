@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Search, Bell, ChevronDown, Send,
+  ArrowLeft, Search, Bell, Send,
   User, Shield, Wallet, FileText, Lock, Check, CheckCircle2,
   UserPlus, Filter, ChevronRight, X, AlertCircle, Edit2,
   MoreVertical, Trash2, AlertTriangle, Loader2,
@@ -11,6 +11,8 @@ import {
 import Logo from '../components/Logo/Logo';
 import './SendMoney.css';
 import api from "../services/api";
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 
 // ===== MENU ESPACE CLIENT =====
 const NAV_ITEMS = [
@@ -346,12 +348,7 @@ const isValidRIB = (rib) => /^\d{24}$/.test(rib);
           </button>
           <div className="sm-topbar-actions">
             <div className="dash-search"><Search size={16} /><input type="text" placeholder="Rechercher..." /></div>
-            <button type="button" className="dash-icon-button"><Bell size={18} /><span className="dash-badge">3</span></button>
-            <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
-              <span>Marwa Boutabi</span>
-              <ChevronDown size={16} />
-            </div>
+<NotificationBell />            <UserHeader />
           </div>
         </header>
 

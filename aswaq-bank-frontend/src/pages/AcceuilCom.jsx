@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './AcceuilCom.css';
-
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 const STATS = [
   {
     key: 'solde',
@@ -298,22 +299,9 @@ export default function AcceuilCom() {
               <Search size={16} />
               <input type="text" placeholder="Rechercher..." />
             </div>
-            <button
-  type="button"
-  className="acc-icon-button"
-  onClick={() => navigate('/notifications-com')}
->
-              <Bell size={18} />
-              <span className="acc-badge">3</span>
-            </button>
-  <div className="acc-user-chip">
-  <div className="acc-user-avatar">MB</div>
-  <div className="acc-user-info">
-    <span className="acc-user-name">Marwa Boutabi</span>
-    <span className="acc-user-role">Commerçant</span>
-  </div>
-  <ChevronDown size={16} />
-</div>
+            <NotificationBell />
+    <UserHeader />
+
           </div>
         </header>
 

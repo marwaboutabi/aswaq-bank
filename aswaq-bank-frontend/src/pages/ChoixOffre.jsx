@@ -39,17 +39,19 @@ const navigate = useNavigate();
 const [selected, setSelected] = useState('personnel');
 
   const handleContinue = () => {
-    saveRegistrationData({
-      offre: selected,
-      role: ROLE_MAP[selected],
-    });
+  saveRegistrationData({
+    offre: selected,
+    role: ROLE_MAP[selected],
+  });
 
-    if (selected === 'commercant') {
-      navigate('/informations-commercant');
-    } else {
-      navigate('/verifier-contact');
-    }
-  };
+  if (selected === 'commercant') {
+    navigate('/informations-commercant');
+  } else if (selected === 'fournisseur') {
+    navigate('/informations-fournisseur');
+  } else {
+    navigate('/verifier-contact');
+  }
+};
 
   const features = [
     { icon: ShieldCheck, title: 'Sécurisé', text: 'Vos données sont protégées avec les plus hauts standards.' },

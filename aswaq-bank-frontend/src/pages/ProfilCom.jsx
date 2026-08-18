@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, ArrowLeftRight,  Star, Bell, Bot, User, LogOut, Search, ChevronDown, ChevronRight,
@@ -10,6 +10,7 @@ import {
 import Logo from '../components/Logo/Logo';
 import './ProfilCom.css';
 import './DashboardClient.css';
+import api from '../services/api';
 
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/acceuil-com' },
@@ -70,16 +71,101 @@ export default function Profil() {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const [notifPrefs, setNotifPrefs] = useState(
-    NOTIFICATION_PREFS.reduce((acc, p) => ({ ...acc, [p.id]: p.default }), {})
-  );
-  const [preferences, setPreferences] = useState({
-    language: 'Français',
-    currency: 'MAD',
-    theme: 'Clair',
-  });
-  const [activeModal, setActiveModal] = useState(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // Nouveaux states à ajouter
+const [profileForm, setProfileForm] = useState({
+  nom: '', prenom: '', telephone: '', email: '',
+  companyName: '', activitySector: '', address: '', city: '',
+});
+const [emailStep, setEmailStep] = useState('idle'); // 'idle' | 'otp'
+const [otpCode, setOtpCode] = useState('');
+const [otpError, setOtpError] = useState('');
+const [savingProfile, setSavingProfile] = useState(false);
+const [currentUser, setCurrentUser] = useState(null);
+
+const [activeModal, setActiveModal] = useState(null);
+
+const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+const [notifPrefs, setNotifPrefs] = useState({
+  payments: true,
+  security: true,
+  loyalty: true,
+  stock: true,
+  supplier: true,
+  ai: false,
+});
+
+const [preferences, setPreferences] = useState({
+  language: 'Français',
+  currency: 'MAD',
+  theme: 'Clair',
+});
+useEffect(() => { const loadCurrentUser = async () => { try { const response = await api.get('/users/me'); 
+  const user = response.data; console.log('Utilisateur connecté :', user); 
+  setCurrentUser(user); setProfileForm({
+     nom: user.nom || '', prenom: user.prenom || '',
+      telephone: user.telephone || '', email: user.email || '',
+       companyName: user.merchant?.companyName || '', 
+       activitySector: user.merchant?.activitySector || '',
+        address: user.merchant?.address || user.adresse || '',
+         city: user.merchant?.city || user.ville || '', });
+         } catch (error) { 
+          console.error( 'Erreur lors du chargement du profil :', error );
+         } }; 
+         loadCurrentUser(); 
+        }, []);
+// Au clic "Modifier les informations du commerce", pré-remplir profileForm
+// avec les vraies données récupérées via GET /api/users/me (à charger au montage).
+
+const handleSaveProfile = async () => {
+  setSavingProfile(true);
+  try {
+    // 1) On met à jour tout SAUF l'email
+    await api.put('/users/me', {
+      nom: profileForm.nom,
+      prenom: profileForm.prenom,
+      telephone: profileForm.telephone,
+      companyName: profileForm.companyName,
+      activitySector: profileForm.activitySector,
+      address: profileForm.address,
+      city: profileForm.city,
+    });
+
+    // 2) Si l'email a changé, on déclenche la vérification OTP
+    if (profileForm.email && profileForm.email !== currentUser.email) {
+      await api.post('/users/me/email/request-change', { newEmail: profileForm.email });
+      setEmailStep('otp'); // on bascule le modal en mode "saisie du code"
+    } else {
+      setActiveModal(null); // rien à vérifier, on ferme normalement
+    }
+  } catch (err) {
+    alert(err.response?.data?.message || "Erreur lors de l'enregistrement.");
+  } finally {
+    setSavingProfile(false);
+  }
+};
+
+const handleConfirmEmailOtp = async () => {
+  setOtpError('');
+  try {
+    const res = await api.post('/users/me/email/confirm-change', {
+      newEmail: profileForm.email,
+      code: otpCode,
+    });
+
+    if (res.data.success) {
+      // Déconnexion forcée : l'email a changé, il faut se reconnecter avec le nouveau
+      localStorage.removeItem('token');
+      navigate('/login', {
+        state: { message: 'Votre email a été mis à jour. Veuillez vous reconnecter.' },
+      });
+    } else {
+      setOtpError(res.data.message || 'Code invalide.');
+    }
+  } catch (err) {
+    setOtpError(err.response?.data?.message || 'Erreur de vérification.');
+  }
+};
 
   const handleNotifChange = (id) => {
     setNotifPrefs((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -173,19 +259,14 @@ export default function Profil() {
                   </button>
                 </div>
                 <div className="profil-profile-info">
-                  <h2 className="profil-profile-name">Marwa Boutabi</h2>
-                  <p className="profil-profile-role" style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '4px', fontWeight: '500' }}>
-                    Gérante • Épicerie Fine du Centre
-                  </p>
+<h2 className="profil-profile-name"> {profileForm.prenom} {profileForm.nom} </h2>                  <p> {profileForm.companyName || 'Commerce'} </p>
                   <div className="profil-profile-details" style={{ marginTop: '8px' }}>
                     <div className="profil-detail-item">
                       <Mail size={14} />
-                      <span>contact@epicerie-centre.ma</span>
-                    </div>
+<span>{profileForm.email}</span>                    </div>
                     <div className="profil-detail-item">
                       <Phone size={14} />
-                      <span>+212 6 12 34 56 78</span>
-                    </div>
+<span>{profileForm.telephone}</span>                    </div>
                   </div>
                 </div>
               </div>
@@ -338,43 +419,84 @@ export default function Profil() {
         </div>
       </main>
 
-      {/* Modal : Modifier le profil */}
       {activeModal === 'profile' && (
-        <div className="profil-overlay" onClick={() => setActiveModal(null)}>
-          <div className="profil-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="profil-modal-header">
-              <h3>Modifier les informations du commerce</h3>
-              <button type="button" onClick={() => setActiveModal(null)}>
-                <X size={20} />
-              </button>
-            </div>
-            <div className="profil-modal-body">
-              <div className="profil-modal-avatar">
-                <div className="profil-avatar profil-avatar-large">MB</div>
-                <button type="button" className="profil-avatar-edit-btn">
-                  <Camera size={14} />
-                  Changer le logo
-                </button>
-              </div>
-              <label className="profil-modal-label">Nom complet du gérant</label>
-              <input type="text" className="profil-modal-input" defaultValue="Marwa Boutabi" />
-              
-              <label className="profil-modal-label">Nom de l'entreprise / Commerce</label>
-              <input type="text" className="profil-modal-input" defaultValue="Épicerie Fine du Centre" />
-              
-              <label className="profil-modal-label">Adresse e-mail professionnelle</label>
-              <input type="email" className="profil-modal-input" defaultValue="contact@epicerie-centre.ma" />
-              
-              <label className="profil-modal-label">Numéro de téléphone professionnel</label>
-              <input type="tel" className="profil-modal-input" defaultValue="+212 6 12 34 56 78" />
-            </div>
-            <button type="button" className="profil-modal-submit" onClick={() => setActiveModal(null)}>
-              <Check size={16} />
-              Enregistrer les modifications
-            </button>
+  <div className="profil-overlay" onClick={() => setActiveModal(null)}>
+    <div className="profil-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="profil-modal-header">
+        <h3>{emailStep === 'otp' ? 'Vérification de votre nouvel email' : 'Modifier les informations du commerce'}</h3>
+        <button type="button" onClick={() => { setActiveModal(null); setEmailStep('idle'); }}>
+          <X size={20} />
+        </button>
+      </div>
+
+      {emailStep === 'idle' ? (
+        <>
+          <div className="profil-modal-body">
+            {/* ... tes champs existants, mais liés à profileForm au lieu de defaultValue ... */}
+            <label className="profil-modal-label">Nom complet du gérant</label>
+            <input
+              type="text"
+              className="profil-modal-input"
+              value={`${profileForm.prenom} ${profileForm.nom}`}
+              onChange={(e) => {
+                const [prenom, ...rest] = e.target.value.split(' ');
+                setProfileForm({ ...profileForm, prenom, nom: rest.join(' ') });
+              }}
+            />
+            <label className="profil-modal-label">Nom de l'entreprise / Commerce</label>
+            <input
+              type="text"
+              className="profil-modal-input"
+              value={profileForm.companyName}
+              onChange={(e) => setProfileForm({ ...profileForm, companyName: e.target.value })}
+            />
+            <label className="profil-modal-label">Adresse e-mail professionnelle</label>
+            <input
+              type="email"
+              className="profil-modal-input"
+              value={profileForm.email}
+              onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+            />
+            <label className="profil-modal-label">Numéro de téléphone professionnel</label>
+            <input
+              type="tel"
+              className="profil-modal-input"
+              value={profileForm.telephone}
+              onChange={(e) => setProfileForm({ ...profileForm, telephone: e.target.value })}
+            />
           </div>
+          <button
+            type="button"
+            className="profil-modal-submit"
+            onClick={handleSaveProfile}
+            disabled={savingProfile}
+          >
+            <Check size={16} />
+            {savingProfile ? 'Enregistrement...' : 'Enregistrer les modifications'}
+          </button>
+        </>
+      ) : (
+        <div className="profil-modal-body">
+          <p>Un code de vérification a été envoyé à <strong>{profileForm.email}</strong>.</p>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            className="profil-modal-input"
+            placeholder="Code à 6 chiffres"
+            value={otpCode}
+            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+          />
+          {otpError && <div className="form-error">{otpError}</div>}
+          <button type="button" className="profil-modal-submit" onClick={handleConfirmEmailOtp}>
+            <Check size={16} />
+            Confirmer et se reconnecter
+          </button>
         </div>
       )}
+    </div>
+  </div>
+)}
 
       {/* Modal : Fermer le compte */}
       {showDeleteConfirm && (

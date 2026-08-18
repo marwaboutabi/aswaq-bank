@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
-import { Link, useLocation, useNavigate  } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Home, ArrowLeftRight,Receipt, Star, PiggyBank, PieChart,
-  Bell, Bot, User, LogOut, ChevronDown, Plus,
+  Home, ArrowLeftRight, Receipt, Star, PiggyBank, PieChart,
+  Bell, Bot, User, LogOut, Plus,
   X, Pencil, Trash2, Sparkles, Wallet,
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
+import api from '../services/api'; 
 import './Epargne.css';
 import './DashboardClient.css';
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/dashboard-client' },
@@ -22,84 +25,117 @@ const NAV_ITEMS = [
   { icon: User, label: 'Profil et paramètres', to: '/parametres' },
 ];
 
-const INITIAL_GOALS = [
-  {
-    id: 1,
-    name: "Vacances d'été",
-    current: 3250,
-    target: 5000,
-    deadline: '30 juin 2027',
-    monthlyAdvice: 350,
-    onTrack: true,
-  },
-  {
-    id: 2,
-    name: 'Nouvelle voiture',
-    current: 18000,
-    target: 40000,
-    deadline: 'Décembre 2028',
-    monthlyAdvice: 620,
-    onTrack: false,
-  },
-];
-
-const HISTORY = [
-  { id: 1, date: '20 juillet 2026', amount: 300, goalName: 'Vacances d\'été' },
-  { id: 2, date: '12 juillet 2026', amount: 500, goalName: 'Nouvelle voiture' },
-  { id: 3, date: '5 juillet 2026', amount: 200, goalName: "Vacances d'été" },
-];
-
 const QUICK_AMOUNTS = [200, 500, 1000];
+
+// ---- Helpers d'affichage ---------------------------------------------------------
+function formatDeadline(deadline) {
+  if (!deadline) return 'Non définie';
+  const d = new Date(deadline);
+  if (Number.isNaN(d.getTime())) return deadline;
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function formatHistoryDate(dateString) {
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return dateString;
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
 
 export default function Epargne() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [goals, setGoals] = useState(INITIAL_GOALS);
-  const [history, setHistory] = useState(HISTORY);
+
+  const [goals, setGoals] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const [addModalGoal, setAddModalGoal] = useState(null);
   const [addAmount, setAddAmount] = useState('');
+  const [addSubmitting, setAddSubmitting] = useState(false);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({ name: '', target: '', deadline: '' });
+  const [createSubmitting, setCreateSubmitting] = useState(false);
 
-  const totalSaved = goals.reduce((sum, g) => sum + g.current, 0);
+  const totalSaved = goals.reduce((sum, g) => sum + Number(g.currentAmount), 0);
 
-  const handleAddMoney = () => {
+  // ---- Chargement initial ---------------------------------------------------------
+  const loadGoals = async () => {
+    const res = await api.get('/savings-goals');
+    setGoals(res.data);
+  };
+
+  const loadHistory = async () => {
+    const res = await api.get('/savings-goals/history');
+    setHistory(res.data);
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        await Promise.all([loadGoals(), loadHistory()]);
+      } catch (err) {
+        setErrorMsg("Impossible de charger vos objectifs d'épargne.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // ---- Actions ---------------------------------------------------------------------
+  const handleAddMoney = async () => {
     const amount = Number(addAmount);
     if (!amount || amount <= 0 || !addModalGoal) return;
 
-    setGoals((prev) =>
-      prev.map((g) => (g.id === addModalGoal.id ? { ...g, current: Math.min(g.current + amount, g.target) } : g))
-    );
-    setHistory((prev) => [
-      { id: Date.now(), date: "Aujourd'hui", amount, goalName: addModalGoal.name },
-      ...prev,
-    ]);
-    setAddModalGoal(null);
-    setAddAmount('');
+    try {
+      setAddSubmitting(true);
+      setErrorMsg('');
+      const res = await api.post(`/savings-goals/${addModalGoal.id}/add-money`, { amount });
+
+      setGoals((prev) => prev.map((g) => (g.id === res.data.id ? res.data : g)));
+      await loadHistory();
+
+      setAddModalGoal(null);
+      setAddAmount('');
+    } catch (err) {
+      const backendMessage = err?.response?.data?.message;
+      setErrorMsg(backendMessage || "Le solde de votre compte est insuffisant pour cet ajout.");
+    } finally {
+      setAddSubmitting(false);
+    }
   };
 
-  const handleDeleteGoal = (id) => {
-    setGoals((prev) => prev.filter((g) => g.id !== id));
+  const handleDeleteGoal = async (id) => {
+    try {
+      await api.delete(`/savings-goals/${id}`);
+      setGoals((prev) => prev.filter((g) => g.id !== id));
+    } catch (err) {
+      setErrorMsg("Impossible de supprimer cet objectif.");
+    }
   };
 
-  const handleCreateGoal = () => {
+  const handleCreateGoal = async () => {
     if (!newGoal.name || !newGoal.target) return;
-    setGoals((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
+
+    try {
+      setCreateSubmitting(true);
+      setErrorMsg('');
+      const res = await api.post('/savings-goals', {
         name: newGoal.name,
-        current: 0,
-        target: Number(newGoal.target),
-        deadline: newGoal.deadline || 'Non définie',
-        monthlyAdvice: Math.round(Number(newGoal.target) / 12),
-        onTrack: true,
-      },
-    ]);
-    setNewGoal({ name: '', target: '', deadline: '' });
-    setCreateModalOpen(false);
+        targetAmount: Number(newGoal.target),
+        deadline: newGoal.deadline || null, // format yyyy-MM-dd (input type="date")
+      });
+
+      setGoals((prev) => [res.data, ...prev]);
+      setNewGoal({ name: '', target: '', deadline: '' });
+      setCreateModalOpen(false);
+    } catch (err) {
+      setErrorMsg("Impossible de créer l'objectif.");
+    } finally {
+      setCreateSubmitting(false);
+    }
   };
 
   return (
@@ -144,147 +180,144 @@ export default function Epargne() {
             <p className="dash-greeting-sub">Économisez progressivement pour réaliser vos projets.</p>
           </div>
           <div className="dash-topbar-actions">
-           <button 
-  type="button" 
-  className="dash-icon-button"
-  onClick={() => navigate('/notifications')}
->
-  <Bell size={18} />
-  <span className="dash-badge">3</span>
-</button>
-            <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
-              <span>Marwa Boutabi</span>
-              <ChevronDown size={16} />
-            </div>
+            <NotificationBell />
+            <UserHeader />
           </div>
         </header>
 
-        {/* ===== Carte résumé BLANCHE SANS ICÔNE ===== */}
-        <div className="epa-hero-card">
-          <div className="epa-hero-info">
-            <span className="epa-hero-label">Épargne totale</span>
-            <span className="epa-hero-amount">{totalSaved.toLocaleString('fr-FR')} <small>MAD</small></span>
-          </div>
-          <div className="epa-hero-count">
-            {goals.length} objectif{goals.length > 1 ? 's' : ''} actif{goals.length > 1 ? 's' : ''}
-          </div>
-        </div>
-
-        {/* ===== Mes objectifs ===== */}
-        <section className="epa-section">
-          <div className="epa-section-header">
-            <h2 className="epa-section-title">Mes objectifs</h2>
-            <button type="button" className="epa-create-btn" onClick={() => setCreateModalOpen(true)}>
-              <Plus size={16} /> Créer un objectif
-            </button>
-          </div>
-
-          <div className="epa-goals-grid">
-            {goals.map((goal) => {
-              const percent = Math.min(100, Math.round((goal.current / goal.target) * 100));
-              const remaining = goal.target - goal.current;
-              const isComplete = goal.current >= goal.target;
-
-              return (
-                <div key={goal.id} className="epa-goal-card">
-                  <div className="epa-goal-top">
-                    <p className="epa-goal-name">{goal.name}</p>
-                    <div className="epa-goal-menu">
-                      <button type="button" className="epa-icon-btn" title="Modifier">
-                        <Pencil size={14} />
-                      </button>
-                      <button type="button" className="epa-icon-btn" title="Supprimer" onClick={() => handleDeleteGoal(goal.id)}>
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <p className="epa-goal-amounts">
-                    {goal.current.toLocaleString('fr-FR')} MAD / {goal.target.toLocaleString('fr-FR')} MAD
-                  </p>
-
-                  <div className="epa-goal-track">
-                    <div className="epa-goal-fill" style={{ width: `${percent}%` }} />
-                  </div>
-
-                  <div className="epa-goal-footer">
-                    <span className="epa-goal-percent">{percent}%</span>
-                    <span className="epa-goal-remaining">
-                      {isComplete ? 'Objectif atteint 🎉' : `Il vous reste ${remaining.toLocaleString('fr-FR')} MAD`}
-                    </span>
-                  </div>
-
-                  <p className="epa-goal-deadline">Date cible : {goal.deadline}</p>
-
-                  <button
-                    type="button"
-                    className="epa-add-money-btn"
-                    disabled={isComplete}
-                    onClick={() => setAddModalGoal(goal)}
-                  >
-                    <Wallet size={16} /> Ajouter de l'argent
-                  </button>
-                </div>
-              );
-            })}
-
-            {goals.length === 0 && (
-              <div className="epa-empty-state">
-                <PiggyBank size={32} />
-                <p>Vous n'avez pas encore d'objectif d'épargne.</p>
-                <button type="button" className="epa-create-btn" onClick={() => setCreateModalOpen(true)}>
-                  <Plus size={16} /> Créer mon premier objectif
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* ===== Conseils intelligents ===== */}
-        {goals.length > 0 && (
-          <section className="epa-section">
-            <h2 className="epa-section-title epa-section-title-icon">
-              <Sparkles size={18} /> Conseils intelligents
-            </h2>
-            <div className="epa-advice-grid">
-              {goals.map((goal) => (
-                <div key={goal.id} className={`epa-advice-card ${goal.onTrack ? 'epa-advice-good' : 'epa-advice-warning'}`}>
-                  <p className="epa-advice-goal">{goal.name}</p>
-                  {goal.onTrack ? (
-                    <p className="epa-advice-text">
-                      Au rythme actuel, vous atteindrez votre objectif <strong>avant la date prévue</strong>.
-                    </p>
-                  ) : (
-                    <p className="epa-advice-text">
-                      Pour atteindre votre objectif à temps, nous vous conseillons d'épargner environ{' '}
-                      <strong>{goal.monthlyAdvice.toLocaleString('fr-FR')} MAD par mois</strong>.
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
+        {errorMsg && (
+          <div className="epa-error-banner">{errorMsg}</div>
         )}
 
-        {/* ===== Historique ===== */}
-        <section className="epa-section">
-          <h2 className="epa-section-title">Historique</h2>
-          <div className="epa-history-panel">
-            {history.map((h) => (
-              <div key={h.id} className="epa-history-row">
-                <div className="epa-history-info">
-                  <p className="epa-history-date">{h.date}</p>
-                  <p className="epa-history-goal">Objectif {h.goalName}</p>
-                </div>
-                <span className="epa-history-amount">+{h.amount.toLocaleString('fr-FR')} MAD</span>
+        {loading ? (
+          <p>Chargement de vos objectifs...</p>
+        ) : (
+          <>
+            {/* ===== Carte résumé ===== */}
+            <div className="epa-hero-card">
+              <div className="epa-hero-info">
+                <span className="epa-hero-label">Épargne totale</span>
+                <span className="epa-hero-amount">{totalSaved.toLocaleString('fr-FR')} <small>MAD</small></span>
               </div>
-            ))}
-            {history.length === 0 && (
-              <p className="epa-history-empty">Aucun versement pour le moment.</p>
+              <div className="epa-hero-count">
+                {goals.length} objectif{goals.length > 1 ? 's' : ''} actif{goals.length > 1 ? 's' : ''}
+              </div>
+            </div>
+
+            {/* ===== Mes objectifs ===== */}
+            <section className="epa-section">
+              <div className="epa-section-header">
+                <h2 className="epa-section-title">Mes objectifs</h2>
+                <button type="button" className="epa-create-btn" onClick={() => setCreateModalOpen(true)}>
+                  <Plus size={16} /> Créer un objectif
+                </button>
+              </div>
+
+              <div className="epa-goals-grid">
+                {goals.map((goal) => (
+                  <div key={goal.id} className="epa-goal-card">
+                    <div className="epa-goal-top">
+                      <p className="epa-goal-name">{goal.name}</p>
+                      <div className="epa-goal-menu">
+                        <button type="button" className="epa-icon-btn" title="Modifier">
+                          <Pencil size={14} />
+                        </button>
+                        <button type="button" className="epa-icon-btn" title="Supprimer" onClick={() => handleDeleteGoal(goal.id)}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="epa-goal-amounts">
+                      {Number(goal.currentAmount).toLocaleString('fr-FR')} MAD / {Number(goal.targetAmount).toLocaleString('fr-FR')} MAD
+                    </p>
+
+                    <div className="epa-goal-track">
+                      <div className="epa-goal-fill" style={{ width: `${goal.percent}%` }} />
+                    </div>
+
+                    <div className="epa-goal-footer">
+                      <span className="epa-goal-percent">{goal.percent}%</span>
+                      <span className="epa-goal-remaining">
+                        {goal.completed
+                          ? 'Objectif atteint 🎉'
+                          : `Il vous reste ${Number(goal.remaining).toLocaleString('fr-FR')} MAD`}
+                      </span>
+                    </div>
+
+                    <p className="epa-goal-deadline">Date cible : {formatDeadline(goal.deadline)}</p>
+
+                    <button
+                      type="button"
+                      className="epa-add-money-btn"
+                      disabled={goal.completed}
+                      onClick={() => setAddModalGoal(goal)}
+                    >
+                      <Wallet size={16} /> Ajouter de l'argent
+                    </button>
+                  </div>
+                ))}
+
+                {goals.length === 0 && (
+                  <div className="epa-empty-state">
+                    <PiggyBank size={32} />
+                    <p>Vous n'avez pas encore d'objectif d'épargne.</p>
+                    <button type="button" className="epa-create-btn" onClick={() => setCreateModalOpen(true)}>
+                      <Plus size={16} /> Créer mon premier objectif
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* ===== Conseils intelligents ===== */}
+            {goals.length > 0 && (
+              <section className="epa-section">
+                <h2 className="epa-section-title epa-section-title-icon">
+                  <Sparkles size={18} /> Conseils intelligents
+                </h2>
+                <div className="epa-advice-grid">
+                  {goals.map((goal) => (
+                    <div key={goal.id} className={`epa-advice-card ${goal.onTrack ? 'epa-advice-good' : 'epa-advice-warning'}`}>
+                      <p className="epa-advice-goal">{goal.name}</p>
+                      {goal.completed ? (
+                        <p className="epa-advice-text">Objectif atteint, félicitations !</p>
+                      ) : goal.onTrack ? (
+                        <p className="epa-advice-text">
+                          Au rythme actuel, vous atteindrez votre objectif <strong>avant la date prévue</strong>.
+                        </p>
+                      ) : (
+                        <p className="epa-advice-text">
+                          Pour atteindre votre objectif à temps, nous vous conseillons d'épargner environ{' '}
+                          <strong>{Number(goal.monthlyAdvice).toLocaleString('fr-FR')} MAD par mois</strong>.
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
-          </div>
-        </section>
+
+            {/* ===== Historique ===== */}
+            <section className="epa-section">
+              <h2 className="epa-section-title">Historique</h2>
+              <div className="epa-history-panel">
+                {history.map((h) => (
+                  <div key={h.id} className="epa-history-row">
+                    <div className="epa-history-info">
+                      <p className="epa-history-date">{formatHistoryDate(h.date)}</p>
+                      <p className="epa-history-goal">Objectif {h.goalName}</p>
+                    </div>
+                    <span className="epa-history-amount">+{Number(h.amount).toLocaleString('fr-FR')} MAD</span>
+                  </div>
+                ))}
+                {history.length === 0 && (
+                  <p className="epa-history-empty">Aucun versement pour le moment.</p>
+                )}
+              </div>
+            </section>
+          </>
+        )}
       </main>
 
       {/* ===== Modal : Ajouter de l'argent ===== */}
@@ -319,8 +352,8 @@ export default function Epargne() {
               onChange={(e) => setAddAmount(e.target.value)}
             />
 
-            <button type="button" className="epa-modal-submit" onClick={handleAddMoney}>
-              Confirmer l'ajout
+            <button type="button" className="epa-modal-submit" onClick={handleAddMoney} disabled={addSubmitting}>
+              {addSubmitting ? 'Ajout en cours...' : "Confirmer l'ajout"}
             </button>
           </div>
         </div>
@@ -355,9 +388,8 @@ export default function Epargne() {
 
             <label className="epa-modal-label">Date cible</label>
             <input
-              type="text"
+              type="date"
               className="epa-modal-input"
-              placeholder="Ex : Décembre 2027"
               value={newGoal.deadline}
               onChange={(e) => setNewGoal((p) => ({ ...p, deadline: e.target.value }))}
             />
@@ -367,8 +399,8 @@ export default function Epargne() {
               <option>Compte principal •••• 4589</option>
             </select>
 
-            <button type="button" className="epa-modal-submit" onClick={handleCreateGoal}>
-              Créer l'objectif
+            <button type="button" className="epa-modal-submit" onClick={handleCreateGoal} disabled={createSubmitting}>
+              {createSubmitting ? 'Création...' : "Créer l'objectif"}
             </button>
           </div>
         </div>

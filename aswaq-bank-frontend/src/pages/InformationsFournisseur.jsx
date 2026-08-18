@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown, Store, QrCode, ShoppingBag, PackageSearch, BrainCircuit, Info } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo/Logo';
-import './InformationsCommercant.css';
+import './InformationsFournisseur.css';
 import { saveRegistrationData } from '../utils/registrationStorage';
 
 const SECTEURS = [
@@ -13,8 +13,8 @@ const SECTEURS = [
   'Autre',
 ];
 
-export default function InformationsCommercant() {
-  const navigate = useNavigate();
+export default function InformationsFournisseur() {
+      const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -28,11 +28,27 @@ export default function InformationsCommercant() {
   const [errors, setErrors] = useState({});
 
   const features = [
-    { icon: QrCode, title: 'Paiements QR rapides', text: 'Encaissez vos clients en un scan, sans matériel supplémentaire.' },
-    { icon: ShoppingBag, title: 'Gestion des ventes', text: 'Suivez vos transactions et votre chiffre d\'affaires en temps réel.' },
-    { icon: PackageSearch, title: 'Suivi du stock', text: 'Gardez le contrôle sur vos produits et vos réapprovisionnements.' },
-    { icon: BrainCircuit, title: 'Analyse intelligente avec IA', text: 'Des recommandations personnalisées pour développer votre activité.' },
-  ];
+  {
+    icon: QrCode,
+    title: 'Paiements simplifiés',
+    text: 'Recevez vos paiements en toute simplicité.'
+  },
+  {
+    icon: ShoppingBag,
+    title: 'Gestion des commandes',
+    text: 'Suivez vos commandes et vos opérations en temps réel.'
+  },
+  {
+    icon: PackageSearch,
+    title: 'Gestion des produits',
+    text: 'Gérez vos produits et vos approvisionnements facilement.'
+  },
+  {
+    icon: BrainCircuit,
+    title: 'Suivi de votre activité',
+    text: 'Gardez une vision claire de votre activité avec Aswaq Bank.'
+  },
+];
 
   const handleChange = (field) => (e) => {
     const { value } = e.target;
@@ -70,7 +86,7 @@ export default function InformationsCommercant() {
     // Registre de commerce optionnel : aucune validation requise
 
     if (!formData.address.trim()) {
-      newErrors.address = 'L\'adresse du commerce est requise.';
+      newErrors.address = 'L\'adresse du fournisseur est requise.';
     }
 
     if (!formData.city.trim()) {
@@ -133,8 +149,8 @@ export default function InformationsCommercant() {
             avec <span className="commercant-hero-accent">Aswaq Bank.</span>
           </h1>
           <p className="commercant-hero-subtitle">
-            Créez votre espace commerçant pour gérer vos ventes, vos paiements et
-            votre activité en toute simplicité.
+            Créez votre espace fournisseur pour gérer vos commandes, vos paiements et
+votre activité en toute simplicité.
           </p>
 
           <ul className="commercant-features">
@@ -159,20 +175,19 @@ export default function InformationsCommercant() {
               <div className="commercant-icon-badge">
                 <Store size={22} />
               </div>
-              <h2 className="commercant-title">Informations de votre commerce</h2>
+              <h2 className="commercant-title">Informations de votre activité</h2>
               <p className="commercant-subtitle">
-                Ces informations permettent de créer votre espace commerçant.
-              </p>
+Ces informations permettent de créer votre espace fournisseur.              </p>
             </div>
 
             <form className="commercant-form" onSubmit={(e) => e.preventDefault()} noValidate>
               <div className="commercant-field">
-                <label htmlFor="companyName" className="commercant-label">Nom du commerce</label>
+                <label htmlFor="companyName" className="commercant-label">Nom du fournisseur</label>
                 <input
                   id="companyName"
                   type="text"
                   className={`commercant-input ${errors.companyName ? 'commercant-input-error' : ''}`}
-                  placeholder="Ex: Marjane, Bim, Carrefour..."
+                  placeholder="Ex: Atlas Distribution, Maroc Fruits..."
                   value={formData.companyName}
                   onChange={handleChange('companyName')}
                 />
@@ -230,12 +245,12 @@ export default function InformationsCommercant() {
               </div>
 
               <div className="commercant-field">
-                <label htmlFor="address" className="commercant-label">Adresse du commerce</label>
+                <label htmlFor="address" className="commercant-label">Adresse</label>
                 <input
                   id="address"
                   type="text"
                   className={`commercant-input ${errors.address ? 'commercant-input-error' : ''}`}
-                  placeholder="Adresse complète"
+                  placeholder="Adresse complète du fournisseur"
                   value={formData.address}
                   onChange={handleChange('address')}
                 />
@@ -257,8 +272,9 @@ export default function InformationsCommercant() {
 
               <div className="commercant-info-box">
                 <Info size={18} className="commercant-info-icon" />
-                <span>Vos informations sont vérifiées avant l'activation de votre espace fournisseur.</span>
-              </div>
+<span>
+  Vos informations sont vérifiées avant l'activation de votre espace fournisseur.
+</span>              </div>
 
               <button type="button" className="commercant-continue-button" onClick={handleContinue}>
                 <span aria-hidden="true">→</span> Continuer

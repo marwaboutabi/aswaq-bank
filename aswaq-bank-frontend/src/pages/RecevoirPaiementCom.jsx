@@ -111,21 +111,38 @@ function RealisticQRCode({ size = 220 }) {
 
 export default function RecevoirPaiementCom() {
   const location = useLocation();
-  
-  // États du parcours
-  const [paymentState, setPaymentState] = useState('create'); // 'create' | 'generating' | 'waiting' | 'success' | 'expired'
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [reference, setReference] = useState('');
+
+  // ===== Données venant de la création de vente =====
+  const saleId = location.state?.saleId || null;
+  const paymentRequestReference = location.state?.paymentRequestReference || null;
+  const saleAmount = location.state?.amount || '';
+
+  const isSalePayment = !!paymentRequestReference;
+
+  // ===== États =====
+  const [paymentState, setPaymentState] = useState(
+    isSalePayment ? 'waiting' : 'create'
+  );
+
+  const [amount, setAmount] = useState(
+    saleAmount !== '' ? String(saleAmount) : ''
+  );
+
+  const [description, setDescription] = useState(
+    isSalePayment ? `Paiement vente #${saleId}` : ''
+  );
+
+  const [reference, setReference] = useState(
+    paymentRequestReference || ''
+  );
+
   const [timeLeft, setTimeLeft] = useState(QR_VALIDITY_SECONDS);
   const [copied, setCopied] = useState(false);
   const [selectedQuickAmount, setSelectedQuickAmount] = useState(null);
-  
-  // Données de la transaction (simulées)
   const [transactionData, setTransactionData] = useState(null);
   const [payments, setPayments] = useState([]);
+
   const timerRef = useRef(null);
-  const simulationRef = useRef(null);
 
   useEffect(() => {
 
@@ -146,6 +163,22 @@ export default function RecevoirPaiementCom() {
             );
         });
 
+}, []);
+useEffect(() => {
+  if (!isSalePayment) return;
+
+  setReference(paymentRequestReference);
+
+  setTransactionData({
+    reference: paymentRequestReference,
+    amount: formatAmount(saleAmount),
+    description: `Paiement vente #${saleId}`,
+    merchant: 'Marwa Boutabi',
+    createdAt: new Date(),
+    expiresAt: new Date(Date.now() + QR_VALIDITY_SECONDS * 1000),
+  });
+
+  setPaymentState('waiting');
 }, []);
   // Formatage du montant
   const formatAmount = (val) => {
@@ -178,77 +211,75 @@ export default function RecevoirPaiementCom() {
 
   // Gestion de la génération du QR Code
  const handleGenerateQR = async () => {
+  // Pour une vente, le PaymentRequest a déjà été créé
+  // automatiquement par le backend lors de la création de la vente.
+  if (isSalePayment) {
+    console.log(
+      'Demande de paiement déjà créée pour cette vente.'
+    );
+    return;
+  }
 
-    if (!isValidAmount()) return;
+  if (!isValidAmount()) {
+    return;
+  }
 
+  try {
+    setPaymentState('generating');
 
-    try {
+    const response = await api.post(
+      '/payment-requests/create',
+      null,
+      {
+        params: {
+          amount: String(amount).replace(',', '.'),
+          description:
+            description || 'Achat en magasin',
+        },
+      }
+    );
 
-        setPaymentState('generating');
+    const paymentRequest = response.data;
 
+    console.log(
+      'Réponse backend :',
+      paymentRequest
+    );
 
-        const response = await api.post(
-            "/payment-requests/create",
-            null,
-            {
-                params: {
-                    amount: amount.replace(',', '.'),
-                    description: description || "Achat en magasin"
-                }
-            }
-        );
+    setReference(paymentRequest.reference);
 
+    setTransactionData({
+      reference: paymentRequest.reference,
+      amount: formatAmount(
+        paymentRequest.amount
+      ),
+      description:
+        paymentRequest.description ||
+        'Achat en magasin',
+      merchant: 'Marwa Boutabi',
+      createdAt: new Date(),
+      expiresAt: new Date(
+        Date.now() +
+          QR_VALIDITY_SECONDS * 1000
+      ),
+    });
 
-        const paymentRequest = response.data;
-console.log("Réponse backend :", paymentRequest);
+    setPaymentState('waiting');
+    setTimeLeft(QR_VALIDITY_SECONDS);
 
-        setReference(paymentRequest.reference);
+  } catch (error) {
+    console.error(
+      'Erreur création paiement',
+      error
+    );
 
+    alert(
+      error?.response?.data?.message ||
+      'Erreur lors de la création du paiement'
+    );
 
-        setTransactionData({
-
-            reference: paymentRequest.reference,
-
-            amount: formatAmount(paymentRequest.amount),
-
-            description: paymentRequest.description 
-                || "Achat en magasin",
-
-            merchant: "Marwa Boutabi",
-
-            createdAt: new Date(),
-
-            expiresAt: new Date(
-                Date.now() + QR_VALIDITY_SECONDS * 1000
-            )
-
-        });
-
-
-        setPaymentState('waiting');
-
-        setTimeLeft(QR_VALIDITY_SECONDS);
-
-
-
-    } catch(error) {
-
-
-        console.error(
-            "Erreur création paiement",
-            error
-        );
-
-
-        alert(
-            "Erreur lors de la création du paiement"
-        );
-
-
-        setPaymentState('create');
-
-    }
-
+    setPaymentState('create');
+  }
 };
 
 
@@ -341,21 +372,57 @@ console.log("Réponse backend :", paymentRequest);
   };
 
   // Régénérer un QR Code après expiration
-  const handleRegenerate = () => {
-    setPaymentState('generating');
-    setTimeout(() => {
-      const ref = generateReference();
-      setReference(ref);
-      setTransactionData((prev) => prev ? {
-        ...prev,
-        reference: ref,
-        createdAt: new Date(),
-        expiresAt: new Date(Date.now() + QR_VALIDITY_SECONDS * 1000)
-      } : prev);
-      setPaymentState('waiting');
-      setTimeLeft(QR_VALIDITY_SECONDS);
-    }, 1200);
-  };
+  const handleRegenerate = async () => {
+    if (!amount) return;
+
+    try {
+        setPaymentState('generating');
+
+        const response = await api.post(
+            "/payment-requests/create",
+            null,
+            {
+                params: {
+                    amount: String(amount).replace(',', '.'),
+                    description: description || "Achat en magasin"
+                }
+            }
+        );
+
+        const paymentRequest = response.data;
+
+        console.log("Nouvelle demande :", paymentRequest);
+
+        setReference(paymentRequest.reference);
+
+        setTransactionData({
+            reference: paymentRequest.reference,
+            amount: formatAmount(paymentRequest.amount),
+            description:
+                paymentRequest.description || "Achat en magasin",
+            merchant: "Marwa Boutabi",
+            createdAt: new Date(),
+            expiresAt: new Date(
+                Date.now() + QR_VALIDITY_SECONDS * 1000
+            )
+        });
+
+        setTimeLeft(QR_VALIDITY_SECONDS);
+        setPaymentState('waiting');
+
+    } catch (error) {
+        console.error(
+            "Erreur régénération paiement",
+            error
+        );
+
+        alert(
+            "Impossible de générer un nouveau QR Code."
+        );
+
+        setPaymentState('expired');
+    }
+};
 
   // Sélection d'un montant rapide
   const handleQuickAmount = (val) => {

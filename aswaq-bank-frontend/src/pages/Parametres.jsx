@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, ArrowLeftRight, Receipt, Star, PiggyBank, PieChart,
@@ -8,8 +8,10 @@ import {
   MessageCircle, AlertTriangle, X, Check, Edit3,
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
+import api from '../services/api';
 import './Parametres.css';
 import './DashboardClient.css';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/dashboard-client' },
@@ -68,7 +70,8 @@ function Toggle({ checked, onChange }) {
 
 export default function Profil() {
   const location = useLocation();
-   const navigate = useNavigate();
+  const navigate = useNavigate();
+
   const [notifPrefs, setNotifPrefs] = useState(
     NOTIFICATION_PREFS.reduce((acc, p) => ({ ...acc, [p.id]: p.default }), {})
   );
@@ -80,6 +83,126 @@ export default function Profil() {
   const [activeModal, setActiveModal] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // ====================================================
+  // PROFIL UTILISATEUR (branché sur le backend)
+  // ====================================================
+  const [profile, setProfile] = useState({
+    id: null,
+    nom: '',
+    prenom: '',
+    email: '',
+    telephone: '',
+    role: '',
+  });
+
+  const [profileForm, setProfileForm] = useState({
+    nom: '',
+    prenom: '',
+    email: '',
+    telephone: '',
+  });
+
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoadingProfile(true);
+        setProfileError('');
+
+        const response = await api.get('/users/me');
+        const data = response.data;
+
+        setProfile(data);
+        setProfileForm({
+          nom: data.nom || '',
+          prenom: data.prenom || '',
+          email: data.email || '',
+          telephone: data.telephone || '',
+        });
+      } catch (error) {
+        console.error('Erreur récupération profil :', error);
+        setProfileError(
+          error.response?.data?.message || 'Impossible de récupérer votre profil.'
+        );
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleOpenProfileModal = () => {
+    setProfileError('');
+    setProfileSuccess('');
+    setProfileForm({
+      nom: profile.nom || '',
+      prenom: profile.prenom || '',
+      email: profile.email || '',
+      telephone: profile.telephone || '',
+    });
+    setActiveModal('profile');
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      setSavingProfile(true);
+      setProfileError('');
+      setProfileSuccess('');
+
+      const emailChanged = profileForm.email !== profile.email;
+
+      const response = await api.put('/users/me', {
+        nom: profileForm.nom,
+        prenom: profileForm.prenom,
+        email: profileForm.email,
+        telephone: profileForm.telephone,
+      });
+
+      // Si l'email a changé, le JWT actuel (généré avec l'ancien email)
+      // devient invalide côté backend dès la prochaine requête.
+      // On déconnecte proprement et on redirige vers /login.
+      if (emailChanged) {
+        localStorage.removeItem('token');
+        navigate('/login', {
+          state: { message: 'Votre email a été modifié. Veuillez vous reconnecter.' },
+        });
+        return;
+      }
+
+      setProfile(response.data);
+      setProfileForm({
+        nom: response.data.nom || '',
+        prenom: response.data.prenom || '',
+        email: response.data.email || '',
+        telephone: response.data.telephone || '',
+      });
+
+      setProfileSuccess('Votre profil a été modifié avec succès.');
+
+      setTimeout(() => {
+        setActiveModal(null);
+        setProfileSuccess('');
+      }, 1000);
+    } catch (error) {
+      console.error('Erreur modification profil :', error);
+      setProfileError(
+        error.response?.data?.message || error.response?.data || 'Impossible de modifier votre profil.'
+      );
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   const handleNotifChange = (id) => {
     setNotifPrefs((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -89,8 +212,12 @@ export default function Profil() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
     window.location.href = '/';
   };
+
+  const fullName = `${profile.prenom || ''} ${profile.nom || ''}`.trim();
+  const initials = `${profile.prenom?.charAt(0) || ''}${profile.nom?.charAt(0) || ''}`.toUpperCase();
 
   return (
     <div className="dash-layout">
@@ -141,17 +268,10 @@ export default function Profil() {
               <Search size={16} />
               <input type="text" placeholder="Rechercher..." />
             </div>
-           <button 
-  type="button" 
-  className="dash-icon-button"
-  onClick={() => navigate('/notifications')}
->
-  <Bell size={18} />
-  <span className="dash-badge">3</span>
-</button>
+            <NotificationBell />
             <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
-              <span>Marwa Boutabi</span>
+              <div className="dash-user-avatar">{loadingProfile ? '...' : initials || 'U'}</div>
+              <span>{loadingProfile ? 'Chargement...' : fullName || 'Utilisateur'}</span>
               <ChevronDown size={16} />
             </div>
           </div>
@@ -163,21 +283,23 @@ export default function Profil() {
             <div className="profil-card profil-profile-card">
               <div className="profil-profile-header">
                 <div className="profil-avatar-wrapper">
-                  <div className="profil-avatar">MB</div>
+                  <div className="profil-avatar">{loadingProfile ? '...' : initials || 'U'}</div>
                   <button type="button" className="profil-avatar-edit">
                     <Camera size={14} />
                   </button>
                 </div>
                 <div className="profil-profile-info">
-                  <h2 className="profil-profile-name">Marwa Boutabi</h2>
+                  <h2 className="profil-profile-name">
+                    {loadingProfile ? 'Chargement...' : fullName || 'Utilisateur'}
+                  </h2>
                   <div className="profil-profile-details">
                     <div className="profil-detail-item">
                       <Mail size={14} />
-                      <span>marwa.boutabi@gmail.ma</span>
+                      <span>{profile.email || 'Non renseignée'}</span>
                     </div>
                     <div className="profil-detail-item">
                       <Phone size={14} />
-                      <span>+212 6 12 34 56 78</span>
+                      <span>{profile.telephone || 'Non renseigné'}</span>
                     </div>
                   </div>
                 </div>
@@ -185,7 +307,8 @@ export default function Profil() {
               <button
                 type="button"
                 className="profil-edit-btn"
-                onClick={() => setActiveModal('profile')}
+                onClick={handleOpenProfileModal}
+                disabled={loadingProfile}
               >
                 <Edit3 size={16} />
                 Modifier mon profil
@@ -194,39 +317,39 @@ export default function Profil() {
           </section>
 
           {/* Section 2 : Sécurité */}
-          {/* Section 2 : Sécurité */}
-<section className="profil-section">
-  <h3 className="profil-section-title">Sécurité</h3>
-  <div className="profil-card">
-    {SECURITY_ITEMS.map((item, idx) => {
-      const Icon = item.icon;
-      return (
-        <button
-          key={item.id}
-          type="button"
-          className={`profil-list-item ${idx < SECURITY_ITEMS.length - 1 ? '' : 'profil-list-item-last'}`}
-          onClick={() => {
-            if (item.id === 'password') {
-              navigate('/reset-password'); // ← Redirection vers forgot password
-            } else {
-              setActiveModal(item.id);
-            }
-          }}
-        >
-          <div className="profil-list-icon">
-            <Icon size={18} />
-          </div>
-          <div className="profil-list-content">
-            <p className="profil-list-label">{item.label}</p>
-            <p className="profil-list-desc">{item.desc}</p>
-          </div>
-          {item.badge && <span className="profil-badge profil-badge-success">{item.badge}</span>}
-          <ChevronRight size={16} className="profil-list-arrow" />
-        </button>
-      );
-    })}
-  </div>
-</section>
+          <section className="profil-section">
+            <h3 className="profil-section-title">Sécurité</h3>
+            <div className="profil-card">
+              {SECURITY_ITEMS.map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`profil-list-item ${idx < SECURITY_ITEMS.length - 1 ? '' : 'profil-list-item-last'}`}
+                    onClick={() => {
+                      if (item.id === 'password') {
+                        navigate('/reset-password');
+                      } else {
+                        setActiveModal(item.id);
+                      }
+                    }}
+                  >
+                    <div className="profil-list-icon">
+                      <Icon size={18} />
+                    </div>
+                    <div className="profil-list-content">
+                      <p className="profil-list-label">{item.label}</p>
+                      <p className="profil-list-desc">{item.desc}</p>
+                    </div>
+                    {item.badge && <span className="profil-badge profil-badge-success">{item.badge}</span>}
+                    <ChevronRight size={16} className="profil-list-arrow" />
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
           {/* Section 3 : Notifications */}
           <section className="profil-section">
             <h3 className="profil-section-title">Notifications</h3>
@@ -281,38 +404,38 @@ export default function Profil() {
             </div>
           </section>
 
- {/* Section 5 : Aide & Informations */}
-<section className="profil-section">
-  <h3 className="profil-section-title">Aide & Informations</h3>
-  <div className="profil-card">
-    {HELP_ITEMS.map((item, idx) => {
-      const Icon = item.icon;
-      return (
-        <button
-          key={item.id}
-          type="button"
-          className={`profil-list-item ${idx < HELP_ITEMS.length - 1 ? '' : 'profil-list-item-last'}`}
-          onClick={() => {
-            if (item.id === 'terms') {
-              navigate('/conditions-generales');
-            } else if (item.id === 'privacy') {
-              navigate('/politique-confidentialite');
-            }
-          }}
-        >
-          <div className="profil-list-icon">
-            <Icon size={18} />
-          </div>
-          <div className="profil-list-content">
-            <p className="profil-list-label">{item.label}</p>
-            <p className="profil-list-desc">{item.desc}</p>
-          </div>
-          <ChevronRight size={16} className="profil-list-arrow" />
-        </button>
-      );
-    })}
-  </div>
-</section>
+          {/* Section 5 : Aide & Informations */}
+          <section className="profil-section">
+            <h3 className="profil-section-title">Aide & Informations</h3>
+            <div className="profil-card">
+              {HELP_ITEMS.map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`profil-list-item ${idx < HELP_ITEMS.length - 1 ? '' : 'profil-list-item-last'}`}
+                    onClick={() => {
+                      if (item.id === 'terms') {
+                        navigate('/conditions-generales');
+                      } else if (item.id === 'privacy') {
+                        navigate('/politique-confidentialite');
+                      }
+                    }}
+                  >
+                    <div className="profil-list-icon">
+                      <Icon size={18} />
+                    </div>
+                    <div className="profil-list-content">
+                      <p className="profil-list-label">{item.label}</p>
+                      <p className="profil-list-desc">{item.desc}</p>
+                    </div>
+                    <ChevronRight size={16} className="profil-list-arrow" />
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
           {/* Section 6 : Déconnexion */}
           <section className="profil-section profil-logout-section">
@@ -343,22 +466,95 @@ export default function Profil() {
             </div>
             <div className="profil-modal-body">
               <div className="profil-modal-avatar">
-                <div className="profil-avatar profil-avatar-large">MB</div>
+                <div className="profil-avatar profil-avatar-large">{initials || 'U'}</div>
                 <button type="button" className="profil-avatar-edit-btn">
                   <Camera size={14} />
                   Changer la photo
                 </button>
               </div>
-              <label className="profil-modal-label">Nom complet</label>
-              <input type="text" className="profil-modal-input" defaultValue="Marwa Boutabi" />
-              <label className="profil-modal-label">Adresse e-mail</label>
-              <input type="email" className="profil-modal-input" defaultValue="marwa.boutabi@gmail.ma" />
-              <label className="profil-modal-label">Numéro de téléphone</label>
-              <input type="tel" className="profil-modal-input" defaultValue="+212 6 12 34 56 78" />
+
+              <label className="profil-modal-label" htmlFor="profile-nom">Nom</label>
+              <input
+                id="profile-nom"
+                type="text"
+                name="nom"
+                className="profil-modal-input"
+                value={profileForm.nom}
+                onChange={handleProfileChange}
+                placeholder="Votre nom"
+              />
+
+              <label className="profil-modal-label" htmlFor="profile-prenom">Prénom</label>
+              <input
+                id="profile-prenom"
+                type="text"
+                name="prenom"
+                className="profil-modal-input"
+                value={profileForm.prenom}
+                onChange={handleProfileChange}
+                placeholder="Votre prénom"
+              />
+
+              <label className="profil-modal-label" htmlFor="profile-email">Adresse e-mail</label>
+              <input
+                id="profile-email"
+                type="email"
+                name="email"
+                className="profil-modal-input"
+                value={profileForm.email}
+                onChange={handleProfileChange}
+                placeholder="Votre adresse e-mail"
+              />
+
+              <label className="profil-modal-label" htmlFor="profile-telephone">Numéro de téléphone</label>
+              <input
+                id="profile-telephone"
+                type="tel"
+                name="telephone"
+                className="profil-modal-input"
+                value={profileForm.telephone}
+                onChange={handleProfileChange}
+                placeholder="Votre numéro de téléphone"
+              />
+
+              {profileError && (
+                <div
+                  style={{
+                    marginTop: '12px',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    color: '#b91c1c',
+                    background: '#fee2e2',
+                    fontSize: '14px',
+                  }}
+                >
+                  {profileError}
+                </div>
+              )}
+
+              {profileSuccess && (
+                <div
+                  style={{
+                    marginTop: '12px',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    color: '#166534',
+                    background: '#dcfce7',
+                    fontSize: '14px',
+                  }}
+                >
+                  {profileSuccess}
+                </div>
+              )}
             </div>
-            <button type="button" className="profil-modal-submit" onClick={() => setActiveModal(null)}>
+            <button
+              type="button"
+              className="profil-modal-submit"
+              onClick={handleSaveProfile}
+              disabled={savingProfile}
+            >
               <Check size={16} />
-              Enregistrer les modifications
+              {savingProfile ? 'Enregistrement...' : 'Enregistrer les modifications'}
             </button>
           </div>
         </div>

@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, ArrowLeftRight, Receipt, Star, PiggyBank, PieChart,
-  Bell, Bot, User, LogOut, Search, ChevronDown, Eye, EyeOff, Send, Download,
+  Bell, Bot, User, LogOut, Search, Eye, EyeOff, Send, Download,
   PlusCircle, FileText, Copy, Shield, Settings, Lock, Unlock, RefreshCw,
   Wifi, Globe, Banknote, MapPin, CheckCircle2, Building2, X,
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './MonCompte.css';
 import './DashboardClient.css';
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 
 const OFFER_CONFIG = {
   personnel: {
@@ -161,19 +163,8 @@ export default function MonCompte() {
               <Search size={16} />
               <input type="text" placeholder="Rechercher..." />
             </div>
-            <button 
-              type="button" 
-              className="dash-icon-button"
-              onClick={() => navigate('/notifications')}
-            >
-              <Bell size={18} />
-              <span className="dash-badge">3</span>
-            </button>
-            <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
-              <span>Marwa Boutabi</span>
-              <ChevronDown size={16} />
-            </div>
+            <NotificationBell />
+           <UserHeader />
           </div>
         </header>
 

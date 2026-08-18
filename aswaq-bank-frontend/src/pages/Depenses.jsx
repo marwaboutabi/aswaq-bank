@@ -2,14 +2,15 @@ import React from 'react';
 import { Link, useLocation , useNavigate } from 'react-router-dom';
 import {
   Home, ArrowLeftRight, ShoppingBag, Receipt, Star, PiggyBank, PieChart,
-  Bell, Bot, User, LogOut, ChevronDown, Search, TrendingUp, TrendingDown,
+  Bell, Bot, User, LogOut, Search, TrendingUp, TrendingDown,
   Wallet, Sparkles, AlertTriangle, Target, Award, ArrowRight,
   ShoppingCart, Car, UtensilsCrossed, Shirt, Lightbulb, Gamepad2,
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './Depenses.css';
 import './DashboardClient.css';
-
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/dashboard-client' },
   { icon: ArrowLeftRight, label: 'Gestion du compte', to: '/mon-compte' },
@@ -247,19 +248,8 @@ export default function Depenses() {
               <Search size={16} />
               <input type="text" placeholder="Rechercher..." />
             </div>
-           <button 
-  type="button" 
-  className="dash-icon-button"
-  onClick={() => navigate('/notifications')}
->
-  <Bell size={18} />
-  <span className="dash-badge">3</span>
-</button>
-            <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
-              <span>Marwa Boutabi</span>
-              <ChevronDown size={16} />
-            </div>
+           <NotificationBell />
+            <UserHeader />
           </div>
         </header>
 

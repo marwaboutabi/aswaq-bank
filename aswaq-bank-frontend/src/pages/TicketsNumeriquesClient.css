@@ -91,7 +91,8 @@
   color: #0b1f4b;
 }
 
-/* ===== Filters ===== */
+/* ===== Filters (ancien système — conservé mais remplacé visuellement
+   par les règles ".tickets-filter-builder" plus bas dans ce fichier) ===== */
 .tickets-filters {
   display: flex;
   gap: 0.5rem;
@@ -130,7 +131,6 @@
   border-color: #1d4fd8;
 }
 
-/* Input de filtre dynamique - collé aux boutons */
 .tickets-filter-input-wrapper {
   display: flex;
   align-items: center;
@@ -190,17 +190,13 @@
   background: #0b1f4b;
 }
 
-/* Compteur de résultats */
 .tickets-results-count {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-left: auto;
   font-size: 0.82rem;
   color: #6b7280;
   font-weight: 600;
-  padding-left: 1rem;
-  border-left: 1px solid #e5e7eb;
 }
 
 .tickets-clear-all {
@@ -262,7 +258,7 @@
   gap: 1rem;
   overflow-x: auto;
   scroll-behavior: smooth;
-  padding: 0.5rem 0;
+  padding: 0.5rem 0.75rem 1rem;
   flex: 1;
 }
 
@@ -296,7 +292,6 @@
   min-width: 300px;
   background: white;
   border-radius: 16px;
-  padding: 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   border: 1px solid #f1f5f9;
   transition: all 0.2s ease;
@@ -305,7 +300,7 @@
 }
 
 .tickets-carousel-card:hover {
-  box-shadow: 0 8px 20px rgba(11, 31, 75, 0.1);
+  box-shadow: 0 10px 24px rgba(11, 31, 75, 0.12);
   transform: translateY(-2px);
 }
 
@@ -313,13 +308,12 @@
 .tickets-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .tickets-grid-card {
   background: white;
   border-radius: 16px;
-  padding: 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   border: 1px solid #f1f5f9;
   transition: all 0.2s ease;
@@ -328,7 +322,7 @@
 }
 
 .tickets-grid-card:hover {
-  box-shadow: 0 8px 20px rgba(11, 31, 75, 0.1);
+  box-shadow: 0 10px 24px rgba(11, 31, 75, 0.12);
 }
 
 /* ===== Card content ===== */
@@ -336,7 +330,6 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1rem;
 }
 
 .tickets-merchant-logo {
@@ -371,7 +364,6 @@
 
 .tickets-card-body {
   flex: 1;
-  margin-bottom: 1rem;
 }
 
 .tickets-card-stats {
@@ -387,9 +379,10 @@
 }
 
 .tickets-amount {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #0b1f4b;
+  font-family: 'Courier New', monospace;
 }
 
 .tickets-card-badges {
@@ -519,7 +512,7 @@
   gap: 1.5rem;
 }
 
-/* ===== Receipt design ===== */
+/* ===== Receipt design (drawer) ===== */
 .receipt-container {
   background: white;
   border-radius: 16px;
@@ -759,6 +752,193 @@
   background: #0b1f4b;
 }
 
+/* ============================================================
+   NOUVEAU — Carte "vrai ticket" (encoches + perforation + code-barres)
+   Ajouté en bas du fichier : ne touche à aucune règle existante,
+   ces déclarations gagnent simplement la cascade sur les mêmes
+   sélecteurs (padding notamment).
+   ⚠️ --ticket-notch-bg doit correspondre au fond derrière les cartes
+   (celui de .dash-main). Si les encoches ne se fondent pas parfaitement
+   dans le fond, ajuste juste cette variable.
+   ============================================================ */
+:root {
+  --ticket-notch-bg: #f8fafc;
+}
+
+.tickets-carousel-card,
+.tickets-grid-card {
+  padding: 0;
+  overflow: visible;
+  position: relative;
+}
+
+.ticket-topbar {
+  height: 6px;
+  border-radius: 15px 15px 0 0;
+  background: linear-gradient(90deg, #1d4fd8, #3b82f6);
+}
+
+.tickets-carousel-card .tickets-card-header,
+.tickets-grid-card .tickets-card-header {
+  padding: 1rem 1.25rem 0;
+  margin-bottom: 0;
+}
+
+.tickets-carousel-card .tickets-card-body,
+.tickets-grid-card .tickets-card-body {
+  padding: 0 1.25rem;
+  margin-bottom: 0;
+}
+
+.tickets-carousel-card .tickets-open-btn,
+.tickets-grid-card .tickets-open-btn {
+  margin: 0.85rem 1.25rem 1.25rem;
+  width: calc(100% - 2.5rem);
+}
+
+/* Ligne de "détachement" façon ticket, avec encoches rondes */
+.ticket-perforation {
+  position: relative;
+  height: 0;
+  border-top: 2px dashed #dbe3ee;
+  margin: 0.9rem -1.25rem;
+}
+
+.ticket-perforation::before,
+.ticket-perforation::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ticket-notch-bg);
+}
+
+.ticket-perforation::before { left: -9px; }
+.ticket-perforation::after { right: -9px; }
+
+/* ============================================================
+   NOUVEAU — Barre de filtres unifiée et combinable
+   ============================================================ */
+.tickets-filters {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.tickets-filter-builder {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tickets-filter-type select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E") no-repeat right 0.75rem center;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.6rem 2rem 0.6rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  outline: none;
+}
+
+.tickets-filter-type select:focus {
+  border-color: #1d4fd8;
+}
+
+.tickets-filter-builder-input {
+  flex: 1;
+  min-width: 160px;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  outline: none;
+  background: white;
+}
+
+.tickets-filter-builder-input:focus {
+  border-color: #1d4fd8;
+  box-shadow: 0 0 0 3px rgba(29, 79, 216, 0.08);
+}
+
+.tickets-filter-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #1d4fd8;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+}
+
+.tickets-filter-add-btn:hover:not(:disabled) {
+  background: #0b1f4b;
+}
+
+.tickets-filter-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tickets-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tickets-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: white;
+  border: 1px solid #dbe3ee;
+  color: #0b1f4b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.5rem 0.3rem 0.75rem;
+  border-radius: 999px;
+}
+
+.tickets-filter-chip button {
+  background: #f1f5f9;
+  border: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+}
+
+.tickets-filter-chip button:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.tickets-results-count {
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 1100px) {
   .tickets-summary-grid {
@@ -774,22 +954,13 @@
   .tickets-grid {
     grid-template-columns: 1fr;
   }
-  .tickets-filters {
+  .tickets-filter-builder {
     flex-direction: column;
     align-items: stretch;
   }
-  .tickets-filter-input-wrapper {
-    margin-left: 0;
+  .tickets-filter-type select,
+  .tickets-filter-builder-input,
+  .tickets-filter-add-btn {
     width: 100%;
-  }
-  .tickets-filter-input {
-    width: 100%;
-  }
-  .tickets-results-count {
-    margin-left: 0;
-    padding-left: 0;
-    border-left: none;
-    border-top: 1px solid #e5e7eb;
-    padding-top: 0.75rem;
   }
 }

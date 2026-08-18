@@ -16,7 +16,51 @@
   top: 0;
   z-index: 10;
 }
+/* ===== PIN Card ===== */
+.submitted-pin-box {
+  background: #f4f7ff;
+  border: 1px solid #dde6fd;
+  border-radius: 14px;
+  padding: 24px;
+  margin: 20px 0 24px;
+  text-align: center;
+}
 
+.submitted-pin-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1657ff;
+  margin: 0 0 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.submitted-pin-value {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 10px;
+  color: #14213d;
+  font-family: 'Inter', monospace;
+  margin: 0 0 14px;
+}
+
+.submitted-pin-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 0;
+}
 .submitted-navbar-inner {
   max-width: 1280px;
   margin: 0 auto;

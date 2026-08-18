@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate  } from 'react-router-dom';
 import {
   Home, ArrowLeftRight, ShoppingBag, Receipt, Star, PiggyBank, PieChart,
-  Bell, Bot, User, LogOut, ChevronDown, Gift, Clock, Store,
+  Bell, Bot, User, LogOut, Gift, Clock, Store,
   ShoppingCart, QrCode, RotateCcw, Coffee, Truck, Percent, Gem, Sparkles,
   Smartphone, PartyPopper, Calculator,
 } from 'lucide-react';
@@ -11,11 +11,13 @@ import './Fidelite.css';
 import './DashboardClient.css';
 import loyaltyService from "../services/loyaltyService";
 import { QRCodeSVG } from "qrcode.react";
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
+
 
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/dashboard-client' },
   { icon: ArrowLeftRight, label: 'Gestion du compte', to: '/mon-compte' },
-  { icon: ArrowLeftRight, label: 'Historique des transactions', to: '/transactions-client' },
   { icon: Receipt, label: 'Tickets numériques', to: '/tickets-client' },
   { icon: Star, label: 'Points de fidélité', to: '/fidelite' },
   { icon: PiggyBank, label: "Objectifs d'épargne", to: '/epargne' },
@@ -33,20 +35,9 @@ const LEVELS = [
 ];
 
 
-
-const REWARDS = [
-  { id: 1, icon: Gift, title: '50 MAD de réduction', cost: 500, tone: 'green' },
-  { id: 2, icon: Truck, title: 'Livraison gratuite', cost: 1000, tone: 'orange' },
-  { id: 3, icon: Percent, title: '10% de réduction', cost: 1500, tone: 'red' },
-];
-
-const PARTNERS = [
-  { id: 1, icon: ShoppingCart, name: 'Aswaq Market', category: 'Supermarché', pointsInfo: '1 pt / 10 MAD' },
-  { id: 2, icon: Coffee, name: 'Café Central', category: 'Café & restauration', pointsInfo: '1 pt / 5 MAD' },
-  { id: 3, icon: Store, name: 'Boutique Amal', category: 'Commerce local', pointsInfo: '1 pt / 10 MAD' },
-];
-
 export default function Fidelite() {
+  const [partners, setPartners] = useState([]);
+
   const location = useLocation();
   const navigate = useNavigate();
 const [points, setPoints] = useState(0);
@@ -58,45 +49,27 @@ const [conversionMessage, setConversionMessage] = useState("");
 const [myRewards, setMyRewards] = useState([]);
 
 useEffect(() => {
+  const loadHistory = async () => {
+    try {
+      const data = await loyaltyService.getHistory();
 
-const loadHistory = async()=>{
-
-try{
-
-const data = await loyaltyService.getHistory();
-
-
-const formatted = data.map(item => ({
-    id:item.id,
-    name:item.description,
-    date:new Date(item.createdAt)
-        .toLocaleDateString("fr-FR"),
-    points:Math.abs(item.points),
-    type:item.type === "EARNED"
-        ? "earned"
-        : "spent"
+      const formatted = data.map((item) => ({
+  id: item.id,
+  name: item.description,
+  date: new Date(item.createdAt).toLocaleDateString("fr-FR"),
+  points: Math.abs(item.points),
+  type: item.type === "EARNED" ? "earned" : "spent",
+  icon: item.type === "EARNED" ? ShoppingBag : Gift, // ou toute icône pertinente
 }));
 
+      setActivities(formatted);
+    } catch (error) {
+      console.error("Erreur historique fidélité", error);
+    }
+  };
 
-setActivities(formatted);
-
-
-}catch(error){
-
-console.error(
-"Erreur historique fidélité",
-error
-);
-
-}
-
-};
-
-
-loadHistory();
-
-
-},[]);
+  loadHistory();
+}, []);
 useEffect(() => {
 
     const loadLoyalty = async () => {
@@ -127,51 +100,82 @@ useEffect(() => {
 
 }, []);
 useEffect(() => {
+  const loadRewards = async () => {
+    try {
+      const data = await loyaltyService.getRewards();
 
-    const loadRewards = async () => {
+      setMyRewards(data);
+    } catch (error) {
+      console.error("Erreur chargement récompenses", error);
+    }
+  };
 
+  loadRewards();
+}, []);
+useEffect(() => {
+    const loadPartners = async () => {
         try {
+            const data = await loyaltyService.getPartners();
 
-            const data = await loyaltyService.getRewards();
-
-            setMyRewards(data);
+            setPartners(data);
 
         } catch (error) {
-
             console.error(
-                "Erreur chargement récompenses",
+                "Erreur chargement partenaires",
                 error
             );
 
+            setPartners([]);
         }
-
     };
 
-    loadRewards();
-
+    loadPartners();
 }, []);
 
-  const currentLevelIndex = [...LEVELS].reverse().findIndex((l) => points >= l.threshold);
-  const currentLevel = LEVELS[LEVELS.length - 1 - currentLevelIndex];
-  const nextLevel = LEVELS[LEVELS.length - currentLevelIndex];
-  const pointsRemaining = nextLevel ? nextLevel.threshold - points : 0;
-  const progressPercent = nextLevel
-    ? Math.min(100, ((points - currentLevel.threshold) / (nextLevel.threshold - currentLevel.threshold)) * 100)
-    : 100;
+  const currentLevel =
+  [...LEVELS]
+    .reverse()
+    .find((l) => points >= l.threshold) || LEVELS[0];
 
-  const estimatedValue = Math.round(points * 0.1);
+const currentLevelIndex = LEVELS.findIndex(
+  (l) => l.name === currentLevel.name
+);
+
+const nextLevel = LEVELS[currentLevelIndex + 1] || null;
+
+const pointsRemaining = nextLevel
+  ? Math.max(0, nextLevel.threshold - points)
+  : 0;
+
+const progressPercent = nextLevel
+  ? Math.min(
+      100,
+      Math.max(
+        0,
+        ((points - currentLevel.threshold) /
+          (nextLevel.threshold - currentLevel.threshold)) *
+          100
+      )
+    )
+  : 100;
+
+const estimatedValue = Math.round(points * 0.1);
 
   const ACTIONS = [
     { key: 'gagner', icon: Star, title: 'Gagner des points', desc: 'Découvrez comment' },
-    { key: 'echanger', icon: Gift, title: 'Échanger mes points', desc: 'Voir les récompenses' },
-    { key: 'historique', icon: Clock, title: 'Historique', desc: 'Voir mes mouvements' },
-    { key: 'partenaires', icon: Store, title: 'Partenaires', desc: 'Où gagner des points' },
+{
+  key: 'echanger',
+  icon: Gift,
+  title: 'Échanger mes points',
+  desc: '200 pts = 20 MAD'
+},    
+{ key: 'partenaires', icon: Store, title: 'Partenaires', desc: 'Où gagner des points' },
   ];
 const handleConvertPoints = async () => {
 
-    if (points < 500) {
+    if (points < 200) {
         setConversionMessage(
-            "Vous devez avoir au moins 500 points pour obtenir cette récompense."
+            "Vous devez avoir au moins 200 points pour obtenir un bon de 20 MAD."
         );
         return;
     }
@@ -182,23 +186,37 @@ const handleConvertPoints = async () => {
         setConversionMessage("");
 
         const reward = await loyaltyService.convertPoints();
-        setMyRewards((prev) => [reward, ...prev]);
 
-        // Mettre immédiatement à jour les points
-        setPoints((prev) => prev - 500);
+        setMyRewards((prev) => [
+            reward,
+            ...prev
+        ]);
 
-        // Recharger l'historique
-        const history = await loyaltyService.getHistory();
+        // Recharger les vrais points depuis le backend
+        const updatedAccount =
+            await loyaltyService.getMyPoints();
 
-        const formatted = history.map(item => ({
+        setPoints(updatedAccount.points);
+        setLevel(updatedAccount.level);
+
+        // Recharger également l'historique
+        const history =
+            await loyaltyService.getHistory();
+
+        const formatted = history.map((item) => ({
             id: item.id,
             name: item.description,
-            date: new Date(item.createdAt)
-                .toLocaleDateString("fr-FR"),
-            points: Math.abs(item.points),
+            date: item.createdAt
+                ? new Date(item.createdAt)
+                    .toLocaleDateString("fr-FR")
+                : "-",
+            points: Math.abs(item.points || 0),
             type: item.type === "EARNED"
                 ? "earned"
-                : "spent"
+                : "spent",
+            icon: item.type === "EARNED"
+                ? ShoppingBag
+                : Gift,
         }));
 
         setActivities(formatted);
@@ -267,19 +285,8 @@ const handleConvertPoints = async () => {
             <p className="dash-greeting-sub">Gagnez des points, progressez et profitez de récompenses exclusives.</p>
           </div>
           <div className="dash-topbar-actions">
-           <button 
-  type="button" 
-  className="dash-icon-button"
-  onClick={() => navigate('/notifications')}
->
-  <Bell size={18} />
-  <span className="dash-badge">3</span>
-</button>
-            <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
-              <span>Marwa Boutabi</span>
-              <ChevronDown size={16} />
-            </div>
+           <NotificationBell />
+            <UserHeader />
           </div>
         </header>
 
@@ -336,8 +343,13 @@ const handleConvertPoints = async () => {
                 key={action.key}
                 type="button"
                 className={`fid-action-card ${activeTab === action.key ? 'fid-action-card-active' : ''}`}
-                onClick={() => setActiveTab(activeTab === action.key ? null : action.key)}
-              >
+onClick={() => {
+  if (action.key === 'echanger') {
+    handleConvertPoints();
+  } else {
+    setActiveTab(activeTab === action.key ? null : action.key);
+  }
+}}              >
                 <div className="fid-action-icon"><Icon size={18} /></div>
                 <div className="fid-action-text">
                   <p className="fid-action-title">{action.title}</p>
@@ -382,26 +394,64 @@ const handleConvertPoints = async () => {
         )}
 
         {/* ===== Panneau : Partenaires ===== */}
-        {activeTab === 'partenaires' && (
-          <div className="fid-info-panel">
-            <h3>Commerçants partenaires</h3>
+{activeTab === 'partenaires' && (
+    <div className="fid-info-panel">
+
+        <h3>Commerçants partenaires</h3>
+
+        {partners.length === 0 ? (
+
+            <p className="fid-info-intro">
+                Aucun commerçant partenaire disponible pour le moment.
+            </p>
+
+        ) : (
+
             <div className="fid-partners-list">
-              {PARTNERS.map((p) => {
-                const Icon = p.icon;
-                return (
-                  <div key={p.id} className="fid-partner-row">
-                    <div className="fid-partner-icon"><Icon size={18} /></div>
-                    <div className="fid-partner-info">
-                      <p className="fid-partner-name">{p.name}</p>
-                      <p className="fid-partner-category">{p.category}</p>
+
+                {partners.map((merchant) => (
+
+                    <div
+                        key={merchant.id}
+                        className="fid-partner-row"
+                    >
+
+                        <div className="fid-partner-icon">
+                            <Store size={18} />
+                        </div>
+
+                        <div className="fid-partner-info">
+
+                            <p className="fid-partner-name">
+                                {merchant.companyName}
+                            </p>
+
+                            <p className="fid-partner-category">
+                                {merchant.activitySector || "Commerce"}
+                            </p>
+
+                            {merchant.city && (
+                                <p className="fid-partner-category">
+                                    {merchant.city}
+                                </p>
+                            )}
+
+                        </div>
+
+                        <span className="fid-partner-points">
+                            1 pt / 10 MAD
+                        </span>
+
                     </div>
-                    <span className="fid-partner-points">{p.pointsInfo}</span>
-                  </div>
-                );
-              })}
+
+                ))}
+
             </div>
-          </div>
+
         )}
+
+    </div>
+)}
 {/* ===== Mes bons d'achat ===== */}
 {myRewards.length > 0 && (
   <div className="fid-panel" style={{ marginBottom: '20px' }}>
@@ -489,82 +539,7 @@ const handleConvertPoints = async () => {
 
   </div>
 )}
-        {/* ===== Deux colonnes : Activités + Récompenses populaires ===== */}
-        <div className="fid-bottom-grid">
-          <div className="fid-panel">
-            <div className="fid-panel-header">
-              <h2 className="fid-panel-title">Dernières activités</h2>
-            </div>
-            <div className="fid-activity-list">
-              {activities.map((a) => {
-                const Icon = a.icon;
-                return (
-                  <div key={a.id} className="fid-activity-row">
-                    <div className="fid-activity-icon"><Icon size={18} /></div>
-                    <div className="fid-activity-info">
-                      <p className="fid-activity-name">{a.name}</p>
-                      <p className="fid-activity-date">{a.date}</p>
-                    </div>
-                    <span className={`fid-activity-points ${a.type === 'earned' ? 'fid-points-earned' : 'fid-points-spent'}`}>
-                      {a.type === 'earned' ? '+' : '-'}{a.points} pts
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-            <Link to="/fidelite" className="fid-see-all">
-              Voir tout l'historique →
-            </Link>
-          </div>
-
-          <div className="fid-panel">
-            <div className="fid-panel-header fid-panel-header-row">
-              <h2 className="fid-panel-title">Récompenses populaires</h2>
-              <button type="button" className="fid-header-action-btn">
-                Échanger mes points
-              </button>
-            </div>
-            <div className="fid-popular-list">
-
-    {conversionMessage && (
-        <div className="fid-info-panel">
-            {conversionMessage}
-        </div>
-    )}
-
-    {REWARDS.map((r) => {
-                const Icon = r.icon;
-                const canRedeem = points >= r.cost;
-                const missing = r.cost - points;
-                return (
-                  <div key={r.id} className="fid-popular-row">
-                    <div className={`fid-popular-icon fid-tone-${r.tone}`}><Icon size={18} /></div>
-                    <div className="fid-popular-info">
-                      <p className="fid-popular-name">{r.title}</p>
-                      <p className="fid-popular-desc">Coût : {r.cost.toLocaleString('fr-FR')} pts</p>
-                    </div>
-                    {canRedeem ? (
-<button
-        type="button"
-        className="fid-redeem-btn"
-        onClick={handleConvertPoints}
-        disabled={converting}
-    >
-        {converting ? "Conversion..." : "Échanger"}
-    </button>                    ) : (
-                      <span className="fid-missing-points">
-                        Il vous manque {missing.toLocaleString('fr-FR')} pts
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            <Link to="/fidelite" className="fid-see-all">
-              Voir toutes les récompenses →
-            </Link>
-          </div>
-        </div>
+        
       </main>
     </div>
   );

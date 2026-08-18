@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  ArrowLeft, Bell, ChevronDown, Send,
+  ArrowLeft, Bell, Send,
   User, Shield, Wallet, FileText, Lock, Check,
   Search, ChevronRight, Info, CreditCard, Eye, EyeOff,
   Building2, Calendar, AlertCircle
@@ -9,6 +9,8 @@ import {
 import Logo from '../components/Logo/Logo';
 import api from '../services/api';
 import './SendMoney.css';
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 
 const MAIN_STEPS = [
   { icon: User, label: 'Bénéficiaire' },
@@ -147,15 +149,8 @@ if (!senderAccountNumber || !transferData.beneficiary?.id) {
           </button>
           <div className="sm-topbar-actions">
             <div className="dash-search"><Search size={16} /><input type="text" placeholder="Rechercher..." /></div>
-            <button type="button" className="dash-icon-button">
-              <Bell size={18} />
-              <span className="dash-badge">3</span>
-            </button>
-            <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
-              <span>Marwa Boutabi</span>
-              <ChevronDown size={16} />
-            </div>
+            <NotificationBell />
+            <UserHeader />
           </div>
         </header>
 

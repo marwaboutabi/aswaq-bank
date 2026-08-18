@@ -8,6 +8,8 @@ import {
 import Logo from '../components/Logo/Logo';
 import './Stock.css';
 import api from "../services/api";
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 
 const INITIAL_PRODUCTS = [
   { id: 1, name: 'Lait 1L', code: 'PRD001', category: 'Boissons', price: '12,00 MAD', stock: 35, status: 'En stock', date: '10 Juil 2026' },
@@ -271,46 +273,10 @@ price: `${parseFloat(product.price).toFixed(2).replace(".", ",")} MAD`,      sto
             <p className="prod-subtitle">Ajustez les quantités et les prix de vos produits.</p>
           </div>
 
-          <div className="prod-topbar-actions">
-            {/* ✅ CORRECTION ICI : Redirection vers la page des notifications */}
-            <button
-              type="button"
-              className="prod-icon-button"
-              onClick={() => navigate('/notifications-com')}
-              aria-label="Notifications"
-            >
-              <Bell size={18} />
-              <span className="prod-badge">3</span>
-            </button>
-
-            <div
-              className="prod-user-chip"
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              style={{ position: 'relative' }}
-            >
-              <div className="prod-user-avatar">MB</div>
-              <div className="prod-user-info">
-                <span className="prod-user-name">Marwa Boutabi</span>
-                <span className="prod-user-role">Commerçant</span>
-              </div>
-              <ChevronDown size={16} />
-              {showUserMenu && (
-                <div style={{
-                  position: 'absolute', right: 0, top: 48,
-                  background: 'white', border: '1px solid #e5e7eb',
-                  borderRadius: 10, padding: '0.5rem', width: 180,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 10
-                }}>
-                  <Link to="/parametres-commerce" style={{ display: 'block', padding: '0.5rem', textDecoration: 'none', color: '#374151' }}>
-                    Mon profil
-                  </Link>
-                  <Link to="/" onClick={handleLogout} style={{ display: 'block', padding: '0.5rem', textDecoration: 'none', color: '#dc2626' }}>
-                    Déconnexion
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
+         <div className="prod-topbar-actions">
+  <NotificationBell />
+  <UserHeader />
+</div>
         </header>
 
         <section className="prod-filters-row" style={{ position: 'relative' }}>

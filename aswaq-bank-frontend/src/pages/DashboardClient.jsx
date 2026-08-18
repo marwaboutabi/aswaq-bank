@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, CreditCard, ArrowLeftRight, QrCode, Star, Bot, LogOut,
-  Search, Bell, ChevronDown, Eye, EyeOff, Send, Download, ShoppingCart,
+  Search, Bell, Eye, EyeOff, Send, Download, ShoppingCart,
   TrendingUp, Sparkles, Fuel, ShoppingBag, Receipt, PiggyBank, PieChart, User,
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './DashboardClient.css';
-
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 const TRANSACTIONS = [
   { id: 1, name: 'Carrefour Market', type: 'Achat', amount: -250, date: '15 Juil 2026 · 14:30', icon: ShoppingCart },
   { id: 2, name: 'Virement de Sara Ali', type: 'Virement reçu', amount: 2000, date: '15 Juil 2026 · 11:20', icon: Download },
@@ -141,19 +142,8 @@ export default function Dashboard() {
               <Search size={16} />
               <input type="text" placeholder="Rechercher..." />
             </div>
-            <button
-              type="button"
-              className="dash-icon-button"
-              onClick={() => navigate('/notifications')}
-            >
-              <Bell size={18} />
-              <span className="dash-badge">3</span>
-            </button>
-            <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
-              <span>Marwa Boutabi</span>
-              <ChevronDown size={16} />
-            </div>
+            <NotificationBell />
+            <UserHeader />
           </div>
         </header>
 

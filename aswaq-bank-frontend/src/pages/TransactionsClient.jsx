@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, ArrowLeftRight, Receipt, Star, PiggyBank, PieChart,
-  Bell, Bot, User, LogOut, Search, ChevronDown, CreditCard,
+  Bell, Bot, User, LogOut, Search,  CreditCard,
   Download, Filter, X, FileText,  Loader2, 
   Calendar, Tag,  ShoppingCart, QrCode, Send, Banknote, PlusCircle
 } from 'lucide-react';
@@ -10,7 +10,8 @@ import Logo from '../components/Logo/Logo';
 import './TransactionsClient.css';
 import './DashboardClient.css';
 import api from '../services/api';
-
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 
 const TRANSACTION_TYPES = [
   'Toutes',
@@ -276,15 +277,8 @@ console.log("typeFilter =", typeFilter);
               <Search size={16} />
               <input type="text" placeholder="Rechercher..." />
             </div>
-            <button type="button" className="dash-icon-button" onClick={() => navigate('/notifications')}>
-              <Bell size={18} />
-              <span className="dash-badge">3</span>
-            </button>
-            <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
-              <span>Marwa Boutabi</span>
-              <ChevronDown size={16} />
-            </div>
+            <NotificationBell />
+            <UserHeader />
           </div>
         </header>
 

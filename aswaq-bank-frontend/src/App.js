@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
-
+import {
+  NotificationProvider
+} from './context/NotificationContext';
 import Accueil from './pages/Accueil';
 import Navbar from './components/Navbar/Navbar';
 import Hero from './components/Hero';
@@ -63,6 +65,7 @@ import ProfilFournisseur from './pages/ProfilFournisseur';
 import NotificationsFournisseur from './pages/NotificationsFournisseur';
 import AssistantFournisseur from './pages/AssistantFournisseur';
 import InformationsCommercant from './pages/InformationsCommercant';
+import InformationsFournisseur from './pages/InformationsFournisseur';
 
 function HomePage() {
   const { lang } = useLanguage();
@@ -93,6 +96,7 @@ function HomePage() {
 export default function App() {
   return (
     <LanguageProvider>
+      <NotificationProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Accueil />} />
@@ -153,9 +157,10 @@ export default function App() {
           <Route path="/notifications-fournisseur" element={<NotificationsFournisseur />} />
           <Route path="/assistant-fournisseur" element={<AssistantFournisseur />} />
           <Route path="/informations-commercant" element={<InformationsCommercant />} />
-
+          <Route path="/informations-fournisseur" element={<InformationsFournisseur />} />
         </Routes>
       </BrowserRouter>
+      </NotificationProvider>
     </LanguageProvider>
   );
 }

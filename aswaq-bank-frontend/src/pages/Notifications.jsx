@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import { Link, useLocation , useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, ArrowLeftRight, Receipt, Star, PiggyBank, PieChart,
-  Bell, Bot, User, LogOut, Search, ChevronDown, CheckCheck, ArrowRight, X,
+  Bell, Bot, User, LogOut, Search, CheckCheck, ArrowRight, X,
   CreditCard, Download, Send, Shield, Bot as BotIcon, Target, TrendingUp,
   Calendar, AlertCircle,
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
-import './Notifications.css';
+import api from '../services/api'; 
 import './DashboardClient.css';
-
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/dashboard-client' },
   { icon: ArrowLeftRight, label: 'Gestion du compte', to: '/mon-compte' },
@@ -31,154 +32,56 @@ const FILTERS = [
   { key: 'ai', label: 'Assistant IA' },
 ];
 
-const INITIAL_NOTIFICATIONS = [
-  {
-    id: 1,
-    type: 'payment',
-    icon: CreditCard,
-    title: 'Paiement effectué',
-    description: 'Paiement de 250 MAD chez Carrefour.',
-    date: "Aujourd'hui",
-    time: '14:35',
-    read: false,
-  },
-  {
-    id: 2,
-    type: 'loyalty',
-    icon: Star,
-    title: 'Points de fidélité',
-    description: 'Vous avez gagné 25 points suite à votre dernier achat.',
-    date: "Aujourd'hui",
-    time: '14:36',
-    read: false,
-  },
-  {
-    id: 3,
-    type: 'security',
-    icon: Shield,
-    title: 'Nouvelle connexion',
-    description: 'Nouvelle connexion détectée sur votre compte depuis Casablanca.',
-    date: 'Hier',
-    time: '09:12',
-    read: true,
-  },
-  {
-    id: 4,
-    type: 'ai',
-    icon: BotIcon,
-    title: "Conseil de l'Assistant IA",
-    description: 'Vos dépenses en restauration ont augmenté de 15 % ce mois-ci.',
-    date: 'Hier',
-    time: '18:20',
-    read: false,
-    link: { label: "Voir l'analyse", to: '/depenses' },
-  },
-  {
-    id: 5,
-    type: 'payment',
-    icon: Download,
-    title: 'Argent reçu',
-    description: 'Vous avez reçu 2 000 MAD de Ahmed Benali.',
-    date: '19 juillet',
-    time: '11:20',
-    read: true,
-  },
-  {
-    id: 6,
-    type: 'payment',
-    icon: Send,
-    title: 'Argent envoyé',
-    description: 'Virement de 500 MAD envoyé vers Sara El Fassi.',
-    date: '18 juillet',
-    time: '16:05',
-    read: true,
-  },
-  {
-    id: 7,
-    type: 'loyalty',
-    icon: Target,
-    title: "Objectif d'épargne",
-    description: 'Bravo ! Vous avez atteint 80 % de votre objectif Vacances.',
-    date: '17 juillet',
-    time: '10:00',
-    read: true,
-  },
-  {
-    id: 8,
-    type: 'ai',
-    icon: TrendingUp,
-    title: 'Analyse intelligente',
-    description: 'Vous pouvez économiser environ 400 MAD ce mois-ci.',
-    date: '16 juillet',
-    time: '08:30',
-    read: true,
-    link: { label: "Voir l'analyse", to: '/depenses' },
-  },
-];
-
-const NOTIFICATION_DETAILS = {
-  1: {
-    fullDescription: 'Un paiement de 250,00 MAD a été effectué chez Carrefour Market - Casablanca.',
-    location: 'Carrefour Market, Bd Zerktouni, Casablanca',
-    cardUsed: 'Carte •••• 4589',
-    category: 'Alimentation',
-    balance: 'Solde après opération : 12 450,00 MAD',
-  },
-  2: {
-    fullDescription: 'Félicitations ! Vous avez gagné 25 points de fidélité suite à votre achat.',
-    totalPoints: '1 275 points',
-    nextReward: 'Prochaine récompense : 1 500 points',
-    progress: "85% vers le niveau Silver",
-  },
-  3: {
-    fullDescription: 'Une nouvelle connexion a été détectée sur votre compte.',
-    device: 'Chrome sur Windows',
-    location: 'Casablanca, Maroc',
-    ip: 'IP : 105.159.xx.xx',
-    time: '19 juillet 2026 à 09:12',
-  },
-  4: {
-    fullDescription: 'Notre analyse montre que vos dépenses en restauration ont augmenté de 15% ce mois-ci.',
-    lastMonth: 'Dépenses le mois dernier : 320 MAD',
-    thisMonth: 'Dépenses ce mois-ci : 487 MAD',
-    difference: '+167 MAD (+15%)',
-    advice: 'Conseil : Essayez de préparer vos repas à la maison 2 fois par semaine.',
-  },
-  5: {
-    fullDescription: 'Vous avez reçu un virement de 2 000,00 MAD de Ahmed Benali.',
-    sender: 'Ahmed Benali - CIH Bank',
-    reference: 'Virement instantané',
-    receivedAt: '19 juillet 2026 à 11:20',
-    balance: 'Solde après réception : 12 700,00 MAD',
-  },
-  6: {
-    fullDescription: 'Vous avez envoyé un virement de 500,00 MAD vers Sara El Fassi.',
-    recipient: 'Sara El Fassi - Attijariwafa Bank',
-    reference: 'TXN-2026-0718-001',
-    sentAt: '18 juillet 2026 à 16:05',
-    balance: 'Solde après envoi : 11 085,00 MAD',
-  },
-  7: {
-    fullDescription: "Bravo ! Vous avez atteint 80% de votre objectif d'épargne \"Vacances d'été\".",
-    saved: '4 000 MAD',
-    target: '5 000 MAD',
-    remaining: '1 000 MAD restants',
-    deadline: 'Date cible : 30 juin 2027',
-  },
-  8: {
-    fullDescription: 'Selon notre analyse, vous pouvez économiser environ 400 MAD supplémentaires ce mois-ci.',
-    currentSpending: 'Dépenses actuelles : 3 250 MAD',
-    potentialSavings: 'Économies potentielles : 400 MAD',
-    tips: 'Conseils : Réduisez les sorties restaurants de 10% et optimisez vos abonnements.',
-  },
+// Icône par défaut selon le type (le backend renvoie un type, pas un composant React)
+const TYPE_ICONS = {
+  payment: CreditCard,
+  loyalty: Star,
+  security: Shield,
+  ai: BotIcon,
 };
+
+function getIcon(type) {
+  return TYPE_ICONS[type] || Bell;
+}
+
+// ---- Helpers d'affichage date/heure -----------------------------------------------
+function splitDateTime(isoString) {
+  if (!isoString) return { date: '', time: '' };
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return { date: isoString, time: '' };
+
+  const now = new Date();
+  const isSameDay = (a, b) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  let dateLabel;
+  if (isSameDay(d, now)) {
+    dateLabel = "Aujourd'hui";
+  } else if (isSameDay(d, yesterday)) {
+    dateLabel = 'Hier';
+  } else {
+    dateLabel = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+  }
+
+  const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  return { date: dateLabel, time };
+}
+
+function humanizeKey(key) {
+  return key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+}
 
 export default function Notifications() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedNotif, setSelectedNotif] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -187,19 +90,46 @@ export default function Notifications() {
     return n.type === activeFilter;
   });
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await api.get('/notifications');
+        setNotifications(res.data);
+      } catch (err) {
+        setErrorMsg('Impossible de charger les notifications.');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const markAllAsRead = async () => {
+    try {
+      await api.patch('/notifications/read-all');
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (err) {
+      setErrorMsg('Impossible de marquer les notifications comme lues.');
+    }
   };
 
-  const markAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+  const markAsRead = async (id) => {
+    try {
+      const res = await api.patch(`/notifications/${id}/read`);
+      setNotifications((prev) => prev.map((n) => (n.id === id ? res.data : n)));
+      return res.data;
+    } catch (err) {
+      setErrorMsg('Impossible de marquer la notification comme lue.');
+      return null;
+    }
   };
 
-  const openNotification = (notif) => {
+  const openNotification = async (notif) => {
     setSelectedNotif(notif);
-    markAsRead(notif.id);
+    if (!notif.read) {
+      const updated = await markAsRead(notif.id);
+      if (updated) setSelectedNotif(updated);
+    }
   };
 
   const closeNotification = () => {
@@ -211,7 +141,7 @@ export default function Notifications() {
       {/* Sidebar */}
       <aside className="dash-sidebar">
         <div className="acc-sidebar-logo">
-          <Logo size={100} className="mb-6"  />
+          <Logo size={100} className="mb-6" />
         </div>
         <nav className="dash-nav">
           {NAV_ITEMS.map((item) => {
@@ -253,21 +183,12 @@ export default function Notifications() {
               <Search size={16} />
               <input type="text" placeholder="Rechercher..." />
             </div>
-           <button 
-  type="button" 
-  className="dash-icon-button"
-  onClick={() => navigate('/notifications')}
->
-  <Bell size={18} />
-  <span className="dash-badge">3</span>
-</button>
-            <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
-              <span>Marwa Boutabi</span>
-              <ChevronDown size={16} />
-            </div>
+            <NotificationBell />
+            <UserHeader />
           </div>
         </header>
+
+        {errorMsg && <div className="epa-error-banner">{errorMsg}</div>}
 
         {/* Actions bar */}
         <div className="notif-actions-bar">
@@ -292,47 +213,52 @@ export default function Notifications() {
         </div>
 
         {/* Notifications list */}
-        <div className="notif-list">
-          {filteredNotifications.length === 0 ? (
-            <div className="notif-empty">
-              <Bell size={40} />
-              <p>Aucune notification pour ce filtre.</p>
-            </div>
-          ) : (
-            filteredNotifications.map((notif) => {
-              const Icon = notif.icon;
-              return (
-                <div
-                  key={notif.id}
-                  className={`notif-card ${!notif.read ? 'notif-unread' : ''}`}
-                  onClick={() => openNotification(notif)}
-                >
-                  <div className={`notif-icon notif-icon-${notif.type}`}>
-                    <Icon size={18} />
-                  </div>
-                  <div className="notif-content">
-                    <div className="notif-header">
-                      <p className="notif-title">{notif.title}</p>
-                      {!notif.read && <span className="notif-dot" />}
+        {loading ? (
+          <p>Chargement des notifications...</p>
+        ) : (
+          <div className="notif-list">
+            {filteredNotifications.length === 0 ? (
+              <div className="notif-empty">
+                <Bell size={40} />
+                <p>Aucune notification pour ce filtre.</p>
+              </div>
+            ) : (
+              filteredNotifications.map((notif) => {
+                const Icon = getIcon(notif.type);
+                const { date, time } = splitDateTime(notif.createdAt);
+                return (
+                  <div
+                    key={notif.id}
+                    className={`notif-card ${!notif.read ? 'notif-unread' : ''}`}
+                    onClick={() => openNotification(notif)}
+                  >
+                    <div className={`notif-icon notif-icon-${notif.type}`}>
+                      <Icon size={18} />
                     </div>
-                    <p className="notif-description">{notif.description}</p>
-                    <div className="notif-footer">
-                      <span className="notif-date">
-                        {notif.date} • {notif.time}
-                      </span>
-                      {notif.link && (
-                        <Link to={notif.link.to} className="notif-link" onClick={(e) => e.stopPropagation()}>
-                          {notif.link.label}
-                          <ArrowRight size={12} />
-                        </Link>
-                      )}
+                    <div className="notif-content">
+                      <div className="notif-header">
+                        <p className="notif-title">{notif.title}</p>
+                        {!notif.read && <span className="notif-dot" />}
+                      </div>
+                      <p className="notif-description">{notif.description}</p>
+                      <div className="notif-footer">
+                        <span className="notif-date">
+                          {date} • {time}
+                        </span>
+                        {notif.linkTo && (
+                          <Link to={notif.linkTo} className="notif-link" onClick={(e) => e.stopPropagation()}>
+                            {notif.linkLabel}
+                            <ArrowRight size={12} />
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+                );
+              })
+            )}
+          </div>
+        )}
 
         {/* Voir les anciennes */}
         <div className="notif-footer-link">
@@ -350,7 +276,7 @@ export default function Notifications() {
             <div className="notif-drawer-header">
               <div className={`notif-drawer-icon notif-icon-${selectedNotif.type}`}>
                 {(() => {
-                  const Icon = selectedNotif.icon;
+                  const Icon = getIcon(selectedNotif.type);
                   return <Icon size={24} />;
                 })()}
               </div>
@@ -363,28 +289,25 @@ export default function Notifications() {
               <h2 className="notif-drawer-title">{selectedNotif.title}</h2>
               <p className="notif-drawer-date">
                 <Calendar size={14} />
-                {selectedNotif.date} à {selectedNotif.time}
+                {(() => {
+                  const { date, time } = splitDateTime(selectedNotif.createdAt);
+                  return `${date} à ${time}`;
+                })()}
               </p>
 
               <div className="notif-drawer-divider" />
 
-              <p className="notif-drawer-description">
-                {NOTIFICATION_DETAILS[selectedNotif.id]?.fullDescription || selectedNotif.description}
-              </p>
+              <p className="notif-drawer-description">{selectedNotif.description}</p>
 
               {/* Détails spécifiques selon le type */}
-              {NOTIFICATION_DETAILS[selectedNotif.id] && (
+              {selectedNotif.details && Object.keys(selectedNotif.details).length > 0 && (
                 <div className="notif-drawer-details">
-                  {Object.entries(NOTIFICATION_DETAILS[selectedNotif.id])
-                    .filter(([key]) => key !== 'fullDescription')
-                    .map(([key, value]) => (
-                      <div key={key} className="notif-detail-row">
-                        <span className="notif-detail-label">
-                          {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
-                        </span>
-                        <span className="notif-detail-value">{value}</span>
-                      </div>
-                    ))}
+                  {Object.entries(selectedNotif.details).map(([key, value]) => (
+                    <div key={key} className="notif-detail-row">
+                      <span className="notif-detail-label">{humanizeKey(key)}</span>
+                      <span className="notif-detail-value">{value}</span>
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -409,7 +332,7 @@ export default function Notifications() {
                   </>
                 )}
                 {selectedNotif.type === 'ai' && (
-                  <Link to="/depenses" className="notif-action-btn notif-action-primary">
+                  <Link to={selectedNotif.linkTo || '/depenses'} className="notif-action-btn notif-action-primary">
                     <TrendingUp size={16} />
                     Voir l'analyse complète
                   </Link>

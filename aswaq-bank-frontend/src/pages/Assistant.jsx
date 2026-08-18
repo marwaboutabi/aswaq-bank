@@ -2,12 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate  } from 'react-router-dom';
 import {
   Home, ArrowLeftRight,  Receipt, Star, PiggyBank, PieChart,
-  Bell, Bot, User, LogOut, ChevronDown, Send, Sparkles,
+  Bell, Bot, User, LogOut, Send, Sparkles,
   TrendingUp, Target, CreditCard, Wallet, RefreshCw,
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './Assistant.css';
 import './DashboardClient.css';
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/dashboard-client' },
@@ -237,19 +239,8 @@ export default function Assistant() {
               <RefreshCw size={16} />
               Nouvelle conversation
             </button>
-            <button 
-  type="button" 
-  className="dash-icon-button"
-  onClick={() => navigate('/notifications')}
->
-  <Bell size={18} />
-  <span className="dash-badge">3</span>
-</button>
-            <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
-              <span>Marwa Boutabi</span>
-              <ChevronDown size={16} />
-            </div>
+            <NotificationBell />
+            <UserHeader />
           </div>
         </header>
 

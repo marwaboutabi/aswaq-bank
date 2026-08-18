@@ -148,33 +148,16 @@ console.log(payload);
                 <p className="submitted-card-subtitle">
                   Votre compte a été créé avec succès !
                 </p>
-                <div
-    style={{
-        background: "#fff8e6",
-        border: "2px solid #d4af37",
-        borderRadius: "12px",
-        padding: "20px",
-        marginTop: "20px",
-        textAlign: "center"
-    }}
->
-    <h3>🔐 Code PIN de votre carte bancaire</h3>
-
-    <div
-        style={{
-            fontSize: "34px",
-            fontWeight: "bold",
-            letterSpacing: "8px",
-            margin: "20px 0"
-        }}
-    >
-        {generatedPin}
-    </div>
-
-    <p style={{ color: "#c0392b", fontWeight: "bold" }}>
-        ⚠️ Ce code ne sera plus jamais affiché.
-        Veuillez le mémoriser.
-    </p>
+                <div className="submitted-pin-box">
+  <p className="submitted-pin-label">
+    <Lock size={14} />
+    Code PIN de votre carte bancaire
+  </p>
+  <div className="submitted-pin-value">{generatedPin}</div>
+  <p className="submitted-pin-warning">
+    <AlertTriangle size={14} />
+    Ce code ne sera plus jamais affiché — mémorisez-le.
+  </p>
 </div>
                 <div className="submitted-status-badge submitted-status-success">
                   <span className="submitted-status-dot submitted-status-dot-success" />

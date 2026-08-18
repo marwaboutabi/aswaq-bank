@@ -27,6 +27,7 @@ import Logo from '../components/Logo/Logo';
 import './ReceiveMoney.css';
 import { QRCodeCanvas } from 'qrcode.react';
 import axios from 'axios';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 
 
 // ===== MENU ESPACE CLIENT =====
@@ -192,10 +193,7 @@ useEffect(() => {
               <Search size={16} />
               <input type="text" placeholder="Rechercher..." />
             </div>
-            <button type="button" className="dash-icon-button">
-              <Bell size={18} />
-              <span className="dash-badge">3</span>
-            </button>
+         <NotificationBell />
             <div className="dash-user-chip">
               <div className="dash-user-avatar">MB</div>
               <span>Marwa Boutabi</span>

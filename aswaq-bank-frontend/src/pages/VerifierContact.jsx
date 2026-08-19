@@ -28,7 +28,12 @@ function formatTime(totalSeconds) {
 
 export default function VerifierContact() {
   const navigate = useNavigate();
-  const email = getRegistrationData().email || 'exemple@gmail.com';
+  const registrationData = getRegistrationData();
+
+  const email = registrationData.email || 'exemple@gmail.com';
+  const role = registrationData.role;
+  const merchant = registrationData.merchant;
+  const supplier = registrationData.supplier;
 
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [error, setError] = useState('');
@@ -46,6 +51,7 @@ export default function VerifierContact() {
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
+
   useEffect(() => {
     if (otpSentRef.current) return;
     otpSentRef.current = true;
@@ -124,7 +130,11 @@ export default function VerifierContact() {
     try {
       const response = await api.post('/auth/verify-otp', { email, code });
       if (response.data.valid) {
-        saveRegistrationData({ emailVerifie: true });
+
+        saveRegistrationData({
+          emailVerifie: true
+        });
+
         navigate('/compte-soumis');
       } else {
         setError('Code incorrect. Veuillez réessayer.');

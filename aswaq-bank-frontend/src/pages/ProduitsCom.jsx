@@ -86,7 +86,7 @@ const STATUS_STYLES = {
 const getStatusFromStock = (stock) => {
   const stockNum = parseInt(stock, 10) || 0;
   if (stockNum === 0) return 'Rupture';
-  if (stockNum <= 12) return 'Stock faible';
+  if (stockNum <= 5) return 'Stock faible';
   return 'En stock';
 };
 

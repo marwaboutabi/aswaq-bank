@@ -46,11 +46,13 @@ export default function FideliteCom() {
   // États Données Réelles
   const [pointsHistory, setPointsHistory] = useState([]);
   const [tickets, setTickets] = useState([]);
-  const [compensations, setCompensations] = useState([]);
-
+  const [payableCompensations, setPayableCompensations] = useState([]);
+  const [receivableCompensations, setReceivableCompensations] = useState([]);
+  
   // États de chargement
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [loadingTickets, setLoadingTickets] = useState(false);
+  const [loadingCompensations, setLoadingCompensations] = useState(false);
   const [error, setError] = useState('');
 
   // Chargement initial de l'historique
@@ -58,10 +60,14 @@ export default function FideliteCom() {
     loadPointsHistory();
   }, []);
 
-  // Chargement dynamique des tickets quand on change d'onglet
+  // Chargement dynamique des tickets et compensations quand on change d'onglet
   useEffect(() => {
     if (activeTab === 'tickets') {
       loadTickets();
+    }
+
+    if (activeTab === 'compensation') {
+      loadCompensations();
     }
   }, [activeTab]);
 
@@ -132,6 +138,47 @@ export default function FideliteCom() {
       setTickets([]);
     } finally {
       setLoadingTickets(false);
+    }
+  };
+
+  const loadCompensations = async () => {
+    try {
+      setLoadingCompensations(true);
+      setError('');
+
+      const [payableResponse, receivableResponse] = await Promise.all([
+        api.get('/merchant-compensations/payable'),
+        api.get('/merchant-compensations/receivable')
+      ]);
+
+      console.log('========== COMPENSATIONS ==========');
+      console.log('STATUS PAYABLE:', payableResponse.status);
+      console.log('DATA PAYABLE:', payableResponse.data);
+      console.log('STATUS RECEIVABLE:', receivableResponse.status);
+      console.log('DATA RECEIVABLE:', receivableResponse.data);
+      console.log('===================================');
+
+      const payable = Array.isArray(payableResponse.data)
+        ? payableResponse.data
+        : [];
+
+      const receivable = Array.isArray(receivableResponse.data)
+        ? receivableResponse.data
+        : [];
+
+      setPayableCompensations(payable);
+      setReceivableCompensations(receivable);
+
+    } catch (err) {
+      console.error('Erreur chargement compensations:', err);
+      console.error('Response:', err.response?.data);
+      console.error('Status:', err.response?.status);
+
+      setPayableCompensations([]);
+      setReceivableCompensations([]);
+      setError("Impossible de charger les compensations.");
+    } finally {
+      setLoadingCompensations(false);
     }
   };
 
@@ -356,7 +403,7 @@ export default function FideliteCom() {
           </section>
         )}
 
-        {/* ================= COMPENSATION (Structure conservée) ================= */}
+        {/* ================= COMPENSATION ENTRE COMMERÇANTS ================= */}
         {activeTab === 'compensation' && (
           <section className="fid-panel">
             <div className="fid-panel-header">
@@ -376,38 +423,171 @@ export default function FideliteCom() {
               Solde des échanges de points avec les autres commerçants.
             </p>
 
-            {/* Note: Les données de compensation restent affichées ici. 
-                Pour les rendre dynamiques, il faudra connecter l'endpoint MerchantCompensation une fois disponible. */}
             <div className="fid-compensation-row">
+
               <div className="fid-compensation-box">
                 <p className="fid-compensation-label">À recevoir</p>
-                <p className="fid-compensation-amount fid-amount-positive">+ 1 240,00 MAD</p>
-                <p className="fid-compensation-sub">Vous allez recevoir</p>
+
+                <p className="fid-compensation-amount fid-amount-positive">
+                  + {receivableCompensations
+                    .reduce((total, c) => total + Number(c.amount || 0), 0)
+                    .toFixed(2)
+                    .replace('.', ',')} MAD
+                </p>
+
+                <p className="fid-compensation-sub">
+                  Vous allez recevoir
+                </p>
               </div>
+
               <div className="fid-compensation-icon">
                 <RefreshCw size={18} />
               </div>
+
               <div className="fid-compensation-box">
                 <p className="fid-compensation-label">À payer</p>
-                <p className="fid-compensation-amount fid-amount-negative">- 320,00 MAD</p>
-                <p className="fid-compensation-sub">Vous allez payer</p>
+
+                <p className="fid-compensation-amount fid-amount-negative">
+                  - {payableCompensations
+                    .reduce((total, c) => total + Number(c.amount || 0), 0)
+                    .toFixed(2)
+                    .replace('.', ',')} MAD
+                </p>
+
+                <p className="fid-compensation-sub">
+                  Vous allez payer
+                </p>
               </div>
+
             </div>
 
             <div className="fid-details">
               <h3 className="fid-details-title">Détails</h3>
+
               <div className="fid-details-list">
-                {/* Placeholder statique en attendant l'API Compensation */}
-                <div className="fid-detail-item">
-                  <div className="fid-detail-icon" style={{ background: '#dcfce7', color: '#16a34a' }}>
-                    <Store size={18} />
+
+                {loadingCompensations ? (
+
+                  <div className="fid-cell-text">
+                    Chargement des compensations...
                   </div>
-                  <div className="fid-detail-body">
-                    <p className="fid-detail-name">Café Al Baraka</p>
-                    <p className="fid-detail-desc">Utilisation de vos points chez eux</p>
-                  </div>
-                  <p className="fid-detail-amount fid-amount-positive">+ 1 240,00 MAD</p>
-                </div>
+
+                ) : (
+                  <>
+                    {/* ================= À RECEVOIR ================= */}
+
+                    {receivableCompensations.map((compensation) => {
+
+                      const merchant = compensation.fromMerchant;
+                      const merchantName = merchant?.companyName || merchant?.name || 'Commerçant';
+
+                      return (
+                        <div
+                          key={`receivable-${compensation.id}`}
+                          className="fid-detail-item"
+                        >
+
+                          <div
+                            className="fid-detail-icon"
+                            style={{
+                              background: '#dcfce7',
+                              color: '#16a34a'
+                            }}
+                          >
+                            <Store size={18} />
+                          </div>
+
+                          <div className="fid-detail-body">
+
+                            <p className="fid-detail-name">
+                              {merchantName}
+                            </p>
+
+                            <p className="fid-detail-desc">
+                              Compensation à recevoir
+                            </p>
+
+                            <p className="fid-detail-desc">
+                              {compensation.points || 0} points
+                            </p>
+
+                          </div>
+
+                          <p className="fid-detail-amount fid-amount-positive">
+                            + {Number(compensation.amount || 0)
+                              .toFixed(2)
+                              .replace('.', ',')} MAD
+                          </p>
+
+                        </div>
+                      );
+                    })}
+
+
+                    {/* ================= À PAYER ================= */}
+
+                    {payableCompensations.map((compensation) => {
+
+                      const merchant = compensation.toMerchant;
+                      const merchantName = merchant?.companyName || merchant?.name || 'Commerçant';
+
+                      return (
+                        <div
+                          key={`payable-${compensation.id}`}
+                          className="fid-detail-item"
+                        >
+
+                          <div
+                            className="fid-detail-icon"
+                            style={{
+                              background: '#fee2e2',
+                              color: '#dc2626'
+                            }}
+                          >
+                            <Store size={18} />
+                          </div>
+
+                          <div className="fid-detail-body">
+
+                            <p className="fid-detail-name">
+                              {merchantName}
+                            </p>
+
+                            <p className="fid-detail-desc">
+                              Compensation à payer
+                            </p>
+
+                            <p className="fid-detail-desc">
+                              {compensation.points || 0} points
+                            </p>
+
+                          </div>
+
+                          <p className="fid-detail-amount fid-amount-negative">
+                            - {Number(compensation.amount || 0)
+                              .toFixed(2)
+                              .replace('.', ',')} MAD
+                          </p>
+
+                        </div>
+                      );
+                    })}
+
+
+                    {/* ================= AUCUNE COMPENSATION ================= */}
+
+                    {payableCompensations.length === 0 &&
+                     receivableCompensations.length === 0 && (
+
+                      <div className="fid-cell-text">
+                        Aucune compensation pour le moment.
+                      </div>
+
+                    )}
+
+                  </>
+                )}
+
               </div>
             </div>
 

@@ -82,21 +82,32 @@ export default function InformationsCommercant() {
   };
 
   const handleContinue = () => {
-    if (!validate()) return;
+  if (!validate()) return;
 
-    saveRegistrationData({
-      supplier: {
-        companyName: formData.companyName.trim(),
-        activitySector: formData.activitySector,
-        ice: formData.ice.trim(),
-        registreCommerce: formData.registreCommerce.trim(),
-        address: formData.address.trim(),
-        city: formData.city.trim(),
-      },
-    });
-
-    navigate('/verifier-contact');
+  const merchantData = {
+    companyName: formData.companyName.trim(),
+    activitySector: formData.activitySector,
+    ice: formData.ice.trim(),
+    registreCommerce: formData.registreCommerce.trim(),
+    address: formData.address.trim(),
+    city: formData.city.trim(),
   };
+
+  saveRegistrationData({
+  merchant: {
+    companyName: formData.companyName.trim(),
+    activitySector: formData.activitySector,
+    ice: formData.ice.trim(),
+    registreCommerce: formData.registreCommerce.trim(),
+    address: formData.address.trim(),
+    city: formData.city.trim(),
+  },
+});
+
+  console.log('✅ MERCHANT SAUVEGARDÉ :', merchantData);
+
+  navigate('/verifier-contact');
+};
 
   return (
     <div className="commercant-page">

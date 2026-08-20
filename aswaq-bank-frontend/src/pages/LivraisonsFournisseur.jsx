@@ -480,7 +480,6 @@ export default function LivraisonsFournisseur() {
     { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur' },
     { icon: CreditCard, label: 'Paiements', to: '/paiements-fournisseur' },
     { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' , active: true},
-    { icon: Layers, label: 'Catalogue', to: '/catalogue-fournisseur' },
    { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
     { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur' },
     { icon: User, label: 'Profil & Paramètres', to: '/profil-fournisseur' },

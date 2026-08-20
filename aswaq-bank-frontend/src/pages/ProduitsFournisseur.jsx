@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Package, ShoppingCart, CreditCard, Truck, Layers, User, Settings,
@@ -7,46 +7,26 @@ import {
   SlidersHorizontal, Bot
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
+import axiosClient from '../services/api';
 import './ProduitsFournisseur.css';
-
-const STATS = [
-  { key: 'total', icon: Package, tone: 'blue', label: 'Produits', value: '87' },
-  { key: 'faible', icon: AlertTriangle, tone: 'orange', label: 'Stock faible', value: '5' },
-  { key: 'rupture', icon: XCircle, tone: 'purple', label: 'Rupture', value: '2' },
-  { key: 'categories', icon: Layers, tone: 'teal', label: 'Catégories', value: '12' },
-];
 
 const CATEGORIES = ['Épicerie', 'Boissons', 'Produits frais', 'Hygiène'];
 
-function availabilityFromStock(stock) {
-  if (stock === 0) return 'Rupture';
-  if (stock <= 10) return 'Stock faible';
-  return 'Disponible';
-}
-
-const INITIAL_PRODUCTS = [
-  { id: 1, name: "Huile d'olive 1L", category: 'Épicerie', price: 75, stock: 120, emoji: '🫒', sku: 'EPI-0012', unit: 'Bouteille', weight: '1 L', updated: '20 Juil 2026', description: "Huile d'olive extra vierge, pression à froid." },
-  { id: 2, name: 'Sucre Blanc 1kg', category: 'Épicerie', price: 14, stock: 6, emoji: '🍚', sku: 'EPI-0034', unit: 'Sachet', weight: '1 kg', updated: '19 Juil 2026', description: 'Sucre blanc cristallisé, sachet refermable.' },
-  { id: 3, name: 'Café Moulu 250g', category: 'Boissons', price: 48, stock: 0, emoji: '☕', sku: 'BOI-0021', unit: 'Paquet', weight: '250 g', updated: '18 Juil 2026', description: 'Café moulu torréfaction artisanale.' },
-  { id: 4, name: 'Thé Vert 100g', category: 'Boissons', price: 32, stock: 4, emoji: '🍵', sku: 'BOI-0045', unit: 'Boîte', weight: '100 g', updated: '21 Juil 2026', description: 'Thé vert à la menthe, feuilles entières.' },
-  { id: 5, name: 'Farine 1kg', category: 'Épicerie', price: 9, stock: 85, emoji: '🌾', sku: 'EPI-0056', unit: 'Sachet', weight: '1 kg', updated: '22 Juil 2026', description: 'Farine blanche type 55, qualité supérieure.' },
-  { id: 6, name: 'Lait UHT 1L', category: 'Produits frais', price: 7, stock: 200, emoji: '🥛', sku: 'FRA-0011', unit: 'Brique', weight: '1 L', updated: '23 Juil 2026', description: 'Lait entier UHT, longue conservation.' },
-  { id: 7, name: 'Savon Liquide 500ml', category: 'Hygiène', price: 22, stock: 0, emoji: '🧴', sku: 'HYG-0007', unit: 'Flacon', weight: '500 ml', updated: '17 Juil 2026', description: 'Savon liquide antibactérien, parfum neutre.' },
-  { id: 8, name: 'Riz Basmati 1kg', category: 'Épicerie', price: 28, stock: 15, emoji: '🍚', sku: 'EPI-0078', unit: 'Sachet', weight: '1 kg', updated: '24 Juil 2026', description: 'Riz basmati long grain, origine Inde.' },
-  { id: 9, name: "Jus d'Orange 1L", category: 'Boissons', price: 18, stock: 9, emoji: '🧃', sku: 'BOI-0063', unit: 'Bouteille', weight: '1 L', updated: '25 Juil 2026', description: "Jus d'orange 100% pur jus, sans sucre ajouté." },
-  { id: 10, name: 'Dentifrice 75ml', category: 'Hygiène', price: 16, stock: 60, emoji: '🪥', sku: 'HYG-0019', unit: 'Tube', weight: '75 ml', updated: '26 Juil 2026', description: 'Dentifrice fluoré, protection complète.' },
-];
-
 const EMPTY_FORM = {
-  name: '', description: '', category: CATEGORIES[0], price: '', stock: '', unit: '', emoji: '📦', sku: '', weight: '',
+  name: '', description: '', category: CATEGORIES[0], price: '', stock: '',
 };
 
 const PAGE_SIZE = 10;
 
-function AvailabilityBadge({ stock }) {
-  const status = availabilityFromStock(stock);
+function formatDate(isoString) {
+  if (!isoString) return '—';
+  const d = new Date(isoString);
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function AvailabilityBadge({ availability }) {
   const toneMap = { Disponible: 'green', 'Stock faible': 'orange', Rupture: 'red' };
-  return <span className={`prod-four-badge-pill prod-four-badge-pill-${toneMap[status]}`}>{status}</span>;
+  return <span className={`prod-four-badge-pill prod-four-badge-pill-${toneMap[availability] || 'green'}`}>{availability}</span>;
 }
 
 function ProductFormModal({ title, submitLabel, initialValues, onCancel, onSubmit }) {
@@ -95,29 +75,10 @@ function ProductFormModal({ title, submitLabel, initialValues, onCancel, onSubmi
             </div>
           </div>
 
-          <div className="prod-four-form-grid">
-            <div className="prod-four-form-row">
-              <label>Stock</label>
-              <input type="number" min="0" value={form.stock} onChange={update('stock')} placeholder="0" required />
-            </div>
-            <div className="prod-four-form-row">
-              <label>Unité</label>
-              <input type="text" value={form.unit} onChange={update('unit')} placeholder="Ex. Sachet, Bouteille..." />
-            </div>
+          <div className="prod-four-form-row">
+            <label>Stock</label>
+            <input type="number" min="0" value={form.stock} onChange={update('stock')} placeholder="0" required />
           </div>
-
-          <div className="prod-four-form-grid">
-            <div className="prod-four-form-row">
-              <label>SKU</label>
-              <input type="text" value={form.sku} onChange={update('sku')} placeholder="Ex. EPI-0099" />
-            </div>
-            <div className="prod-four-form-row">
-              <label>Poids</label>
-              <input type="text" value={form.weight} onChange={update('weight')} placeholder="Ex. 1 kg" />
-            </div>
-          </div>
-
-          
 
           <div className="prod-four-modal-actions">
             <button type="button" className="prod-four-btn prod-four-btn-ghost" onClick={onCancel}>Annuler</button>
@@ -153,7 +114,13 @@ export default function ProduitsFournisseur() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
+  // State pour stocker les informations de l'utilisateur connecté
+  const [user, setUser] = useState(null);
+
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -163,28 +130,87 @@ export default function ProduitsFournisseur() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [deletingProduct, setDeletingProduct] = useState(null);
 
+  // Chargement du profil utilisateur au montage du composant
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            return;
+        }
+
+        const response = await fetch('http://localhost:8080/api/users/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Impossible de récupérer le profil');
+        }
+
+        const data = await response.json();
+        setUser(data);
+      } catch (error) {
+        console.error('Erreur récupération utilisateur:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
+
   const NAV_ITEMS = [
     { icon: Home, label: 'Accueil', to: '/accueil-fournisseur' },
     { icon: Package, label: 'Produits', to: '/produits-fournisseur', active: true },
     { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur' },
     { icon: CreditCard, label: 'Paiements', to: '/paiements-fournisseur' },
     { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' },
-    { icon: Layers, label: 'Catalogue', to: '/catalogue-fournisseur' },
     { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
     { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur' },
     { icon: User, label: 'Profil & Paramètres', to: '/profil-fournisseur' },
   ];
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await axiosClient.get('/supplier/products');
+        setProducts(res.data);
+      } catch (err) {
+        console.error(err);
+        setError("Impossible de charger les produits.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const stats = useMemo(() => {
+    const total = products.length;
+    const faible = products.filter((p) => p.availability === 'Stock faible').length;
+    const rupture = products.filter((p) => p.availability === 'Rupture').length;
+    const categories = new Set(products.map((p) => p.category)).size;
+    return [
+      { key: 'total', icon: Package, tone: 'blue', label: 'Produits', value: String(total) },
+      { key: 'faible', icon: AlertTriangle, tone: 'orange', label: 'Stock faible', value: String(faible) },
+      { key: 'rupture', icon: XCircle, tone: 'purple', label: 'Rupture', value: String(rupture) },
+      { key: 'categories', icon: Layers, tone: 'teal', label: 'Catégories', value: String(categories) },
+    ];
+  }, [products]);
+
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesSearch = p.name.toLowerCase().includes(search.trim().toLowerCase());
       const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
-      const status = availabilityFromStock(p.stock);
       const matchesStatus =
         statusFilter === 'all'
-        || (statusFilter === 'available' && status === 'Disponible')
-        || (statusFilter === 'low' && status === 'Stock faible')
-        || (statusFilter === 'out' && status === 'Rupture');
+        || (statusFilter === 'available' && p.availability === 'Disponible')
+        || (statusFilter === 'low' && p.availability === 'Stock faible')
+        || (statusFilter === 'out' && p.availability === 'Rupture');
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [products, search, categoryFilter, statusFilter]);
@@ -195,50 +221,56 @@ export default function ProduitsFournisseur() {
 
   const resetFiltersPage = () => setPage(1);
 
-  const handleAddProduct = (form) => {
-    const newProduct = {
-      id: Date.now(),
-      name: form.name,
-      description: form.description,
-      category: form.category,
-      price: Number(form.price) || 0,
-      stock: Number(form.stock) || 0,
-      emoji: form.emoji || '📦',
-      unit: form.unit,
-      sku: form.sku,
-      weight: form.weight,
-      updated: "Aujourd'hui",
-    };
-    setProducts((prev) => [newProduct, ...prev]);
-    setShowAddModal(false);
+  const handleAddProduct = async (form) => {
+    try {
+      const res = await axiosClient.post('/supplier/products', {
+        name: form.name,
+        description: form.description,
+        category: form.category,
+        price: Number(form.price) || 0,
+        stock: Number(form.stock) || 0,
+      });
+      setProducts((prev) => [res.data, ...prev]);
+      setShowAddModal(false);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleEditProduct = (form) => {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === editingProduct.id
-          ? {
-              ...p,
-              name: form.name,
-              description: form.description,
-              category: form.category,
-              price: Number(form.price) || 0,
-              stock: Number(form.stock) || 0,
-              emoji: form.emoji || p.emoji,
-              unit: form.unit,
-              sku: form.sku,
-              weight: form.weight,
-              updated: "Aujourd'hui",
-            }
-          : p
-      )
-    );
-    setEditingProduct(null);
+  const handleEditProduct = async (form) => {
+    try {
+      const res = await axiosClient.put(`/supplier/products/${editingProduct.id}`, {
+        name: form.name,
+        description: form.description,
+        category: form.category,
+        price: Number(form.price) || 0,
+        stock: Number(form.stock) || 0,
+      });
+      setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? res.data : p)));
+      setEditingProduct(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleConfirmDelete = () => {
-    setProducts((prev) => prev.filter((p) => p.id !== deletingProduct.id));
-    setDeletingProduct(null);
+  const handleConfirmDelete = async () => {
+    try {
+      await axiosClient.delete(`/supplier/products/${deletingProduct.id}`);
+      setProducts((prev) => prev.filter((p) => p.id !== deletingProduct.id));
+      setDeletingProduct(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Helper pour générer les initiales si l'utilisateur est chargé
+  const getInitials = () => {
+    if (!user) return 'MB'; // Fallback par défaut
+    const prenom = user.prenom || user.firstName || '';
+    const nom = user.nom || user.lastName || '';
+    const firstLetter = prenom.charAt(0).toUpperCase();
+    const lastLetter = nom.charAt(0).toUpperCase();
+    return `${firstLetter}${lastLetter}` || 'U';
   };
 
   return (
@@ -295,9 +327,15 @@ export default function ProduitsFournisseur() {
               <span className="prod-four-badge">3</span>
             </button>
             <div className="prod-four-user-chip">
-              <div className="prod-four-user-avatar">MB</div>
+              {/* Avatar avec initiales dynamiques */}
+              <div className="prod-four-user-avatar">{getInitials()}</div>
               <div className="prod-four-user-info">
-                <span className="prod-four-user-name">Marwa Boutabi</span>
+                {/* Affichage dynamique Nom Prénom */}
+                <span className="prod-four-user-name">
+                  {user
+                    ? `${user.prenom || user.firstName || ''} ${user.nom || user.lastName || ''}`.trim()
+                    : 'Fournisseur'}
+                </span>
                 <span className="prod-four-user-role">Fournisseur</span>
               </div>
               <ChevronDown size={16} />
@@ -307,7 +345,7 @@ export default function ProduitsFournisseur() {
 
         {/* Stats */}
         <section className="prod-four-stats-row">
-          {STATS.map((s) => {
+          {stats.map((s) => {
             const Icon = s.icon;
             return (
               <div className="prod-four-stat-card" key={s.key}>
@@ -381,6 +419,7 @@ export default function ProduitsFournisseur() {
             <table className="prod-four-table">
               <thead>
                 <tr>
+                  <th>Référence</th>
                   <th>Nom du produit</th>
                   <th>Catégorie</th>
                   <th>Prix</th>
@@ -391,8 +430,21 @@ export default function ProduitsFournisseur() {
                 </tr>
               </thead>
               <tbody>
-                {pageProducts.map((p) => (
+                {loading && (
+                  <tr>
+                    <td colSpan={8} className="prod-four-empty-row">Chargement des produits...</td>
+                  </tr>
+                )}
+
+                {!loading && error && (
+                  <tr>
+                    <td colSpan={8} className="prod-four-empty-row">{error}</td>
+                  </tr>
+                )}
+
+                {!loading && !error && pageProducts.map((p) => (
                   <tr key={p.id}>
+                    <td className="prod-four-updated">{p.sku}</td>
                     <td>
                       <span className="prod-four-product-name">{p.name}</span>
                     </td>
@@ -401,8 +453,8 @@ export default function ProduitsFournisseur() {
                     </td>
                     <td className="prod-four-price">{p.price.toLocaleString('fr-FR')} MAD</td>
                     <td className="prod-four-stock">{p.stock}</td>
-                    <td><AvailabilityBadge stock={p.stock} /></td>
-                    <td className="prod-four-updated">{p.updated}</td>
+                    <td><AvailabilityBadge availability={p.availability} /></td>
+                    <td className="prod-four-updated">{formatDate(p.updatedAt)}</td>
                     <td>
                       <div className="prod-four-row-actions">
                         <button
@@ -426,9 +478,9 @@ export default function ProduitsFournisseur() {
                   </tr>
                 ))}
 
-                {pageProducts.length === 0 && (
+                {!loading && !error && pageProducts.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="prod-four-empty-row">
+                    <td colSpan={8} className="prod-four-empty-row">
                       Aucun produit ne correspond à votre recherche.
                     </td>
                   </tr>
@@ -496,10 +548,6 @@ export default function ProduitsFournisseur() {
             category: editingProduct.category,
             price: editingProduct.price,
             stock: editingProduct.stock,
-            unit: editingProduct.unit || '',
-            emoji: editingProduct.emoji || '📦',
-            sku: editingProduct.sku || '',
-            weight: editingProduct.weight || '',
           }}
           onCancel={() => setEditingProduct(null)}
           onSubmit={handleEditProduct}

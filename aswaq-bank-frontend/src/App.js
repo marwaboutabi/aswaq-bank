@@ -60,7 +60,6 @@ import ProduitsFournisseur from './pages/ProduitsFournisseur';
 import CommandesRecuesFournisseur from './pages/CommandesRecuesFournisseur';
 import PaiementsFournisseur from './pages/PaiementsFournisseur';
 import LivraisonsFournisseur from './pages/LivraisonsFournisseur';
-import CatalogueFournisseur from './pages/CatalogueFournisseur';
 import ProfilFournisseur from './pages/ProfilFournisseur';
 import NotificationsFournisseur from './pages/NotificationsFournisseur';
 import AssistantFournisseur from './pages/AssistantFournisseur';
@@ -152,7 +151,6 @@ export default function App() {
           <Route path="/commandes-fournisseur" element={<CommandesRecuesFournisseur />} />
           <Route path="/paiements-fournisseur" element={<PaiementsFournisseur />} />
           <Route path="/livraisons-fournisseur" element={<LivraisonsFournisseur />} />
-          <Route path="/catalogue-fournisseur" element={<CatalogueFournisseur />} />
           <Route path="/profil-fournisseur" element={<ProfilFournisseur />} />
           <Route path="/notifications-fournisseur" element={<NotificationsFournisseur />} />
           <Route path="/assistant-fournisseur" element={<AssistantFournisseur />} />

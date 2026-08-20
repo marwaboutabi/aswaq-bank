@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, ArrowLeftRight, Receipt, Star, Bell, Bot, User, LogOut, Search, ChevronDown,
@@ -16,7 +16,6 @@ const NAV_ITEMS = [
     { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur' },
     { icon: CreditCard, label: 'Paiements', to: '/paiements-fournisseur' },
     { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' },
-    { icon: Layers, label: 'Catalogue', to: '/catalogue-fournisseur' },
    { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' , active: true },
     { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur'},
     { icon: User, label: 'Profil & Paramètres', to: '/profil-fournisseur' },
@@ -347,9 +346,44 @@ const NOTIFICATION_DETAILS = {
 export default function NotificationsFournisseur() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // State pour stocker les informations de l'utilisateur connecté
+  const [user, setUser] = useState(null);
+
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedNotif, setSelectedNotif] = useState(null);
+
+  // Chargement du profil utilisateur au montage du composant
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            return;
+        }
+
+        const response = await fetch('http://localhost:8080/api/users/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Impossible de récupérer le profil');
+        }
+
+        const data = await response.json();
+        setUser(data);
+      } catch (error) {
+        console.error('Erreur récupération utilisateur:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const newOrdersCount = notifications.filter((n) => n.type === 'orders' && !n.read).length;
@@ -389,6 +423,16 @@ export default function NotificationsFournisseur() {
       purple: 'notif-badge-purple',
     };
     return colorMap[color] || 'notif-badge-blue';
+  };
+
+  // Helper pour générer les initiales si l'utilisateur est chargé
+  const getInitials = () => {
+    if (!user) return 'AS'; // Fallback par défaut (Atlas Supply)
+    const prenom = user.prenom || user.firstName || '';
+    const nom = user.nom || user.lastName || '';
+    const firstLetter = prenom.charAt(0).toUpperCase();
+    const lastLetter = nom.charAt(0).toUpperCase();
+    return `${firstLetter}${lastLetter}` || 'U';
   };
 
   return (
@@ -451,9 +495,15 @@ export default function NotificationsFournisseur() {
               {unreadCount > 0 && <span className="dash-badge">{unreadCount}</span>}
             </button>
             <div className="fourn-user-chip" onClick={() => navigate('/parametres-fournisseur')}>
-              <div className="fourn-user-avatar">AS</div>
+              {/* Avatar avec initiales dynamiques */}
+              <div className="fourn-user-avatar">{getInitials()}</div>
               <div className="fourn-user-info">
-                <span className="fourn-user-name">Atlas Supply</span>
+                {/* Affichage dynamique Nom Prénom */}
+                <span className="fourn-user-name">
+                  {user
+                    ? `${user.prenom || user.firstName || ''} ${user.nom || user.lastName || ''}`.trim()
+                    : 'Atlas Supply'}
+                </span>
                 <span className="fourn-user-role">Fournisseur</span>
               </div>
               <ChevronDown size={16} />

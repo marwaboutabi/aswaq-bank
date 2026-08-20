@@ -1,29 +1,28 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Star, User, LogOut, Search, ChevronDown, ChevronRight,
   Camera, Mail, Phone, Shield, Smartphone, History, Lock,
-  Globe, DollarSign, Monitor,  FileText, 
+  Globe, DollarSign, Monitor, FileText,
   MessageCircle, AlertTriangle, X, Check, Edit3,
-  Package, Users, Truck, ShoppingCart, CreditCard, Layers,
-  Bot, Bell ,Building2
+  Package, Truck, ShoppingCart, CreditCard, Layers,
+  Bot, Bell, Building2
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
-import './ProfilCom.css'; 
+import axiosClient from '../services/api';
+import './ProfilCom.css';
 import './DashboardClient.css';
 
 const NAV_ITEMS = [
-    { icon: Home, label: 'Accueil', to: '/accueil-fournisseur' },
-    { icon: Package, label: 'Produits', to: '/produits-fournisseur' },
-    { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur' },
-    { icon: CreditCard, label: 'Paiements', to: '/paiements-fournisseur' },
-    { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' },
-    { icon: Layers, label: 'Catalogue', to: '/catalogue-fournisseur' },
-   { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
-    { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur' },
-    { icon: User, label: 'Profil & Paramètres', to: '/profil-fournisseur' , active: true},
-
-  ];
+  { icon: Home, label: 'Accueil', to: '/accueil-fournisseur' },
+  { icon: Package, label: 'Produits', to: '/produits-fournisseur' },
+  { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur' },
+  { icon: CreditCard, label: 'Paiements', to: '/paiements-fournisseur' },
+  { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' },
+  { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
+  { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur' },
+  { icon: User, label: 'Profil & Paramètres', to: '/profil-fournisseur', active: true },
+];
 
 const SECURITY_ITEMS = [
   { id: 'password', icon: Lock, label: 'Modifier le mot de passe', desc: 'Dernière modification il y a 3 mois' },
@@ -32,7 +31,7 @@ const SECURITY_ITEMS = [
 ];
 
 const NOTIFICATION_PREFS = [
-  { id: 'orders', label: 'Nouvelles commandes', desc: 'Recevoir une notification lorsqu\'un commerçant passe une commande', default: true },
+  { id: 'orders', label: 'Nouvelles commandes', desc: "Recevoir une notification lorsqu'un commerçant passe une commande", default: true },
   { id: 'delivery', label: 'Livraisons', desc: 'Suivi des expéditions et livraisons', default: true },
   { id: 'payments', label: 'Paiements', desc: 'Versements et paiements reçus', default: true },
   { id: 'stock', label: 'Stock', desc: 'Alertes de stock faible', default: true },
@@ -42,7 +41,7 @@ const NOTIFICATION_PREFS = [
 
 const PREFERENCE_ITEMS = [
   { id: 'language', icon: Globe, label: 'Langue', value: 'Français', options: ['Français', 'Arabe', 'English'] },
-  { id: 'currency', icon: DollarSign, label: 'Devise', value: 'MAD', options: ['MAD', 'EUR', 'USD'] }, // <-- CORRECTION: Ajout de icon: DollarSign
+  { id: 'currency', icon: DollarSign, label: 'Devise', value: 'MAD', options: ['MAD', 'EUR', 'USD'] },
   { id: 'theme', icon: Monitor, label: 'Apparence', value: 'Clair', options: ['Clair', 'Sombre', 'Automatique'] },
 ];
 
@@ -53,7 +52,6 @@ const HELP_ITEMS = [
   { id: 'contact', icon: MessageCircle, label: 'Contacter le support', desc: 'Assistance dédiée aux fournisseurs' },
 ];
 
-// Toggle component
 function Toggle({ checked, onChange }) {
   return (
     <button
@@ -66,10 +64,24 @@ function Toggle({ checked, onChange }) {
   );
 }
 
+const EMPTY_EDIT_FORM = {
+  nom: '', prenom: '', telephone: '', companyName: '', activitySector: '', address: '', city: '', ice: '', registreCommerce: '',
+};
+
 export default function ProfilFournisseur() {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
+  // State pour stocker les informations de l'utilisateur connecté (pour le header)
+  const [user, setUser] = useState(null);
+
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const [editForm, setEditForm] = useState(EMPTY_EDIT_FORM);
+
   const [notifPrefs, setNotifPrefs] = useState(
     NOTIFICATION_PREFS.reduce((acc, p) => ({ ...acc, [p.id]: p.default }), {})
   );
@@ -81,6 +93,88 @@ export default function ProfilFournisseur() {
   const [activeModal, setActiveModal] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Chargement du profil utilisateur pour le header (via fetch standard)
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            return;
+        }
+
+        const response = await fetch('http://localhost:8080/api/users/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Impossible de récupérer le profil');
+        }
+
+        const data = await response.json();
+        setUser(data);
+      } catch (error) {
+        console.error('Erreur récupération utilisateur:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await axiosClient.get('/users/me');
+        setProfile(res.data);
+      } catch (err) {
+        console.error(err);
+        setError("Impossible de charger le profil.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const openEditModal = () => {
+    if (!profile) return;
+    setEditForm({
+      nom: profile.nom || '',
+      prenom: profile.prenom || '',
+      telephone: profile.telephone || '',
+      companyName: profile.companyName || '',
+      activitySector: profile.activitySector || '',
+      address: profile.address || '',
+      city: profile.city || '',
+      ice: profile.ice || '',
+      registreCommerce: profile.registreCommerce || '',
+    });
+    setActiveModal('profile');
+  };
+
+  const updateEditForm = (field) => (e) =>
+    setEditForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const handleSaveProfile = async () => {
+    try {
+      setSaving(true);
+      const res = await axiosClient.put('/users/me', editForm);
+      setProfile(res.data);
+      // Mettre à jour aussi l'user du header si nécessaire
+      setUser(res.data); 
+      setActiveModal(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleNotifChange = (id) => {
     setNotifPrefs((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -91,6 +185,27 @@ export default function ProfilFournisseur() {
 
   const handleLogout = () => {
     window.location.href = '/';
+  };
+
+  // Helper pour générer les initiales si l'utilisateur est chargé
+  const getInitials = () => {
+    // Priorité à user (header), sinon profile (détails)
+    const currentUser = user || profile;
+    if (!currentUser) return '...';
+    
+    const prenom = currentUser.prenom || currentUser.firstName || '';
+    const nom = currentUser.nom || currentUser.lastName || '';
+    const firstLetter = prenom.charAt(0).toUpperCase();
+    const lastLetter = nom.charAt(0).toUpperCase();
+    
+    return `${firstLetter}${lastLetter}` || 'F';
+  };
+
+  // Helper pour le nom complet affiché
+  const getFullName = () => {
+    const currentUser = user || profile;
+    if (!currentUser) return '...';
+    return `${currentUser.prenom || currentUser.firstName || ''} ${currentUser.nom || currentUser.lastName || ''}`.trim();
   };
 
   return (
@@ -122,7 +237,7 @@ export default function ProfilFournisseur() {
         </nav>
         <div className="dash-help-card">
           <div className="dash-help-icon">
-            <Bot size={20} /> {/* <-- CORRECTION: Réajout de l'icône Bot */}
+            <Bot size={20} />
           </div>
           <p className="dash-help-title">Besoin d'aide ?</p>
           <p className="dash-help-text">Notre assistant IA est là pour vous aider</p>
@@ -135,7 +250,6 @@ export default function ProfilFournisseur() {
 
       {/* Main */}
       <main className="dash-main">
-        {/* Header */}
         <header className="dash-topbar">
           <div>
             <h1 className="dash-greeting">Profil & Paramètres</h1>
@@ -148,18 +262,22 @@ export default function ProfilFournisseur() {
               <Search size={16} />
               <input type="text" placeholder="Rechercher..." />
             </div>
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="dash-icon-button"
               onClick={() => navigate('/notifications-fournisseur')}
             >
-              <Bell size={18} /> {/* <-- CORRECTION: Réajout de l'icône Bell */}
+              <Bell size={18} />
               <span className="dash-badge">3</span>
             </button>
             <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
+              {/* Avatar avec initiales dynamiques */}
+              <div className="dash-user-avatar">{getInitials()}</div>
               <div className="dash-user-info">
-                <span className="dash-user-name">Marwa Boutabi</span>
+                {/* Affichage dynamique Nom Prénom */}
+                <span className="dash-user-name">
+                  {getFullName()}
+                </span>
                 <span className="dash-user-role">Fournisseur</span>
               </div>
               <ChevronDown size={16} />
@@ -168,187 +286,203 @@ export default function ProfilFournisseur() {
         </header>
 
         <div className="profil-container">
-          {/* Section 1 : Mon profil */}
-          <section className="profil-section">
-            <div className="profil-card profil-profile-card">
-              <div className="profil-profile-header">
-                <div className="profil-avatar-wrapper">
-                  <div className="profil-avatar">AD</div>
-                  <button type="button" className="profil-avatar-edit">
-                    <Camera size={14} />
-                  </button>
-                </div>
-                <div className="profil-profile-info">
-                  <h2 className="profil-profile-name">Marwa Boutabi</h2>
-                  <p className="profil-profile-role" style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '4px', fontWeight: '500' }}>
-                    Responsable Fournisseur • Atlas Distribution SARL
-                  </p>
-                  <div className="profil-profile-details" style={{ marginTop: '8px' }}>
-                    <div className="profil-detail-item">
-                      <Mail size={14} />
-                      <span>contact@atlas-distribution.ma</span>
+          {loading && <p style={{ padding: '16px' }}>Chargement du profil...</p>}
+          {!loading && error && <p style={{ padding: '16px', color: '#dc2626' }}>{error}</p>}
+
+          {!loading && !error && profile && (
+            <>
+              {/* Section 1 : Mon profil */}
+              <section className="profil-section">
+                <div className="profil-card profil-profile-card">
+                  <div className="profil-profile-header">
+                    <div className="profil-avatar-wrapper">
+                      <div className="profil-avatar">{getInitials()}</div>
+                      <button type="button" className="profil-avatar-edit">
+                        <Camera size={14} />
+                      </button>
                     </div>
-                    <div className="profil-detail-item">
-                      <Phone size={14} />
-                      <span>+212 6 55 44 33 22</span>
-                    </div>
-                    <div className="profil-detail-item">
-                      <Globe size={14} />
-                      <span>Zone Industrielle Ain Sebaa, Casablanca</span>
-                    </div>
-                    <div className="profil-detail-item">
-                      <FileText size={14} />
-                      <span>ICE : 001234567890123 • Catégorie : Produits alimentaires</span>
+                    <div className="profil-profile-info">
+                      <h2 className="profil-profile-name">
+                        {getFullName()}
+                      </h2>
+                      <p className="profil-profile-role" style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '4px', fontWeight: '500' }}>
+                        {profile.companyName ? `Responsable Fournisseur • ${profile.companyName}` : 'Responsable Fournisseur'}
+                      </p>
+                      <div className="profil-profile-details" style={{ marginTop: '8px' }}>
+                        <div className="profil-detail-item">
+                          <Mail size={14} />
+                          <span>{profile.email}</span>
+                        </div>
+                        <div className="profil-detail-item">
+                          <Phone size={14} />
+                          <span>{profile.telephone || '—'}</span>
+                        </div>
+                        {(profile.address || profile.city) && (
+                          <div className="profil-detail-item">
+                            <Globe size={14} />
+                            <span>{[profile.address, profile.city].filter(Boolean).join(', ')}</span>
+                          </div>
+                        )}
+                        {(profile.ice || profile.activitySector) && (
+                          <div className="profil-detail-item">
+                            <FileText size={14} />
+                            <span>
+                              {profile.ice ? `ICE : ${profile.ice}` : ''}
+                              {profile.ice && profile.activitySector ? ' • ' : ''}
+                              {profile.activitySector ? `Catégorie : ${profile.activitySector}` : ''}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="profil-edit-btn"
-                onClick={() => setActiveModal('profile')}
-              >
-                <Edit3 size={16} />
-                Modifier les informations de l'entreprise
-              </button>
-            </div>
-          </section>
-
-          {/* Section 2 : Sécurité */}
-          <section className="profil-section">
-            <h3 className="profil-section-title">Sécurité du compte</h3>
-            <div className="profil-card">
-              {SECURITY_ITEMS.map((item, idx) => {
-                const Icon = item.icon;
-                return (
                   <button
-                    key={item.id}
                     type="button"
-                    className={`profil-list-item ${idx < SECURITY_ITEMS.length - 1 ? '' : 'profil-list-item-last'}`}
-                    onClick={() => {
-                      if (item.id === 'password') {
-                        navigate('/reset-password');
-                      } else {
-                        setActiveModal(item.id);
-                      }
-                    }}
+                    className="profil-edit-btn"
+                    onClick={openEditModal}
                   >
-                    <div className="profil-list-icon">
-                      <Icon size={18} />
-                    </div>
-                    <div className="profil-list-content">
-                      <p className="profil-list-label">{item.label}</p>
-                      <p className="profil-list-desc">{item.desc}</p>
-                    </div>
-                    {item.badge && <span className="profil-badge profil-badge-success">{item.badge}</span>}
-                    <ChevronRight size={16} className="profil-list-arrow" />
+                    <Edit3 size={16} />
+                    Modifier les informations de l'entreprise
                   </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Section 3 : Notifications */}
-          <section className="profil-section">
-            <h3 className="profil-section-title">Notifications</h3>
-            <div className="profil-card">
-              {NOTIFICATION_PREFS.map((pref, idx) => (
-                <div
-                  key={pref.id}
-                  className={`profil-list-item ${idx < NOTIFICATION_PREFS.length - 1 ? '' : 'profil-list-item-last'}`}
-                >
-                  <div className="profil-list-content">
-                    <p className="profil-list-label">{pref.label}</p>
-                    <p className="profil-list-desc">{pref.desc}</p>
-                  </div>
-                  <Toggle
-                    checked={notifPrefs[pref.id]}
-                    onChange={() => handleNotifChange(pref.id)}
-                  />
                 </div>
-              ))}
-            </div>
-          </section>
+              </section>
 
-          {/* Section 4 : Préférences */}
-          <section className="profil-section">
-            <h3 className="profil-section-title">Préférences d'affichage</h3>
-            <div className="profil-card">
-              {PREFERENCE_ITEMS.map((pref, idx) => {
-                const Icon = pref.icon;
-                return (
-                  <div
-                    key={pref.id}
-                    className={`profil-list-item ${idx < PREFERENCE_ITEMS.length - 1 ? '' : 'profil-list-item-last'}`}
-                  >
-                    <div className="profil-list-icon">
-                      <Icon size={18} />
-                    </div>
-                    <div className="profil-list-content">
-                      <p className="profil-list-label">{pref.label}</p>
-                    </div>
-                    <select
-                      className="profil-select"
-                      value={preferences[pref.id]}
-                      onChange={(e) => handlePreferenceChange(pref.id, e.target.value)}
+              {/* Section 2 : Sécurité */}
+              <section className="profil-section">
+                <h3 className="profil-section-title">Sécurité du compte</h3>
+                <div className="profil-card">
+                  {SECURITY_ITEMS.map((item, idx) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={`profil-list-item ${idx < SECURITY_ITEMS.length - 1 ? '' : 'profil-list-item-last'}`}
+                        onClick={() => {
+                          if (item.id === 'password') {
+                            navigate('/reset-password');
+                          } else {
+                            setActiveModal(item.id);
+                          }
+                        }}
+                      >
+                        <div className="profil-list-icon">
+                          <Icon size={18} />
+                        </div>
+                        <div className="profil-list-content">
+                          <p className="profil-list-label">{item.label}</p>
+                          <p className="profil-list-desc">{item.desc}</p>
+                        </div>
+                        <ChevronRight size={16} className="profil-list-arrow" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Section 3 : Notifications */}
+              <section className="profil-section">
+                <h3 className="profil-section-title">Notifications</h3>
+                <div className="profil-card">
+                  {NOTIFICATION_PREFS.map((pref, idx) => (
+                    <div
+                      key={pref.id}
+                      className={`profil-list-item ${idx < NOTIFICATION_PREFS.length - 1 ? '' : 'profil-list-item-last'}`}
                     >
-                      {pref.options.map((opt) => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Section 5 : Aide & Informations */}
-          <section className="profil-section">
-            <h3 className="profil-section-title">Aide & Informations légales</h3>
-            <div className="profil-card">
-              {HELP_ITEMS.map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`profil-list-item ${idx < HELP_ITEMS.length - 1 ? '' : 'profil-list-item-last'}`}
-                    onClick={() => {
-                      if (item.id === 'terms') {
-                        navigate('/conditions-generales');
-                      } else if (item.id === 'privacy') {
-                        navigate('/politique-confidentialite');
-                      }
-                    }}
-                  >
-                    <div className="profil-list-icon">
-                      <Icon size={18} />
+                      <div className="profil-list-content">
+                        <p className="profil-list-label">{pref.label}</p>
+                        <p className="profil-list-desc">{pref.desc}</p>
+                      </div>
+                      <Toggle
+                        checked={notifPrefs[pref.id]}
+                        onChange={() => handleNotifChange(pref.id)}
+                      />
                     </div>
-                    <div className="profil-list-content">
-                      <p className="profil-list-label">{item.label}</p>
-                      <p className="profil-list-desc">{item.desc}</p>
-                    </div>
-                    <ChevronRight size={16} className="profil-list-arrow" />
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+                  ))}
+                </div>
+              </section>
 
-          {/* Section 6 : Déconnexion */}
-          <section className="profil-section profil-logout-section">
-            <button type="button" className="profil-logout-btn" onClick={handleLogout}>
-              <LogOut size={18} />
-              Se déconnecter
-            </button>
-            <button
-              type="button"
-              className="profil-delete-link"
-              onClick={() => setShowDeleteConfirm(true)}
-            >
-              Fermer mon compte fournisseur
-            </button>
-          </section>
+              {/* Section 4 : Préférences */}
+              <section className="profil-section">
+                <h3 className="profil-section-title">Préférences d'affichage</h3>
+                <div className="profil-card">
+                  {PREFERENCE_ITEMS.map((pref, idx) => {
+                    const Icon = pref.icon;
+                    return (
+                      <div
+                        key={pref.id}
+                        className={`profil-list-item ${idx < PREFERENCE_ITEMS.length - 1 ? '' : 'profil-list-item-last'}`}
+                      >
+                        <div className="profil-list-icon">
+                          <Icon size={18} />
+                        </div>
+                        <div className="profil-list-content">
+                          <p className="profil-list-label">{pref.label}</p>
+                        </div>
+                        <select
+                          className="profil-select"
+                          value={preferences[pref.id]}
+                          onChange={(e) => handlePreferenceChange(pref.id, e.target.value)}
+                        >
+                          {pref.options.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Section 5 : Aide & Informations */}
+              <section className="profil-section">
+                <h3 className="profil-section-title">Aide & Informations légales</h3>
+                <div className="profil-card">
+                  {HELP_ITEMS.map((item, idx) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={`profil-list-item ${idx < HELP_ITEMS.length - 1 ? '' : 'profil-list-item-last'}`}
+                        onClick={() => {
+                          if (item.id === 'terms') {
+                            navigate('/conditions-generales');
+                          } else if (item.id === 'privacy') {
+                            navigate('/politique-confidentialite');
+                          }
+                        }}
+                      >
+                        <div className="profil-list-icon">
+                          <Icon size={18} />
+                        </div>
+                        <div className="profil-list-content">
+                          <p className="profil-list-label">{item.label}</p>
+                          <p className="profil-list-desc">{item.desc}</p>
+                        </div>
+                        <ChevronRight size={16} className="profil-list-arrow" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Section 6 : Déconnexion */}
+              <section className="profil-section profil-logout-section">
+                <button type="button" className="profil-logout-btn" onClick={handleLogout}>
+                  <LogOut size={18} />
+                  Se déconnecter
+                </button>
+                <button
+                  type="button"
+                  className="profil-delete-link"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Fermer mon compte fournisseur
+                </button>
+              </section>
+            </>
+          )}
         </div>
       </main>
 
@@ -364,45 +498,46 @@ export default function ProfilFournisseur() {
             </div>
             <div className="profil-modal-body">
               <div className="profil-modal-avatar">
-                <div className="profil-avatar profil-avatar-large">AD</div>
+                <div className="profil-avatar profil-avatar-large">{getInitials()}</div>
                 <button type="button" className="profil-avatar-edit-btn">
                   <Camera size={14} />
                   Changer le logo
                 </button>
               </div>
-              <label className="profil-modal-label">Nom du responsable</label>
-              <input type="text" className="profil-modal-input" defaultValue="Marwa Boutabi" />
-              
-              <label className="profil-modal-label">Nom de l'entreprise</label>
-              <input type="text" className="profil-modal-input" defaultValue="Atlas Distribution SARL" />
-              
+
+              <label className="profil-modal-label">Nom</label>
+              <input type="text" className="profil-modal-input" value={editForm.nom} onChange={updateEditForm('nom')} />
+
+              <label className="profil-modal-label">Prénom</label>
+              <input type="text" className="profil-modal-input" value={editForm.prenom} onChange={updateEditForm('prenom')} />
+
               <label className="profil-modal-label">Adresse e-mail professionnelle</label>
-              <input type="email" className="profil-modal-input" defaultValue="contact@atlas-distribution.ma" />
-              
+              <input type="email" className="profil-modal-input" value={profile?.email || ''} disabled />
+
               <label className="profil-modal-label">Numéro de téléphone professionnel</label>
-              <input type="tel" className="profil-modal-input" defaultValue="+212 6 55 44 33 22" />
+              <input type="tel" className="profil-modal-input" value={editForm.telephone} onChange={updateEditForm('telephone')} />
+
+              <label className="profil-modal-label">Nom de l'entreprise</label>
+              <input type="text" className="profil-modal-input" value={editForm.companyName} onChange={updateEditForm('companyName')} />
+
+              <label className="profil-modal-label">Secteur d'activité</label>
+              <input type="text" className="profil-modal-input" value={editForm.activitySector} onChange={updateEditForm('activitySector')} />
 
               <label className="profil-modal-label">Adresse</label>
-              <input type="text" className="profil-modal-input" defaultValue="Zone Industrielle Ain Sebaa" />
+              <input type="text" className="profil-modal-input" value={editForm.address} onChange={updateEditForm('address')} />
 
               <label className="profil-modal-label">Ville</label>
-              <input type="text" className="profil-modal-input" defaultValue="Casablanca" />
+              <input type="text" className="profil-modal-input" value={editForm.city} onChange={updateEditForm('city')} />
 
               <label className="profil-modal-label">ICE</label>
-              <input type="text" className="profil-modal-input" defaultValue="001234567890123" />
+              <input type="text" className="profil-modal-input" value={editForm.ice} onChange={updateEditForm('ice')} />
 
-              <label className="profil-modal-label">IF</label>
-              <input type="text" className="profil-modal-input" defaultValue="12345678" />
-
-              <label className="profil-modal-label">Catégorie</label>
-              <input type="text" className="profil-modal-input" defaultValue="Produits alimentaires" />
-
-              <label className="profil-modal-label">Site Web</label>
-              <input type="url" className="profil-modal-input" defaultValue="https://atlas-distribution.ma" />
+              <label className="profil-modal-label">Registre de commerce</label>
+              <input type="text" className="profil-modal-input" value={editForm.registreCommerce} onChange={updateEditForm('registreCommerce')} />
             </div>
-            <button type="button" className="profil-modal-submit" onClick={() => setActiveModal(null)}>
+            <button type="button" className="profil-modal-submit" onClick={handleSaveProfile} disabled={saving}>
               <Check size={16} />
-              Enregistrer les modifications
+              {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
             </button>
           </div>
         </div>

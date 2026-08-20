@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Package, ShoppingCart, CreditCard, Truck,  User, Settings,
@@ -105,7 +105,6 @@ const QUICK_ACTIONS = [
   { label: 'Voir les commandes', icon: ShoppingBag, tone: 'blue', to: '/commandes-fournisseur' },
   { label: 'Paiements reçus', icon: CreditCard, tone: 'purple', to: '/paiements-fournisseur' },
   { label: 'Gérer les livraisons', icon: Truck, tone: 'orange', to: '/livraisons-fournisseur' },
-  { label: 'Catalogue produits', icon: Package, tone: 'cyan', to: '/catalogue-fournisseur' },
 ];
 
 function DonutChart({ data, total }) {
@@ -200,8 +199,53 @@ function SalesTrendChart({ data }) {
 export default function AccueilFournisseur() {
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // State pour stocker les informations de l'utilisateur connecté
+  const [user, setUser] = useState(null);
+
+  // Chargement du profil utilisateur au montage du composant
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            // Si pas de token, on pourrait rediriger vers le login, mais ici on reste silencieux
+            return;
+        }
+
+        const response = await fetch('http://localhost:8080/api/users/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Impossible de récupérer le profil');
+        }
+
+        const data = await response.json();
+        setUser(data);
+      } catch (error) {
+        console.error('Erreur récupération utilisateur:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
 
   const totalCategorySales = CATEGORY_SALES.reduce((sum, c) => sum + c.amount, 0);
+
+  // Helper pour générer les initiales si l'utilisateur est chargé
+  const getInitials = () => {
+    if (!user) return 'MB'; // Fallback par défaut
+    const prenom = user.prenom || user.firstName || '';
+    const nom = user.nom || user.lastName || '';
+    const firstLetter = prenom.charAt(0).toUpperCase();
+    const lastLetter = nom.charAt(0).toUpperCase();
+    return `${firstLetter}${lastLetter}` || 'U';
+  };
 
   const NAV_ITEMS = [
     { icon: Home, label: 'Accueil', to: '/accueil-fournisseur' , active: true},
@@ -209,7 +253,6 @@ export default function AccueilFournisseur() {
     { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur' },
     { icon: CreditCard, label: 'Paiements', to: '/paiements-fournisseur' },
     { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' },
-    { icon: Layers, label: 'Catalogue', to: '/catalogue-fournisseur' },
    { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
     { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur' },
     { icon: User, label: 'Profil & Paramètres', to: '/profil-fournisseur' },
@@ -258,7 +301,10 @@ export default function AccueilFournisseur() {
       <main className="four-main">
         <header className="four-topbar">
           <div>
-            <h1 className="four-greeting">Bonjour, Marwa 👋</h1>
+            {/* Affichage dynamique du prénom */}
+            <h1 className="four-greeting">
+              Bonjour, {user?.prenom || user?.firstName || 'Fournisseur'} 👋
+            </h1>
             <p className="four-greeting-sub">Voici un aperçu de votre activité fournisseur.</p>
           </div>
 
@@ -276,9 +322,15 @@ export default function AccueilFournisseur() {
               <span className="four-badge">3</span>
             </button>
             <div className="four-user-chip">
-              <div className="four-user-avatar">MB</div>
+              {/* Avatar avec initiales dynamiques */}
+              <div className="four-user-avatar">{getInitials()}</div>
               <div className="four-user-info">
-                <span className="four-user-name">Marwa Boutabi</span>
+                {/* Affichage dynamique Nom Prénom */}
+                <span className="four-user-name">
+                  {user
+                    ? `${user.prenom || user.firstName || ''} ${user.nom || user.lastName || ''}`.trim()
+                    : 'Fournisseur'}
+                </span>
                 <span className="four-user-role">Fournisseur</span>
               </div>
               <ChevronDown size={16} />

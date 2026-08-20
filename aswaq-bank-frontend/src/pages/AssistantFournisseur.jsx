@@ -16,7 +16,6 @@ const NAV_ITEMS = [
     { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur' },
     { icon: CreditCard, label: 'Paiements', to: '/paiements-fournisseur' },
     { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' },
-    { icon: Layers, label: 'Catalogue', to: '/catalogue-fournisseur' },
    { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
     { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur', active: true },
     { icon: User, label: 'Profil & Paramètres', to: '/profil-fournisseur' },
@@ -186,6 +185,9 @@ export default function AssistantFournisseur() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  // State pour stocker les informations de l'utilisateur connecté
+  const [user, setUser] = useState(null);
+
   const [messages, setMessages] = useState([
     {
       id: 0,
@@ -198,9 +200,50 @@ export default function AssistantFournisseur() {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
+  // Chargement du profil utilisateur au montage du composant
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            return;
+        }
+
+        const response = await fetch('http://localhost:8080/api/users/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Impossible de récupérer le profil');
+        }
+
+        const data = await response.json();
+        setUser(data);
+      } catch (error) {
+        console.error('Erreur récupération utilisateur:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
+
+  // Helper pour générer les initiales si l'utilisateur est chargé
+  const getInitials = () => {
+    if (!user) return 'AD'; // Fallback par défaut (Atlas Distribution)
+    const prenom = user.prenom || user.firstName || '';
+    const nom = user.nom || user.lastName || '';
+    const firstLetter = prenom.charAt(0).toUpperCase();
+    const lastLetter = nom.charAt(0).toUpperCase();
+    return `${firstLetter}${lastLetter}` || 'U';
+  };
 
   const handleSend = async (text) => {
     const question = text || inputValue.trim();
@@ -326,9 +369,15 @@ export default function AssistantFournisseur() {
               <span className="dash-badge">4</span>
             </button>
             <div className="fourn-user-chip" onClick={() => navigate('/parametres-fournisseur')}>
-              <div className="fourn-user-avatar">AD</div>
+              {/* Avatar avec initiales dynamiques */}
+              <div className="fourn-user-avatar">{getInitials()}</div>
               <div className="fourn-user-info">
-                <span className="fourn-user-name">Atlas Distribution</span>
+                {/* Affichage dynamique Nom Prénom */}
+                <span className="fourn-user-name">
+                  {user
+                    ? `${user.prenom || user.firstName || ''} ${user.nom || user.lastName || ''}`.trim()
+                    : 'Atlas Distribution'}
+                </span>
                 <span className="fourn-user-role">Fournisseur</span>
               </div>
               <ChevronDown size={16} />
@@ -375,7 +424,7 @@ export default function AssistantFournisseur() {
                   </div>
                   {msg.sender === 'user' && (
                     <div className="assistant-avatar assistant-avatar-user">
-                      AD
+                      {getInitials()}
                     </div>
                   )}
                 </div>

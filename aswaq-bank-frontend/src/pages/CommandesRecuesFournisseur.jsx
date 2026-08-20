@@ -1,23 +1,31 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Home, Package, ShoppingCart, CreditCard, Truck, Layers, User, Settings,
-  HelpCircle, LogOut, Search, Bell, ChevronDown, ChevronLeft, ChevronRight,
+  Home, Package, ShoppingCart, CreditCard, Truck, User,
+  LogOut, Search, Bell, ChevronDown, ChevronLeft, ChevronRight,
   Building2, Download, Check, X, MoreVertical, Clock, ClipboardList,
-  CheckCircle2, Phone, MapPin, Hash, Bot
+  CheckCircle2, Phone, Hash, Bot
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
+import axiosClient from '../services/api';
 import './CommandesRecuesFournisseur.css';
 
-const STATUS_FLOW = ['En attente', 'Acceptée', 'En préparation', 'Expédiée', 'Livrée'];
-const TIMELINE_LABELS = ['Commande reçue', 'Commande acceptée', 'Préparation', 'Expédition', 'Livraison'];
+// Statuts backend -> présentation
+const STATUS_FLOW = ['EN_ATTENTE', 'EN_PREPARATION', 'EXPEDIEE', 'LIVREE'];
+const TIMELINE_LABELS = ['Commande reçue', 'Préparation', 'Expédition', 'Livraison'];
+const STATUS_LABELS = {
+  EN_ATTENTE: 'En attente',
+  EN_PREPARATION: 'En préparation',
+  EXPEDIEE: 'Expédiée',
+  LIVREE: 'Livrée',
+  ANNULEE: 'Annulée',
+};
 const STATUS_TONE = {
-  'En attente': 'orange',
-  'Acceptée': 'blue',
-  'En préparation': 'purple',
-  'Expédiée': 'cyan',
-  'Livrée': 'green',
-  'Refusée': 'red',
+  EN_ATTENTE: 'orange',
+  EN_PREPARATION: 'purple',
+  EXPEDIEE: 'cyan',
+  LIVREE: 'green',
+  ANNULEE: 'red',
 };
 
 const STATS_META = [
@@ -27,132 +35,23 @@ const STATS_META = [
   { key: 'livrees', icon: CheckCircle2, tone: 'green', label: 'Livrées' },
 ];
 
-const INITIAL_ORDERS = [
-  {
-    id: 'CMD-1025', commercant: 'Épicerie Atlas', date: '28/07/2026', phone: '06 61 23 45 67',
-    address: '12 Rue Ibn Battouta, Casablanca', statut: 'En attente',
-    items: [
-      { product: "Huile d'olive 1L", qty: 4, price: 75 },
-      { product: 'Sucre Blanc 1kg', qty: 10, price: 14 },
-      { product: 'Farine 1kg', qty: 10, price: 9 },
-      { product: 'Riz Basmati 1kg', qty: 10, price: 28 },
-      { product: 'Thé Vert 100g', qty: 6, price: 32 },
-    ],
-  },
-  {
-    id: 'CMD-1024', commercant: 'Market Plus', date: '27/07/2026', phone: '06 12 34 56 78',
-    address: '45 Boulevard Zerktouni, Casablanca', statut: 'En préparation',
-    items: [
-      { product: 'Café Moulu 250g', qty: 8, price: 48 },
-      { product: 'Lait UHT 1L', qty: 20, price: 7 },
-      { product: "Jus d'Orange 1L", qty: 12, price: 18 },
-    ],
-  },
-  {
-    id: 'CMD-1023', commercant: 'Bio Shop', date: '26/07/2026', phone: '06 98 76 54 32',
-    address: '7 Avenue Hassan II, Rabat', statut: 'Expédiée',
-    items: [
-      { product: "Huile d'olive 1L", qty: 6, price: 75 },
-      { product: 'Dentifrice 75ml', qty: 15, price: 16 },
-    ],
-  },
-  {
-    id: 'CMD-1022', commercant: 'Alimentation Nour', date: '25/07/2026', phone: '06 45 67 89 01',
-    address: '23 Rue Allal Ben Abdellah, Fès', statut: 'Livrée',
-    items: [
-      { product: 'Farine 1kg', qty: 20, price: 9 },
-      { product: 'Sucre Blanc 1kg', qty: 20, price: 14 },
-      { product: 'Thé Vert 100g', qty: 10, price: 32 },
-      { product: 'Savon Liquide 500ml', qty: 8, price: 22 },
-    ],
-  },
-  {
-    id: 'CMD-1021', commercant: 'Super Marché Al Amal', date: '25/07/2026', phone: '06 23 45 67 89',
-    address: '3 Rue Moulay Youssef, Marrakech', statut: 'Livrée',
-    items: [
-      { product: 'Riz Basmati 1kg', qty: 15, price: 28 },
-      { product: 'Café Moulu 250g', qty: 10, price: 48 },
-    ],
-  },
-  {
-    id: 'CMD-1020', commercant: 'Épicerie Chaabi', date: '24/07/2026', phone: '06 78 90 12 34',
-    address: '18 Rue Tarik Ibn Ziad, Tanger', statut: 'Refusée',
-    items: [
-      { product: 'Lait UHT 1L', qty: 30, price: 7 },
-      { product: "Jus d'Orange 1L", qty: 15, price: 18 },
-    ],
-  },
-  {
-    id: 'CMD-1019', commercant: 'Proxi Market', date: '23/07/2026', phone: '06 33 44 55 66',
-    address: '9 Avenue Mohammed V, Casablanca', statut: 'Acceptée',
-    items: [
-      { product: "Huile d'olive 1L", qty: 8, price: 75 },
-      { product: 'Farine 1kg', qty: 12, price: 9 },
-      { product: 'Dentifrice 75ml', qty: 10, price: 16 },
-    ],
-  },
-  {
-    id: 'CMD-1018', commercant: 'Alimentation Salam', date: '22/07/2026', phone: '06 55 66 77 88',
-    address: '31 Rue de Fès, Meknès', statut: 'En attente',
-    items: [
-      { product: 'Thé Vert 100g', qty: 12, price: 32 },
-      { product: 'Sucre Blanc 1kg', qty: 15, price: 14 },
-    ],
-  },
-  {
-    id: 'CMD-1017', commercant: 'Mini Marché Zineb', date: '21/07/2026', phone: '06 11 22 33 44',
-    address: '5 Rue Ibn Khaldoun, Agadir', statut: 'En préparation',
-    items: [
-      { product: 'Savon Liquide 500ml', qty: 10, price: 22 },
-      { product: 'Dentifrice 75ml', qty: 20, price: 16 },
-      { product: "Jus d'Orange 1L", qty: 10, price: 18 },
-    ],
-  },
-  {
-    id: 'CMD-1016', commercant: 'Épicerie Al Baraka', date: '20/07/2026', phone: '06 22 33 44 55',
-    address: '14 Rue Ibnou Sina, Oujda', statut: 'Livrée',
-    items: [
-      { product: "Huile d'olive 1L", qty: 10, price: 75 },
-      { product: 'Riz Basmati 1kg', qty: 10, price: 28 },
-    ],
-  },
-  {
-    id: 'CMD-1015', commercant: 'Superette Anfa', date: '19/07/2026', phone: '06 66 77 88 99',
-    address: '27 Boulevard Anfa, Casablanca', statut: 'Expédiée',
-    items: [
-      { product: 'Café Moulu 250g', qty: 6, price: 48 },
-      { product: 'Lait UHT 1L', qty: 25, price: 7 },
-    ],
-  },
-  {
-    id: 'CMD-1014', commercant: 'Épicerie Nouvelle', date: '18/07/2026', phone: '06 88 99 00 11',
-    address: '2 Rue Al Massira, Kénitra', statut: 'Refusée',
-    items: [
-      { product: 'Farine 1kg', qty: 25, price: 9 },
-      { product: 'Sucre Blanc 1kg', qty: 25, price: 14 },
-    ],
-  },
-];
-
 const PAGE_SIZE = 10;
 
-function computeTotals(items) {
-  const subtotal = items.reduce((sum, it) => sum + it.qty * it.price, 0);
-  const tva = subtotal * 0.2;
-  const total = subtotal + tva;
-  return { subtotal, tva, total };
+function fmt(n) {
+  return (n ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function fmt(n) {
-  return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('fr-FR');
 }
 
 function StatusBadge({ status }) {
-  return <span className={`cmd-four-badge-pill cmd-four-badge-pill-${STATUS_TONE[status]}`}>{status}</span>;
+  return <span className={`cmd-four-badge-pill cmd-four-badge-pill-${STATUS_TONE[status] || 'orange'}`}>{STATUS_LABELS[status] || status}</span>;
 }
 
 function OrderTimeline({ status }) {
-  const isRefused = status === 'Refusée';
+  const isRefused = status === 'ANNULEE';
   const currentIndex = STATUS_FLOW.indexOf(status);
 
   return (
@@ -173,71 +72,70 @@ function OrderTimeline({ status }) {
           </div>
         );
       })}
-      {isRefused && <span className="cmd-four-timeline-refused">Commande refusée</span>}
+      {isRefused && <span className="cmd-four-timeline-refused">Commande annulée</span>}
     </div>
   );
 }
 
 function OrderDetailModal({ order, onClose, onAccept, onRefuse, onAdvance }) {
-  const { subtotal, tva, total } = computeTotals(order.items);
-  const nextIndex = STATUS_FLOW.indexOf(order.statut) + 1;
-  const nextLabel = STATUS_FLOW[nextIndex];
-  const canAdvance = order.statut !== 'En attente' && order.statut !== 'Livrée' && order.statut !== 'Refusée' && nextLabel;
+  const nextIndex = STATUS_FLOW.indexOf(order.status) + 1;
+  const nextStatus = STATUS_FLOW[nextIndex];
+  const canAdvance = order.status !== 'EN_ATTENTE' && order.status !== 'LIVREE' && order.status !== 'ANNULEE' && nextStatus;
 
   return (
     <div className="cmd-four-modal-overlay" onClick={onClose}>
       <div className="cmd-four-modal" onClick={(e) => e.stopPropagation()}>
         <div className="cmd-four-modal-header">
-          <h3>Commande {order.id}</h3>
+          <h3>Commande {order.reference}</h3>
           <button type="button" className="cmd-four-modal-close" onClick={onClose}>
             <X size={18} />
           </button>
         </div>
 
         <div className="cmd-four-modal-body">
-          <OrderTimeline status={order.statut} />
+          <OrderTimeline status={order.status} />
 
           <div className="cmd-four-detail-grid">
             <div className="cmd-four-detail-item">
               <Hash size={14} />
               <div>
                 <span className="cmd-four-detail-label">Numéro de commande</span>
-                <span className="cmd-four-detail-value">{order.id}</span>
+                <span className="cmd-four-detail-value">{order.reference}</span>
               </div>
             </div>
             <div className="cmd-four-detail-item">
               <Clock size={14} />
               <div>
                 <span className="cmd-four-detail-label">Date</span>
-                <span className="cmd-four-detail-value">{order.date}</span>
+                <span className="cmd-four-detail-value">{formatDate(order.orderDate)}</span>
               </div>
             </div>
             <div className="cmd-four-detail-item">
               <ClipboardList size={14} />
               <div>
                 <span className="cmd-four-detail-label">Statut</span>
-                <StatusBadge status={order.statut} />
+                <StatusBadge status={order.status} />
               </div>
             </div>
             <div className="cmd-four-detail-item">
               <Building2 size={14} />
               <div>
                 <span className="cmd-four-detail-label">Commerçant</span>
-                <span className="cmd-four-detail-value">{order.commercant}</span>
+                <span className="cmd-four-detail-value">{order.merchantName}</span>
               </div>
             </div>
             <div className="cmd-four-detail-item">
               <Phone size={14} />
               <div>
                 <span className="cmd-four-detail-label">Téléphone</span>
-                <span className="cmd-four-detail-value">{order.phone}</span>
+                <span className="cmd-four-detail-value">{order.merchantPhone || '—'}</span>
               </div>
             </div>
             <div className="cmd-four-detail-item">
-              <MapPin size={14} />
+              <Clock size={14} />
               <div>
-                <span className="cmd-four-detail-label">Adresse de livraison</span>
-                <span className="cmd-four-detail-value">{order.address}</span>
+                <span className="cmd-four-detail-label">Livraison souhaitée</span>
+                <span className="cmd-four-detail-value">{order.deliveryDate || 'À définir'}</span>
               </div>
             </div>
           </div>
@@ -251,33 +149,25 @@ function OrderDetailModal({ order, onClose, onAccept, onRefuse, onAdvance }) {
               <span>Sous-total</span>
             </div>
             {order.items.map((it) => (
-              <div className="cmd-four-items-row" key={it.product}>
-                <span>{it.product}</span>
-                <span>{it.qty}</span>
-                <span>{fmt(it.price)} MAD</span>
-                <span>{fmt(it.qty * it.price)} MAD</span>
+              <div className="cmd-four-items-row" key={it.id}>
+                <span>{it.productName}</span>
+                <span>{it.quantity}</span>
+                <span>{fmt(it.unitPrice)} MAD</span>
+                <span>{fmt(it.subtotal)} MAD</span>
               </div>
             ))}
           </div>
 
           <div className="cmd-four-summary">
-            <div className="cmd-four-summary-row">
-              <span>Sous-total</span>
-              <span>{fmt(subtotal)} MAD</span>
-            </div>
-            <div className="cmd-four-summary-row">
-              <span>TVA (20%)</span>
-              <span>{fmt(tva)} MAD</span>
-            </div>
             <div className="cmd-four-summary-row cmd-four-summary-total">
               <span>Total TTC</span>
-              <span>{fmt(total)} MAD</span>
+              <span>{fmt(order.totalAmount)} MAD</span>
             </div>
           </div>
         </div>
 
         <div className="cmd-four-modal-actions">
-          {order.statut === 'En attente' && (
+          {order.status === 'EN_ATTENTE' && (
             <>
               <button type="button" className="cmd-four-btn cmd-four-btn-danger" onClick={() => onRefuse(order.id)}>
                 <X size={15} /> Refuser
@@ -289,7 +179,7 @@ function OrderDetailModal({ order, onClose, onAccept, onRefuse, onAdvance }) {
           )}
           {canAdvance && (
             <button type="button" className="cmd-four-btn cmd-four-btn-primary" onClick={() => onAdvance(order.id)}>
-              Marquer « {nextLabel} »
+              Marquer « {STATUS_LABELS[nextStatus]} »
             </button>
           )}
         </div>
@@ -302,12 +192,47 @@ export default function CommandesRecuesFournisseur() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [orders, setOrders] = useState(INITIAL_ORDERS);
+  // State pour stocker les informations de l'utilisateur connecté
+  const [user, setUser] = useState(null);
+
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+
+  // Chargement du profil utilisateur au montage du composant
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            return;
+        }
+
+        const response = await fetch('http://localhost:8080/api/users/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Impossible de récupérer le profil');
+        }
+
+        const data = await response.json();
+        setUser(data);
+      } catch (error) {
+        console.error('Erreur récupération utilisateur:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
 
   const NAV_ITEMS = [
     { icon: Home, label: 'Accueil', to: '/accueil-fournisseur' },
@@ -315,25 +240,40 @@ export default function CommandesRecuesFournisseur() {
     { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur', active: true },
     { icon: CreditCard, label: 'Paiements', to: '/paiements-fournisseur' },
     { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' },
-    { icon: Layers, label: 'Catalogue', to: '/catalogue-fournisseur' },
     { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
     { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur' },
     { icon: User, label: 'Profil & Paramètres', to: '/profil-fournisseur' },
   ];
 
+  const fetchOrders = async () => {
+    try {
+      setLoadingOrders(true);
+      const res = await axiosClient.get('/supplier/orders');
+      setOrders(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
   const stats = useMemo(() => ({
     total: orders.length,
-    attente: orders.filter((o) => o.statut === 'En attente').length,
-    preparation: orders.filter((o) => o.statut === 'En préparation').length,
-    livrees: orders.filter((o) => o.statut === 'Livrée').length,
+    attente: orders.filter((o) => o.status === 'EN_ATTENTE').length,
+    preparation: orders.filter((o) => o.status === 'EN_PREPARATION').length,
+    livrees: orders.filter((o) => o.status === 'LIVREE').length,
   }), [orders]);
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
       const matchesSearch =
-        o.id.toLowerCase().includes(search.trim().toLowerCase())
-        || o.commercant.toLowerCase().includes(search.trim().toLowerCase());
-      const matchesStatus = statusFilter === 'all' || o.statut === statusFilter;
+        (o.reference || '').toLowerCase().includes(search.trim().toLowerCase())
+        || (o.merchantName || '').toLowerCase().includes(search.trim().toLowerCase());
+      const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
   }, [orders, search, statusFilter]);
@@ -344,17 +284,34 @@ export default function CommandesRecuesFournisseur() {
 
   const resetPage = () => setPage(1);
 
-  const updateStatus = (id, statut) => {
-    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, statut } : o)));
-    setSelectedOrder((prev) => (prev && prev.id === id ? { ...prev, statut } : prev));
+  const updateStatus = async (id, status) => {
+    try {
+      const res = await axiosClient.patch(`/supplier/orders/${id}/status`, { status });
+      setOrders((prev) => prev.map((o) => (o.id === id ? res.data : o)));
+      setSelectedOrder((prev) => (prev && prev.id === id ? res.data : prev));
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Erreur lors de la mise à jour du statut.');
+    }
   };
 
-  const handleAccept = (id) => updateStatus(id, 'Acceptée');
-  const handleRefuse = (id) => updateStatus(id, 'Refusée');
+  // "Accepter" fait passer directement à EN_PREPARATION (déclenche la décrémentation du stock)
+  const handleAccept = (id) => updateStatus(id, 'EN_PREPARATION');
+  const handleRefuse = (id) => updateStatus(id, 'ANNULEE');
   const handleAdvance = (id) => {
     const order = orders.find((o) => o.id === id);
-    const nextIndex = STATUS_FLOW.indexOf(order.statut) + 1;
+    const nextIndex = STATUS_FLOW.indexOf(order.status) + 1;
     if (STATUS_FLOW[nextIndex]) updateStatus(id, STATUS_FLOW[nextIndex]);
+  };
+
+  // Helper pour générer les initiales si l'utilisateur est chargé
+  const getInitials = () => {
+    if (!user) return 'MB'; // Fallback par défaut
+    const prenom = user.prenom || user.firstName || '';
+    const nom = user.nom || user.lastName || '';
+    const firstLetter = prenom.charAt(0).toUpperCase();
+    const lastLetter = nom.charAt(0).toUpperCase();
+    return `${firstLetter}${lastLetter}` || 'U';
   };
 
   return (
@@ -402,18 +359,20 @@ export default function CommandesRecuesFournisseur() {
           </div>
 
           <div className="cmd-four-topbar-actions">
-            <div className="cmd-four-search">
-              <Search size={16} />
-              <input type="text" placeholder="Rechercher..." />
-            </div>
             <button type="button" className="cmd-four-icon-button" onClick={() => navigate('/notifications-fournisseur')}>
               <Bell size={18} />
               <span className="cmd-four-badge">3</span>
             </button>
             <div className="cmd-four-user-chip">
-              <div className="cmd-four-user-avatar">MB</div>
+              {/* Avatar avec initiales dynamiques */}
+              <div className="cmd-four-user-avatar">{getInitials()}</div>
               <div className="cmd-four-user-info">
-                <span className="cmd-four-user-name">Marwa Boutabi</span>
+                {/* Affichage dynamique Nom Prénom */}
+                <span className="cmd-four-user-name">
+                  {user
+                    ? `${user.prenom || user.firstName || ''} ${user.nom || user.lastName || ''}`.trim()
+                    : 'Fournisseur'}
+                </span>
                 <span className="cmd-four-user-role">Fournisseur</span>
               </div>
               <ChevronDown size={16} />
@@ -455,12 +414,11 @@ export default function CommandesRecuesFournisseur() {
               onChange={(e) => { setStatusFilter(e.target.value); resetPage(); }}
             >
               <option value="all">Toutes</option>
-              <option value="En attente">En attente</option>
-              <option value="Acceptée">Acceptée</option>
-              <option value="En préparation">En préparation</option>
-              <option value="Expédiée">Expédiée</option>
-              <option value="Livrée">Livrée</option>
-              <option value="Refusée">Refusée</option>
+              <option value="EN_ATTENTE">En attente</option>
+              <option value="EN_PREPARATION">En préparation</option>
+              <option value="EXPEDIEE">Expédiée</option>
+              <option value="LIVREE">Livrée</option>
+              <option value="ANNULEE">Annulée</option>
             </select>
           </div>
 
@@ -486,58 +444,57 @@ export default function CommandesRecuesFournisseur() {
                 </tr>
               </thead>
               <tbody>
-                {pageOrders.map((o) => {
-                  const { total } = computeTotals(o.items);
-                  return (
-                    <tr key={o.id}>
-                      <td className="cmd-four-ref">{o.id}</td>
-                      <td className="cmd-four-commercant">{o.commercant}</td>
-                      <td className="cmd-four-date">{o.date}</td>
-                      <td className="cmd-four-articles">{o.items.length}</td>
-                      <td className="cmd-four-total">{fmt(total)} MAD</td>
-                      <td><StatusBadge status={o.statut} /></td>
-                      <td>
-                        <div className="cmd-four-row-actions" onClick={(e) => e.stopPropagation()}>
-                          {/* ✅ Bouton œil SUPPRIMÉ */}
-                          {o.statut === 'En attente' && (
-                            <>
-                              <button type="button" className="cmd-four-action-btn cmd-four-action-btn-accept" title="Accepter" onClick={() => handleAccept(o.id)}>
-                                <Check size={15} />
-                              </button>
-                              <button type="button" className="cmd-four-action-btn cmd-four-action-btn-danger" title="Refuser" onClick={() => handleRefuse(o.id)}>
-                                <X size={15} />
-                              </button>
-                            </>
-                          )}
-                          <div className="cmd-four-menu-wrap">
-                            <button
-                              type="button"
-                              className="cmd-four-action-btn"
-                              title="Plus d'actions"
-                              onClick={() => setOpenMenuId(openMenuId === o.id ? null : o.id)}
-                            >
-                              <MoreVertical size={15} />
+                {loadingOrders && (
+                  <tr><td colSpan={7} className="cmd-four-empty-row">Chargement...</td></tr>
+                )}
+                {!loadingOrders && pageOrders.map((o) => (
+                  <tr key={o.id}>
+                    <td className="cmd-four-ref">{o.reference}</td>
+                    <td className="cmd-four-commercant">{o.merchantName}</td>
+                    <td className="cmd-four-date">{formatDate(o.orderDate)}</td>
+                    <td className="cmd-four-articles">{o.items.length}</td>
+                    <td className="cmd-four-total">{fmt(o.totalAmount)} MAD</td>
+                    <td><StatusBadge status={o.status} /></td>
+                    <td>
+                      <div className="cmd-four-row-actions" onClick={(e) => e.stopPropagation()}>
+                        {o.status === 'EN_ATTENTE' && (
+                          <>
+                            <button type="button" className="cmd-four-action-btn cmd-four-action-btn-accept" title="Accepter" onClick={() => handleAccept(o.id)}>
+                              <Check size={15} />
                             </button>
-                            {openMenuId === o.id && (
-                              <div className="cmd-four-menu">
-                                <button type="button" onClick={() => { setSelectedOrder(o); setOpenMenuId(null); }}>
-                                  Voir les détails
+                            <button type="button" className="cmd-four-action-btn cmd-four-action-btn-danger" title="Refuser" onClick={() => handleRefuse(o.id)}>
+                              <X size={15} />
+                            </button>
+                          </>
+                        )}
+                        <div className="cmd-four-menu-wrap">
+                          <button
+                            type="button"
+                            className="cmd-four-action-btn"
+                            title="Plus d'actions"
+                            onClick={() => setOpenMenuId(openMenuId === o.id ? null : o.id)}
+                          >
+                            <MoreVertical size={15} />
+                          </button>
+                          {openMenuId === o.id && (
+                            <div className="cmd-four-menu">
+                              <button type="button" onClick={() => { setSelectedOrder(o); setOpenMenuId(null); }}>
+                                Voir les détails
+                              </button>
+                              {STATUS_FLOW.indexOf(o.status) >= 0 && STATUS_FLOW.indexOf(o.status) < STATUS_FLOW.length - 1 && o.status !== 'EN_ATTENTE' && (
+                                <button type="button" onClick={() => { handleAdvance(o.id); setOpenMenuId(null); }}>
+                                  Marquer « {STATUS_LABELS[STATUS_FLOW[STATUS_FLOW.indexOf(o.status) + 1]]} »
                                 </button>
-                                {STATUS_FLOW.indexOf(o.statut) >= 0 && STATUS_FLOW.indexOf(o.statut) < STATUS_FLOW.length - 1 && o.statut !== 'En attente' && (
-                                  <button type="button" onClick={() => { handleAdvance(o.id); setOpenMenuId(null); }}>
-                                    Marquer « {STATUS_FLOW[STATUS_FLOW.indexOf(o.statut) + 1]} »
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
 
-                {pageOrders.length === 0 && (
+                {!loadingOrders && pageOrders.length === 0 && (
                   <tr>
                     <td colSpan={7} className="cmd-four-empty-row">Aucune commande ne correspond à votre recherche.</td>
                   </tr>

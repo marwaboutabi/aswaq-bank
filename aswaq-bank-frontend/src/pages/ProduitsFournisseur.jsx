@@ -165,7 +165,6 @@ export default function ProduitsFournisseur() {
     { icon: Home, label: 'Accueil', to: '/accueil-fournisseur' },
     { icon: Package, label: 'Produits', to: '/produits-fournisseur', active: true },
     { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur' },
-    { icon: CreditCard, label: 'Paiements', to: '/paiements-fournisseur' },
     { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' },
     { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
     { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur' },

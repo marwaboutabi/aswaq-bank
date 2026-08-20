@@ -238,7 +238,6 @@ export default function CommandesRecuesFournisseur() {
     { icon: Home, label: 'Accueil', to: '/accueil-fournisseur' },
     { icon: Package, label: 'Produits', to: '/produits-fournisseur' },
     { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur', active: true },
-    { icon: CreditCard, label: 'Paiements', to: '/paiements-fournisseur' },
     { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' },
     { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
     { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur' },

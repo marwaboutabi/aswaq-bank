@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Home, ArrowLeftRight,Star, Bell, Bot, User, LogOut, ChevronDown,
+  Home, ArrowLeftRight, Star, Bell, Bot, User, LogOut, ChevronDown,
   Send, Sparkles, TrendingUp, Target, CreditCard, RefreshCw,
-  Package, Boxes, Users,  Truck, BarChart3, Percent,
+  Package, Boxes, Users, Truck, BarChart3, Percent,
   AlertTriangle, DollarSign, ShoppingBag,
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
@@ -85,98 +85,32 @@ const QUICK_SUGGESTIONS = [
   },
 ];
 
-const AI_RESPONSES = {
-  'Peux-tu analyser mes ventes ce mois-ci ?': {
-    text: "Voici l'analyse de vos ventes pour ce mois-ci :\n\n💰 **Chiffre d'affaires total** : 47 850 MAD\n📈 **Évolution** : +12% par rapport au mois dernier\n🛒 **Nombre de transactions** : 342\n🧾 **Panier moyen** : 140 MAD\n\n🏆 **Meilleure journée** : Samedi 20 juillet (2 850 MAD)\n⏰ **Heures de forte affluence** : 17h - 20h\n\n📊 **Répartition par catégorie** :\n🥖 Alimentation : 18 200 MAD (38%)\n🧴 Hygiène : 9 450 MAD (20%)\n🥤 Boissons : 7 680 MAD (16%)\n🛍️ Autres : 12 520 MAD (26%)\n\nVotre commerce affiche une belle croissance. Les catégories Alimentation et Hygiène tirent particulièrement bien.",
-    actions: [
-      { label: 'Voir les ventes détaillées', to: '/analyse-ventes', icon: TrendingUp },
-      { label: 'Voir le tableau de bord', to: '/acceuil-com', icon: BarChart3 },
-    ],
-  },
-
-  'Quels produits se vendent le mieux ?': {
-    text: "Voici vos **5 produits les plus vendus** ce mois-ci :\n\n🥇 **Huile d'olive extra vierge 1L** — 127 unités — 15 875 MAD\n🥈 **Café arabica 500g** — 98 unités — 8 820 MAD\n🥉 **Lait frais 1L** — 245 unités — 2 450 MAD\n4️⃣ **Pain complet** — 312 unités — 1 872 MAD\n5️⃣ **Yaourt nature x4** — 156 unités — 2 340 MAD\n\n💡 **Conseil** : Ces 5 produits représentent **32% de votre chiffre d'affaires**. Assurez-vous qu'ils soient toujours en stock et bien mis en avant en magasin.",
-    actions: [
-      { label: 'Voir tous les produits', to: '/produits', icon: Package },
-      { label: 'Voir les statistiques', to: '/statistiques', icon: BarChart3 },
-    ],
-  },
-
-  'Quels produits doivent être réapprovisionnés ?': {
-    text: "Voici les produits nécessitant un **réapprovisionnement urgent** :\n\n🚨 **Rupture de stock** :\n• Café arabica 500g — 0 unité (2 commandes en attente)\n• Fromage camembert — 0 unité\n\n⚠️ **Stock faible (< 5 unités)** :\n• Huile d'olive 1L — 3 unités\n• Lait frais 1L — 4 unités\n• Pâtes 500g — 2 unités\n• Riz basmati 1kg — 5 unités\n\n📦 **Commande recommandée** :\nJe vous suggère de passer commande chez **DistribMaroc** pour un montant estimé de **4 200 MAD** afin de reconstituer votre stock pour les 10 prochains jours.",
-    actions: [
-      { label: 'Voir le stock', to: '/stock', icon: Boxes },
-      { label: 'Voir les fournisseurs', to: '/fournisseurs', icon: Truck },
-    ],
-  },
-
-  'Peux-tu analyser mon stock actuel ?': {
-    text: "Voici l'analyse de votre stock actuel :\n\n📦 **Total produits en stock** : 1 247 unités\n💰 **Valeur totale du stock** : 87 450 MAD\n📊 **Rotation moyenne** : 18 jours\n\n✅ **Stock sain** : 89% de vos produits\n⚠️ **Stock faible** : 8 produits (6%)\n🚨 **Rupture** : 3 produits (2%)\n🐌 **Sur-stock** : 5 produits (3%) — durée de rotation > 45 jours\n\n💡 **Recommandations** :\n• Réduisez le stock de \"Biscuits secs\" et \"Conserve de thon\" (sur-stock)\n• Passez commande rapidement pour \"Huile d'olive\" et \"Café arabica\"\n• Votre rotation est bonne, continuez ainsi !",
-    actions: [
-      { label: 'Voir le stock complet', to: '/stock', icon: Boxes },
-      { label: 'Voir les produits', to: '/produits', icon: Package },
-    ],
-  },
-
-  'Quelles sont les prévisions de ventes pour la semaine prochaine ?': {
-    text: "Voici les **prévisions de ventes** pour la semaine du 24 au 30 juillet :\n\n📅 **Lundi 24** : ~5 800 MAD\n📅 **Mardi 25** : ~6 200 MAD\n📅 **Mercredi 26** : ~6 500 MAD\n📅 **Jeudi 27** : ~7 100 MAD\n📅 **Vendredi 28** : ~8 400 MAD\n📅 **Samedi 29** : ~9 800 MAD ⭐\n📅 **Dimanche 30** : ~7 200 MAD\n\n💰 **CA estimé total** : ~51 000 MAD (+7% vs semaine dernière)\n\n🔍 **Facteurs pris en compte** :\n• Tendance saisonnière (période estivale)\n• Jours de forte affluence (vendredi-samedi)\n• Promotions actives en magasin\n\n💡 **Conseil** : Renforcez votre stock et votre personnel pour le **samedi 29**, journée prévue la plus chargée.",
-    actions: [
-      { label: 'Voir les statistiques', to: '/statistiques', icon: BarChart3 },
-      { label: 'Gérer le stock', to: '/stock', icon: Boxes },
-    ],
-  },
-
-  'Conseille-moi une promotion à lancer': {
-    text: "Voici **3 promotions recommandées** basées sur votre activité :\n\n🎯 **1. Pack \"Petit-déjeuner complet\"**\n• Café arabica + Lait frais + Pain complet\n• Prix spécial : 45 MAD au lieu de 58 MAD\n• Marge estimée : 22%\n• Potentiel : +15% de ventes sur ces produits\n\n🎯 **2. -20% sur les produits en sur-stock**\n• Biscuits secs, Conserve de thon\n• Durée : 7 jours\n• Objectif : écouler 180 unités\n\n🎯 **3. Programme fidélité \"3 achats = 1 offert\"**\n• Sur la catégorie Hygiène\n• Fidélisation estimée : +25% de clients récurrents\n\n💡 **Ma recommandation** : Lancez le **Pack \"Petit-déjeuner complet\"** en priorité. Il combine marge correcte et fort potentiel de ventes, surtout en période estivale.",
-    actions: [
-      { label: 'Voir les produits', to: '/produits', icon: Package },
-      { label: 'Voir la fidélité', to: '/fidelite-commerce', icon: Star },
-    ],
-  },
-
-  'Quels sont mes produits les moins vendus ?': {
-    text: "Voici vos **5 produits les moins vendus** ce mois-ci :\n\n📉 **Produits à faible rotation** :\n\n1. **Conserve de sardines premium** — 2 unités vendues — 60 MAD\n2. **Chocolat noir 85%** — 4 unités — 140 MAD\n3. **Biscuits secs bio** — 5 unités — 75 MAD\n4. **Confiture artisanale** — 6 unités — 180 MAD\n5. **Thé vert spécial** — 8 unités — 160 MAD\n\n💡 **Analyse** :\n• Ces 5 produits représentent seulement **1,3% de votre CA**\n• Durée moyenne de rotation : **52 jours** (vs 18 jours pour la moyenne)\n• Valeur immobilisée en stock : **4 280 MAD**\n\n🎯 **Actions recommandées** :\n• Lancez une promotion -25% sur ces produits\n• Envisagez de les remplacer par des références plus demandées\n• Regroupez-les dans un corner \"Produits d'exception\"",
-    actions: [
-      { label: 'Voir les produits', to: '/produits', icon: Package },
-      { label: 'Voir les statistiques', to: '/statistiques', icon: BarChart3 },
-    ],
-  },
-
-  'Peux-tu résumer mes paiements récents ?': {
-    text: "Voici le résumé de vos **paiements récents** :\n\n💳 **Aujourd'hui (23 juillet)** :\n• 42 transactions — 6 850 MAD\n• Répartition : 65% carte, 30% espèces, 5% mobile\n\n💳 **Hier (22 juillet)** :\n• 38 transactions — 5 940 MAD\n• Répartition : 62% carte, 33% espèces, 5% mobile\n\n💳 **21 juillet** :\n• 45 transactions — 7 280 MAD\n\n📊 **Tendance des paiements** :\n• 📈 Paiements par carte : +18% ce mois\n• 📉 Espèces : -8% ce mois\n• 📱 Paiement mobile : stable à 5%\n\n💡 **Conseil** : La part des paiements par carte augmente. Assurez-vous que votre TPE fonctionne correctement aux heures de pointe.",
-    actions: [
-      { label: 'Voir les transactions', to: '/transactions-commerce', icon: CreditCard },
-      { label: 'Voir le tableau de bord', to: '/acceuil-com', icon: BarChart3 },
-    ],
-  },
-
-  'Analyse mes commandes fournisseurs': {
-    text: "Voici l'analyse de vos **commandes fournisseurs** :\n\n📦 **Commandes en cours** :\n• #Fourn-2026-156 — DistribMaroc — 15 800 MAD — En attente\n• #Fourn-2026-154 — AtlasSupply — 8 450 MAD — En transit (livraison prévue le 24/07)\n\n✅ **Dernières livraisons** :\n• #Fourn-2026-152 — DistribMaroc — 12 300 MAD — Livrée le 18/07 ✓\n• #Fourn-2026-150 — AtlasSupply — 9 800 MAD — Livrée le 15/07 ✓\n\n📊 **Statistiques fournisseurs (30 derniers jours)** :\n• Total commandé : 58 400 MAD\n• Délai moyen de livraison : 3,2 jours\n• Taux de conformité : 96%\n\n🏆 **Meilleur fournisseur** : DistribMaroc (délai 2,8 jours, conformité 98%)\n\n💡 **Recommandation** : Anticipez vos commandes pour la semaine prochaine — plusieurs produits approchent du seuil critique.",
-    actions: [
-      { label: 'Voir les fournisseurs', to: '/fournisseurs', icon: Truck },
-      { label: 'Voir le stock', to: '/stock', icon: Boxes },
-    ],
-  },
-
-  'Comment puis-je augmenter mes revenus ?': {
-    text: "Voici **5 stratégies concrètes** pour augmenter vos revenus :\n\n💰 **1. Optimiser vos prix**\n• 5 produits ont une marge inférieure à 15%\n• Gain potentiel : +2 340 MAD/mois en ajustant les prix de 5 à 8%\n\n💰 **2. Lancer des packs promotionnels**\n• 3 packs identifiés (petit-déjeuner, goûter, ménage)\n• Gain estimé : +3 500 MAD/mois\n\n💰 **3. Réduire les ruptures de stock**\n• 12% de pertes de ventes dues aux ruptures\n• Gain potentiel : +4 200 MAD/mois\n\n💰 **4. Fidéliser vos clients**\n• 65% de clients non fidélisés\n• Programme de fidélité : +18% de récurrence estimée\n\n💰 **5. Étendre les heures d'ouverture**\n• Demande identifiée entre 20h et 22h\n• Gain potentiel : +2 800 MAD/mois\n\n🎯 **Gain total estimé** : +12 840 MAD/mois (+27%)\n\n💡 **Priorité** : Commencez par **réduire les ruptures** et **optimiser les prix**, ce sont les leviers les plus rapides.",
-    actions: [
-      { label: 'Voir les statistiques', to: '/statistiques', icon: BarChart3 },
-      { label: 'Voir les produits', to: '/produits', icon: Package },
-      { label: 'Voir le tableau de bord', to: '/acceuil-com', icon: TrendingUp },
-    ],
-  },
-};
-
-const DEFAULT_RESPONSE = {
-  text: "Je suis votre **Assistant IA Commercial**. Je peux vous aider à :\n\n📊 Analyser vos ventes et votre chiffre d'affaires\n📦 Gérer votre stock et vos réapprovisionnements\n🚚 Optimiser vos commandes fournisseurs\n💳 Suivre vos paiements et transactions\n🎯 Identifier les produits les plus rentables\n💡 Proposer des promotions efficaces\n⭐ Fidéliser vos clients\n\nN'hésitez pas à me poser une question précise ou à utiliser les suggestions ci-dessous.",
-  actions: [],
-};
-
+// --- MODIFICATION : Appel API vers Spring Boot ---
 async function askAI(question) {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  const response = AI_RESPONSES[question] || DEFAULT_RESPONSE;
-  return response;
+  const token = localStorage.getItem('token');
+
+  const response = await fetch('http://localhost:8080/api/ai/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      message: question,
+      role: 'COMMERCHANT', // Rôle spécifique pour le commerçant
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Erreur lors de la communication avec Gemini');
+  }
+
+  const data = await response.json();
+
+  return {
+    text: data.response || data.message || 'Je n’ai pas pu générer une réponse.',
+    actions: [],
+  };
 }
 
 export default function Assistant() {
@@ -201,8 +135,10 @@ export default function Assistant() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
+  // --- MODIFICATION : Gestion robuste des erreurs et du loading ---
   const handleSend = async (text) => {
     const question = text || inputValue.trim();
+
     if (!question || isTyping) return;
 
     const userMessage = {
@@ -211,20 +147,36 @@ export default function Assistant() {
       text: question,
       actions: [],
     };
+
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
     setIsTyping(true);
 
-    const aiResponse = await askAI(question);
+    try {
+      const aiResponse = await askAI(question);
 
-    const aiMessage = {
-      id: Date.now() + 1,
-      sender: 'ai',
-      text: aiResponse.text,
-      actions: aiResponse.actions || [],
-    };
-    setMessages((prev) => [...prev, aiMessage]);
-    setIsTyping(false);
+      const aiMessage = {
+        id: Date.now() + 1,
+        sender: 'ai',
+        text: aiResponse.text,
+        actions: aiResponse.actions || [],
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Erreur Assistant IA:', error);
+
+      const errorMessage = {
+        id: Date.now() + 1,
+        sender: 'ai',
+        text: "Désolé, je rencontre actuellement un problème pour communiquer avec l'assistant IA. Veuillez réessayer dans quelques instants.",
+        actions: [],
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleSuggestionClick = (suggestion) => {
@@ -325,13 +277,13 @@ export default function Assistant() {
               <span className="dash-badge">3</span>
             </button>
             <div className="dash-user-chip">
-  <div className="dash-user-avatar">MB</div>
-  <div className="dash-user-info">
-    <span className="dash-user-name">Marwa Boutabi</span>
-    <span className="dash-user-role">Commerçant</span>
-  </div>
-  <ChevronDown size={16} />
-</div>
+              <div className="dash-user-avatar">MB</div>
+              <div className="dash-user-info">
+                <span className="dash-user-name">Marwa Boutabi</span>
+                <span className="dash-user-role">Commerçant</span>
+              </div>
+              <ChevronDown size={16} />
+            </div>
           </div>
         </header>
 

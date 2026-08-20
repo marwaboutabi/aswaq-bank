@@ -96,10 +96,38 @@ const DEFAULT_RESPONSE = {
   actions: [],
 };
 
+// --- MODIFICATION ICI : Appel réel au Backend ---
 async function askAI(question) {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  const response = AI_RESPONSES[question] || DEFAULT_RESPONSE;
-  return response;
+  try {
+    const response = await fetch('http://localhost:8080/api/ai/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: question,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erreur serveur : ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return {
+      text: data.response,
+      actions: [],
+    };
+
+  } catch (error) {
+    console.error('Erreur assistant IA:', error);
+
+    return {
+      text: "Désolé, je rencontre actuellement un problème pour contacter l'assistant IA. Veuillez réessayer dans quelques instants.",
+      actions: [],
+    };
+  }
 }
 
 export default function Assistant() {

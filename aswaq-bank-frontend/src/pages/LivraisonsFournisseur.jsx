@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Package, ShoppingCart, CreditCard, Truck, Layers, User, Settings,
@@ -7,131 +7,91 @@ import {
   CheckCircle2, Bot,
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
+import api from '../services/api'; // Import de l'instance API
 import './LivraisonsFournisseur.css';
 
-const STATUS_FLOW = ['En préparation', 'Expédiée', 'En cours de livraison', 'Livrée'];
+// --- CONSTANTES METIER ---
 
-const STATUS_TONE = {
-  'En préparation': 'orange',
-  'Expédiée': 'blue',
-  'En cours de livraison': 'purple',
-  'Livrée': 'green',
+const STATUS_FLOW = [
+  'EN_PREPARATION',
+  'EN_LIVRAISON',
+  'LIVREE'
+];
+
+const STATUS_LABELS = {
+  EN_PREPARATION: 'En préparation',
+  EN_LIVRAISON: 'En cours de livraison',
+  LIVREE: 'Livrée',
 };
 
-const STATS = [
-  { key: 'total', icon: Truck, tone: 'blue', label: 'Livraisons totales', value: '145' },
-  { key: 'prep', icon: Package, tone: 'orange', label: 'En préparation', value: '12' },
-  { key: 'cours', icon: MapPinned, tone: 'purple', label: 'En cours de livraison', value: '18' },
-  { key: 'livrees', icon: CheckCircle, tone: 'green', label: 'Livrées', value: '115' },
+const STATUS_TONE = {
+  EN_PREPARATION: 'orange',
+  EN_LIVRAISON: 'purple',
+  LIVREE: 'green',
+};
+
+const FILTERS = [
+  'Toutes',
+  'EN_PREPARATION',
+  'EN_LIVRAISON',
+  'LIVREE'
 ];
 
-const INITIAL_DELIVERIES = [
-  {
-    id: 'LIV-1001', cmd: 'CMD-1025', client: 'Épicerie Atlas', phone: '06 12 34 56 78',
-    adresse: '12 Rue des Oliviers, Maârif, Casablanca', transporteur: 'Aswaq Express',
-    expedition: '28/07/2026', prevue: '30/07/2026', statut: 'En cours de livraison',
-    tracking: 'AEX-88214-MA', vehicule: 'Fourgon Renault Master', chauffeur: 'Hamid Aoulad',
-    produits: [
-      { nom: 'Huile d\u2019olive 1L', qte: 20, poids: '20 kg', statut: 'Chargé' },
-      { nom: 'Sucre blanc 1kg', qte: 30, poids: '30 kg', statut: 'Chargé' },
-    ],
-  },
-  {
-    id: 'LIV-1002', cmd: 'CMD-1024', client: 'Market Plus', phone: '06 22 45 67 89',
-    adresse: '45 Avenue Hassan II, Agdal, Rabat', transporteur: 'DHL',
-    expedition: '27/07/2026', prevue: '29/07/2026', statut: 'Livrée',
-    tracking: 'DHL-40217-MA', vehicule: 'Camionnette Iveco', chauffeur: 'Youssef Amrani',
-    produits: [
-      { nom: 'Café moulu 250g', qte: 40, poids: '10 kg', statut: 'Livré' },
-    ],
-  },
-  {
-    id: 'LIV-1003', cmd: 'CMD-1023', client: 'Bio Shop', phone: '06 33 56 78 90',
-    adresse: '3 Rue Ibn Batouta, Ville Nouvelle, Fès', transporteur: 'Aswaq Express',
-    expedition: '27/07/2026', prevue: '28/07/2026', statut: 'Expédiée',
-    tracking: 'AEX-88190-MA', vehicule: 'Fourgon Renault Master', chauffeur: 'Sanae Idrissi',
-    produits: [
-      { nom: 'Thé vert 100g', qte: 25, poids: '2,5 kg', statut: 'Chargé' },
-      { nom: 'Farine 1kg', qte: 15, poids: '15 kg', statut: 'Chargé' },
-    ],
-  },
-  {
-    id: 'LIV-1004', cmd: 'CMD-1022', client: 'Alimentation Nour', phone: '06 44 67 89 01',
-    adresse: '78 Boulevard Zerktouni, Guéliz, Marrakech', transporteur: 'CTM Fret',
-    expedition: '26/07/2026', prevue: '28/07/2026', statut: 'En préparation',
-    tracking: '—', vehicule: '—', chauffeur: '—',
-    produits: [
-      { nom: 'Riz basmati 1kg', qte: 50, poids: '50 kg', statut: 'En préparation' },
-    ],
-  },
-  {
-    id: 'LIV-1005', cmd: 'CMD-1021', client: 'Super Marché Al Amal', phone: '06 55 78 90 12',
-    adresse: '9 Rue de la Liberté, Tanger', transporteur: 'Aswaq Express',
-    expedition: '25/07/2026', prevue: '27/07/2026', statut: 'Livrée',
-    tracking: 'AEX-88056-MA', vehicule: 'Fourgon Renault Master', chauffeur: 'Karim Benjelloun',
-    produits: [
-      { nom: 'Huile d\u2019olive 1L', qte: 10, poids: '10 kg', statut: 'Livré' },
-    ],
-  },
-  {
-    id: 'LIV-1006', cmd: 'CMD-1020', client: 'Bio Shop', phone: '06 66 89 01 23',
-    adresse: '21 Avenue Mohammed V, Agadir', transporteur: 'DHL',
-    expedition: '25/07/2026', prevue: '27/07/2026', statut: 'En cours de livraison',
-    tracking: 'DHL-40188-MA', vehicule: 'Camionnette Iveco', chauffeur: 'Nabil Ouazzani',
-    produits: [
-      { nom: 'Sucre blanc 1kg', qte: 12, poids: '12 kg', statut: 'Chargé' },
-    ],
-  },
-  {
-    id: 'LIV-1007', cmd: 'CMD-1019', client: 'Épicerie Chaabi', phone: '06 77 90 12 34',
-    adresse: '5 Rue Allal Ben Abdellah, Casablanca', transporteur: 'CTM Fret',
-    expedition: '24/07/2026', prevue: '26/07/2026', statut: 'Expédiée',
-    tracking: 'CTM-77021-MA', vehicule: 'Camion Ford Transit', chauffeur: 'Anas Kabbaj',
-    produits: [
-      { nom: 'Farine 1kg', qte: 40, poids: '40 kg', statut: 'Chargé' },
-      { nom: 'Thé vert 100g', qte: 18, poids: '1,8 kg', statut: 'Chargé' },
-    ],
-  },
-  {
-    id: 'LIV-1008', cmd: 'CMD-1018', client: 'Marjane Express', phone: '06 88 01 23 45',
-    adresse: '60 Route de Kénitra, Salé', transporteur: 'Aswaq Express',
-    expedition: '24/07/2026', prevue: '26/07/2026', statut: 'En préparation',
-    tracking: '—', vehicule: '—', chauffeur: '—',
-    produits: [
-      { nom: 'Riz basmati 1kg', qte: 60, poids: '60 kg', statut: 'En préparation' },
-    ],
-  },
-  {
-    id: 'LIV-1009', cmd: 'CMD-1017', client: 'Alimentation Salam', phone: '06 99 12 34 56',
-    adresse: '14 Rue Ferhat Hached, Meknès', transporteur: 'DHL',
-    expedition: '23/07/2026', prevue: '25/07/2026', statut: 'Livrée',
-    tracking: 'DHL-40122-MA', vehicule: 'Camionnette Iveco', chauffeur: 'Othmane Fassi',
-    produits: [
-      { nom: 'Café moulu 250g', qte: 20, poids: '5 kg', statut: 'Livré' },
-    ],
-  },
-  {
-    id: 'LIV-1010', cmd: 'CMD-1016', client: 'Épicerie Al Baraka', phone: '06 10 23 45 67',
-    adresse: '30 Boulevard Derfoufi, Oujda', transporteur: 'CTM Fret',
-    expedition: '23/07/2026', prevue: '25/07/2026', statut: 'En cours de livraison',
-    tracking: 'CTM-76988-MA', vehicule: 'Camion Ford Transit', chauffeur: 'Mehdi Rachidi',
-    produits: [
-      { nom: 'Huile d\u2019olive 1L', qte: 15, poids: '15 kg', statut: 'Chargé' },
-    ],
-  },
-];
-
-const FILTERS = ['Toutes', 'En préparation', 'Expédiée', 'En cours de livraison', 'Livrée'];
 const PAGE_SIZE = 10;
 
 const TIMELINE_STEPS = [
-  { label: 'Commande préparée', status: 'En préparation', icon: ClipboardCheck },
-  { label: 'Colis expédié', status: 'Expédiée', icon: Package },
-  { label: 'En cours de livraison', status: 'En cours de livraison', icon: Truck },
-  { label: 'Livraison effectuée', status: 'Livrée', icon: PackageCheck },
+  { label: 'Commande préparée', status: 'EN_PREPARATION', icon: ClipboardCheck },
+  { label: 'Colis expédié / En route', status: 'EN_LIVRAISON', icon: Truck },
+  { label: 'Livraison effectuée', status: 'LIVREE', icon: PackageCheck },
 ];
 
-// ====== GÉNÉRATION DU BON DE LIVRAISON ======
+// --- FONCTIONS UTILITAIRES ---
+
+/**
+ * Transforme la réponse brute de l'API en format attendu par le JSX
+ */
+function mapDeliveryFromApi(d) {
+  return {
+    id: d.id, // ID Livraison ou OrderID selon ton besoin d'affichage
+    orderId: d.orderId, // Gardé pour les appels API PATCH
+    cmd: d.orderReference || `CMD-${d.orderId}`,
+    client: d.merchantName || 'Inconnu',
+    phone: d.merchantPhone || '—',
+    adresse: d.merchantAddress || '—',
+
+    transporteur: d.transporteur || '—',
+    vehicule: d.vehicule || '—',
+    chauffeur: d.chauffeur || '—',
+    tracking: d.trackingNumber || '—',
+
+    expedition: d.expeditionDate
+      ? new Date(d.expeditionDate).toLocaleDateString('fr-FR')
+      : '—',
+
+    prevue: d.estimatedDeliveryDate
+      ? new Date(d.estimatedDeliveryDate).toLocaleDateString('fr-FR')
+      : '—',
+
+    statut: d.status, // Doit être EN_PREPARATION, EN_LIVRAISON ou LIVREE
+
+    produits: (d.items || []).map((item) => ({
+      id: item.id,
+      nom: item.productName,
+      qte: item.quantity,
+      poids: '—', // Si le poids n'est pas dans l'API, on met un placeholder
+      statut:
+        d.status === 'LIVREE'
+          ? 'Livré'
+          : d.status === 'EN_LIVRAISON'
+            ? 'En livraison'
+            : 'En préparation',
+    })),
+  };
+}
+
+/**
+ * Génère le HTML du bon de livraison
+ */
 function generateDeliveryNoteHTML(delivery) {
   const totalPoids = delivery.produits.reduce((sum, p) => {
     const num = parseFloat(p.poids.replace(',', '.'));
@@ -143,7 +103,7 @@ function generateDeliveryNoteHTML(delivery) {
       <td>${p.nom}</td>
       <td>${p.qte}</td>
       <td>${p.poids}</td>
-      <td><span class="status status-${STATUS_TONE[delivery.statut] === 'green' ? 'green' : STATUS_TONE[delivery.statut] === 'orange' ? 'orange' : 'blue'}">${p.statut}</span></td>
+      <td><span class="status status-${STATUS_TONE[delivery.statut] === 'green' ? 'green' : STATUS_TONE[delivery.statut] === 'orange' ? 'orange' : 'purple'}">${p.statut}</span></td>
     </tr>
   `).join('');
 
@@ -151,7 +111,7 @@ function generateDeliveryNoteHTML(delivery) {
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Bon de livraison ${delivery.id}</title>
+<title>Bon de livraison ${delivery.cmd}</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; color: #333; }
@@ -161,7 +121,6 @@ function generateDeliveryNoteHTML(delivery) {
   .header-right { text-align: right; }
   .header-right .ref { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
   .header-right .number { font-size: 22px; font-weight: 700; color: #1d4fd8; margin: 4px 0; }
-  .header-right .date { font-size: 13px; color: #6b7280; }
   .section { margin-bottom: 25px; }
   .section h3 { color: #0b1f4b; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 1px solid #e5e7eb; }
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
@@ -171,21 +130,11 @@ function generateDeliveryNoteHTML(delivery) {
   table.products { width: 100%; border-collapse: collapse; margin-top: 10px; }
   table.products th { background: #f8fafc; color: #0b1f4b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; padding: 10px 12px; border-bottom: 2px solid #e5e7eb; }
   table.products td { padding: 10px 12px; font-size: 14px; border-bottom: 1px solid #f1f5f9; }
-  table.products tr:last-child td { border-bottom: none; }
   .status { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
   .status-green { background: #dcfce7; color: #16a34a; }
   .status-orange { background: #fef3c7; color: #b45309; }
-  .status-blue { background: #dbeafe; color: #1d4fd8; }
   .status-purple { background: #ede9fe; color: #7c3aed; }
-  .totals { background: #f8fafc; padding: 15px; border-radius: 8px; margin-top: 15px; }
-  .totals .info-row { border-bottom: none; }
-  .totals .info-row.final { border-top: 2px solid #cbd5e1; padding-top: 10px; margin-top: 6px; font-weight: 700; font-size: 15px; }
-  .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e7eb; display: flex; justify-content: space-between; align-items: flex-end; }
-  .footer .signatures { display: flex; gap: 60px; }
-  .signature-box { text-align: center; }
-  .signature-box .line { width: 140px; height: 1px; background: #333; margin: 40px 0 6px; }
-  .signature-box .label { font-size: 11px; color: #6b7280; text-transform: uppercase; }
-  .footer .note { font-size: 11px; color: #9ca3af; max-width: 280px; text-align: right; }
+  .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e7eb; display: flex; justify-content: space-between; }
   @media print { body { padding: 20px; } }
 </style>
 </head>
@@ -196,77 +145,36 @@ function generateDeliveryNoteHTML(delivery) {
       <p>Bon de livraison officiel</p>
     </div>
     <div class="header-right">
-      <div class="ref">N° Livraison</div>
-      <div class="number">${delivery.id}</div>
-      <div class="date">Commande : ${delivery.cmd}</div>
+      <div class="ref">N° Commande</div>
+      <div class="number">${delivery.cmd}</div>
     </div>
   </div>
-
   <div class="section">
-    <h3>Informations de la livraison</h3>
+    <h3>Informations</h3>
     <div class="info-grid">
-      <div class="info-row"><span class="label">Statut</span><span class="value"><span class="status status-${STATUS_TONE[delivery.statut] === 'green' ? 'green' : STATUS_TONE[delivery.statut] === 'orange' ? 'orange' : STATUS_TONE[delivery.statut] === 'blue' ? 'blue' : 'purple'}">${delivery.statut}</span></span></div>
-      <div class="info-row"><span class="label">Date d'expédition</span><span class="value">${delivery.expedition}</span></div>
-      <div class="info-row"><span class="label">Livraison prévue</span><span class="value">${delivery.prevue}</span></div>
-      <div class="info-row"><span class="label">N° suivi</span><span class="value">${delivery.tracking}</span></div>
+      <div class="info-row"><span class="label">Statut</span><span class="value">${STATUS_LABELS[delivery.statut]}</span></div>
+      <div class="info-row"><span class="label">Expédition</span><span class="value">${delivery.expedition}</span></div>
+      <div class="info-row"><span class="label">Prévue</span><span class="value">${delivery.prevue}</span></div>
+      <div class="info-row"><span class="label">Suivi</span><span class="value">${delivery.tracking}</span></div>
     </div>
   </div>
-
   <div class="section">
-    <h3>Commerçant destinataire</h3>
+    <h3>Commerçant</h3>
     <div class="info-grid">
       <div class="info-row"><span class="label">Nom</span><span class="value">${delivery.client}</span></div>
-      <div class="info-row"><span class="label">Téléphone</span><span class="value">${delivery.phone}</span></div>
       <div class="info-row" style="grid-column: 1 / -1;"><span class="label">Adresse</span><span class="value">${delivery.adresse}</span></div>
     </div>
   </div>
-
   <div class="section">
-    <h3>Transport</h3>
-    <div class="info-grid">
-      <div class="info-row"><span class="label">Transporteur</span><span class="value">${delivery.transporteur}</span></div>
-      <div class="info-row"><span class="label">Véhicule</span><span class="value">${delivery.vehicule}</span></div>
-      <div class="info-row"><span class="label">Chauffeur</span><span class="value">${delivery.chauffeur}</span></div>
-      <div class="info-row"><span class="label">N° suivi</span><span class="value">${delivery.tracking}</span></div>
-    </div>
-  </div>
-
-  <div class="section">
-    <h3>Produits expédiés</h3>
+    <h3>Produits</h3>
     <table class="products">
-      <thead>
-        <tr>
-          <th>Produit</th>
-          <th>Quantité</th>
-          <th>Poids</th>
-          <th>Statut</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${produitsRows}
-      </tbody>
+      <thead><tr><th>Produit</th><th>Qté</th><th>Poids</th><th>Statut</th></tr></thead>
+      <tbody>${produitsRows}</tbody>
     </table>
-    <div class="totals">
-      <div class="info-row"><span class="label">Nombre d'articles</span><span class="value">${delivery.produits.reduce((s, p) => s + p.qte, 0)} unités</span></div>
-      <div class="info-row final"><span class="label">Poids total</span><span class="value">${totalPoids.toFixed(1)} kg</span></div>
-    </div>
   </div>
-
   <div class="footer">
-    <div class="signatures">
-      <div class="signature-box">
-        <div class="line"></div>
-        <div class="label">Signature transporteur</div>
-      </div>
-      <div class="signature-box">
-        <div class="line"></div>
-        <div class="label">Réception commerçant</div>
-      </div>
-    </div>
-    <div class="note">
-      Document généré automatiquement par la plateforme Aswaq Bank.<br>
-      Le ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-    </div>
+    <div>Signature Transporteur</div>
+    <div>Signature Commerçant</div>
   </div>
 </body>
 </html>`;
@@ -278,24 +186,69 @@ function downloadDeliveryNote(delivery) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `Bon_livraison_${delivery.id}_${delivery.client.replace(/\s+/g, '_')}.html`;
+  link.download = `Bon_livraison_${delivery.cmd}.html`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function DeliveryDetailsModal({ delivery, onClose, onChangeStatus }) {
+// --- COMPOSANT MODAL ---
+
+function DeliveryDetailsModal({ delivery, onClose, onChangeStatus, onUpdateInfo }) {
+  const [form, setForm] = useState({
+    transporteur: '',
+    vehicule: '',
+    chauffeur: '',
+    tracking: '',
+    estimatedDate: '',
+  });
+
+  useEffect(() => {
+    if (delivery) {
+      setForm({
+        transporteur: delivery.transporteur !== '—' ? delivery.transporteur : '',
+        vehicule: delivery.vehicule !== '—' ? delivery.vehicule : '',
+        chauffeur: delivery.chauffeur !== '—' ? delivery.chauffeur : '',
+        tracking: delivery.tracking !== '—' ? delivery.tracking : '',
+        estimatedDate: '',
+      });
+    }
+  }, [delivery]);
+
   if (!delivery) return null;
 
-  const currentIndex = STATUS_FLOW.indexOf(delivery.statut);
-  const nextStatus = STATUS_FLOW[currentIndex + 1];
+  const inputStyle = {
+    padding: '6px 8px',
+    border: '1px solid #e5e7eb',
+    borderRadius: 6,
+    fontSize: 14,
+    width: '100%',
+  };
+
+  // Le fournisseur peut désormais faire avancer le statut jusqu'à LIVREE
+  const nextStatus =
+    delivery.statut === 'EN_PREPARATION'
+      ? 'EN_LIVRAISON'
+      : delivery.statut === 'EN_LIVRAISON'
+        ? 'LIVREE'
+        : null;
+
+  const handleSaveInfo = () => {
+    const payload = {};
+    if (form.transporteur.trim()) payload.transporteur = form.transporteur.trim();
+    if (form.vehicule.trim()) payload.vehicule = form.vehicule.trim();
+    if (form.chauffeur.trim()) payload.chauffeur = form.chauffeur.trim();
+    if (form.tracking.trim()) payload.trackingNumber = form.tracking.trim();
+    if (form.estimatedDate) payload.estimatedDeliveryDate = form.estimatedDate;
+    onUpdateInfo(delivery, payload);
+  };
 
   return (
     <div className="liv-four-modal-overlay" onClick={onClose}>
       <div className="liv-four-modal" onClick={(e) => e.stopPropagation()}>
         <div className="liv-four-modal-header">
-          <h3>Détails de la livraison {delivery.id}</h3>
+          <h3>Détails de la livraison {delivery.cmd}</h3>
           <button type="button" className="liv-four-modal-close" onClick={onClose}>
             <X size={16} />
           </button>
@@ -306,11 +259,10 @@ function DeliveryDetailsModal({ delivery, onClose, onChangeStatus }) {
           <div>
             <p className="liv-four-modal-section-title">Suivi de la livraison</p>
             <div className="liv-four-steps">
-              {TIMELINE_STEPS.map((step, i) => {
+              {TIMELINE_STEPS.map((step) => {
                 const Icon = step.icon;
-                const stepIndex = STATUS_FLOW.indexOf(step.status);
-                const isDone = stepIndex < currentIndex;
-                const isCurrent = stepIndex === currentIndex;
+                const isDone = STATUS_FLOW.indexOf(step.status) < STATUS_FLOW.indexOf(delivery.statut);
+                const isCurrent = step.status === delivery.statut;
                 return (
                   <div className="liv-four-step" key={step.status}>
                     <span
@@ -333,17 +285,13 @@ function DeliveryDetailsModal({ delivery, onClose, onChangeStatus }) {
             <p className="liv-four-modal-section-title">Informations générales</p>
             <div className="liv-four-modal-grid">
               <div className="liv-four-modal-field">
-                <span className="liv-four-modal-field-label">Numéro de livraison</span>
-                <span className="liv-four-modal-field-value">{delivery.id}</span>
-              </div>
-              <div className="liv-four-modal-field">
-                <span className="liv-four-modal-field-label">Numéro de commande</span>
+                <span className="liv-four-modal-field-label">Commande</span>
                 <span className="liv-four-modal-field-value">{delivery.cmd}</span>
               </div>
               <div className="liv-four-modal-field">
                 <span className="liv-four-modal-field-label">Statut</span>
                 <span className={`liv-four-badge-pill liv-four-badge-pill-${STATUS_TONE[delivery.statut]}`}>
-                  {delivery.statut}
+                  {STATUS_LABELS[delivery.statut]}
                 </span>
               </div>
               <div className="liv-four-modal-field">
@@ -351,7 +299,7 @@ function DeliveryDetailsModal({ delivery, onClose, onChangeStatus }) {
                 <span className="liv-four-modal-field-value">{delivery.expedition}</span>
               </div>
               <div className="liv-four-modal-field">
-                <span className="liv-four-modal-field-label">Date estimée de livraison</span>
+                <span className="liv-four-modal-field-label">Date estimée</span>
                 <span className="liv-four-modal-field-value">{delivery.prevue}</span>
               </div>
             </div>
@@ -390,7 +338,7 @@ function DeliveryDetailsModal({ delivery, onClose, onChangeStatus }) {
               </thead>
               <tbody>
                 {delivery.produits.map((p) => (
-                  <tr key={p.nom}>
+                  <tr key={p.id || p.nom}>
                     <td>{p.nom}</td>
                     <td>{p.qte}</td>
                     <td>{p.poids}</td>
@@ -407,39 +355,109 @@ function DeliveryDetailsModal({ delivery, onClose, onChangeStatus }) {
             <div className="liv-four-transport-grid">
               <div className="liv-four-modal-field">
                 <span className="liv-four-modal-field-label">Transporteur</span>
-                <span className="liv-four-modal-field-value">{delivery.transporteur}</span>
+                <input
+                  type="text"
+                  style={inputStyle}
+                  value={form.transporteur}
+                  onChange={(e) => setForm((f) => ({ ...f, transporteur: e.target.value }))}
+                  disabled={delivery.statut === 'LIVREE'}
+                  placeholder="Nom du transporteur"
+                />
               </div>
               <div className="liv-four-modal-field">
                 <span className="liv-four-modal-field-label">Numéro de suivi</span>
-                <span className="liv-four-modal-field-value">{delivery.tracking}</span>
+                <input
+                  type="text"
+                  style={inputStyle}
+                  value={form.tracking}
+                  onChange={(e) => setForm((f) => ({ ...f, tracking: e.target.value }))}
+                  disabled={delivery.statut === 'LIVREE'}
+                  placeholder="N° de tracking"
+                />
               </div>
               <div className="liv-four-modal-field">
                 <span className="liv-four-modal-field-label">Véhicule</span>
-                <span className="liv-four-modal-field-value">{delivery.vehicule}</span>
+                <input
+                  type="text"
+                  style={inputStyle}
+                  value={form.vehicule}
+                  onChange={(e) => setForm((f) => ({ ...f, vehicule: e.target.value }))}
+                  disabled={delivery.statut === 'LIVREE'}
+                  placeholder="Immatriculation / type"
+                />
               </div>
               <div className="liv-four-modal-field">
                 <span className="liv-four-modal-field-label">Chauffeur</span>
-                <span className="liv-four-modal-field-value">{delivery.chauffeur}</span>
+                <input
+                  type="text"
+                  style={inputStyle}
+                  value={form.chauffeur}
+                  onChange={(e) => setForm((f) => ({ ...f, chauffeur: e.target.value }))}
+                  disabled={delivery.statut === 'LIVREE'}
+                  placeholder="Nom du chauffeur"
+                />
+              </div>
+              <div className="liv-four-modal-field">
+                <span className="liv-four-modal-field-label">Date d&apos;expédition</span>
+                <span className="liv-four-modal-field-value">{delivery.expedition}</span>
+              </div>
+              <div className="liv-four-modal-field">
+                <span className="liv-four-modal-field-label">Date estimée de livraison</span>
+                <input
+                  type="date"
+                  style={inputStyle}
+                  value={form.estimatedDate}
+                  onChange={(e) => setForm((f) => ({ ...f, estimatedDate: e.target.value }))}
+                  disabled={delivery.statut === 'LIVREE'}
+                />
               </div>
             </div>
+
+            {delivery.statut !== 'LIVREE' && (
+              <button
+                type="button"
+                className="liv-four-btn liv-four-btn-outline"
+                style={{ marginTop: 10 }}
+                onClick={handleSaveInfo}
+              >
+                Enregistrer les informations
+              </button>
+            )}
           </div>
 
-          {/* Workflow */}
+          {/* Workflow Buttons */}
           <div>
             <p className="liv-four-modal-section-title">Mettre à jour le statut</p>
             <div className="liv-four-workflow">
-              {STATUS_FLOW.map((status, i) => (
-                <button
-                  key={status}
-                  type="button"
-                  className={`liv-four-workflow-btn ${delivery.statut === status ? 'liv-four-workflow-btn-active' : ''}`}
-                  disabled={i > currentIndex + 1}
-                  onClick={() => onChangeStatus(delivery.id, status)}
-                >
-                  {status}
-                </button>
-              ))}
+              {STATUS_FLOW.map((status) => {
+                const isCurrent = delivery.statut === status;
+                const canSelect = nextStatus === status;
+
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    className={`liv-four-workflow-btn ${
+                      isCurrent ? 'liv-four-workflow-btn-active' : ''
+                    }`}
+                    disabled={!canSelect}
+                    onClick={() => {
+                      if (canSelect) {
+                        onChangeStatus(delivery.id, status);
+                      }
+                    }}
+                  >
+                    {STATUS_LABELS[status]}
+                  </button>
+                );
+              })}
             </div>
+
+            {delivery.statut === 'LIVREE' && (
+              <div style={{ marginTop: 10, color: '#16a34a', fontSize: '0.85rem', fontWeight: 600 }}>
+                ✓ Livraison marquée comme livrée
+              </div>
+            )}
           </div>
         </div>
 
@@ -448,13 +466,14 @@ function DeliveryDetailsModal({ delivery, onClose, onChangeStatus }) {
             <FileDown size={15} />
             Bon de livraison
           </button>
+
           {nextStatus && (
             <button
               type="button"
               className="liv-four-btn liv-four-btn-solid"
               onClick={() => onChangeStatus(delivery.id, nextStatus)}
             >
-              Passer à « {nextStatus} »
+              Passer à « {STATUS_LABELS[nextStatus]} »
             </button>
           )}
         </div>
@@ -463,11 +482,17 @@ function DeliveryDetailsModal({ delivery, onClose, onChangeStatus }) {
   );
 }
 
+// --- COMPOSANT PRINCIPAL ---
+
 export default function LivraisonsFournisseur() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [deliveries, setDeliveries] = useState(INITIAL_DELIVERIES);
+  // States
+  const [deliveries, setDeliveries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('Toutes');
   const [page, setPage] = useState(1);
@@ -478,26 +503,162 @@ export default function LivraisonsFournisseur() {
     { icon: Home, label: 'Accueil', to: '/accueil-fournisseur' },
     { icon: Package, label: 'Produits', to: '/produits-fournisseur' },
     { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur' },
-    { icon: CreditCard, label: 'Paiements', to: '/paiements-fournisseur' },
     { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' , active: true},
    { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
     { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur' },
     { icon: User, label: 'Profil & Paramètres', to: '/profil-fournisseur' },
   ];
 
-  const handleChangeStatus = (id, statut) => {
-    setDeliveries((prev) => prev.map((d) => (d.id === id ? { ...d, statut } : d)));
+  // Chargement des données
+  const loadDeliveries = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await api.get('/supplier/deliveries');
+
+      const data = Array.isArray(response.data)
+        ? response.data
+        : [];
+
+      setDeliveries(data.map(mapDeliveryFromApi));
+    } catch (err) {
+      console.error('Erreur chargement livraisons fournisseur:', err);
+
+      setError(
+        err.response?.data?.message ||
+        'Impossible de charger les livraisons.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    loadDeliveries();
+  }, []);
+
+  // Changement de statut (Appel API)
+  const handleChangeStatus = async (id, statut) => {
+    const delivery = deliveries.find((d) => d.id === id);
+    if (!delivery) return;
+
+    // Le fournisseur peut faire avancer le statut : EN_PREPARATION -> EN_LIVRAISON -> LIVREE
+    const allowedNext = {
+      EN_PREPARATION: 'EN_LIVRAISON',
+      EN_LIVRAISON: 'LIVREE',
+    };
+
+    if (allowedNext[delivery.statut] !== statut) {
+      return;
+    }
+
+    try {
+      await api.patch(`/supplier/orders/${delivery.orderId}/status`, {
+        status: statut,
+      });
+
+      // Mise à jour optimiste de l'UI
+      setDeliveries((prev) =>
+        prev.map((d) => (d.id === id ? { ...d, statut } : d))
+      );
+
+      setToast(
+        statut === 'LIVREE'
+          ? 'La livraison a été marquée comme livrée.'
+          : 'La livraison est maintenant en cours de livraison.'
+      );
+      setTimeout(() => setToast(null), 3000);
+
+    } catch (err) {
+      console.error('Erreur changement statut livraison:', err);
+
+      setToast(
+        err.response?.data?.message ||
+        'Impossible de modifier le statut.'
+      );
+
+      setTimeout(() => setToast(null), 3000);
+    }
+  };
+
+  // Mise à jour des infos de livraison (transporteur, véhicule, chauffeur, tracking, date estimée)
+  const handleUpdateDeliveryInfo = async (delivery, fields) => {
+    try {
+      const response = await api.patch(`/supplier/deliveries/${delivery.orderId}`, fields);
+      const updated = mapDeliveryFromApi(response.data);
+
+      setDeliveries((prev) =>
+        prev.map((d) => (d.id === delivery.id ? updated : d))
+      );
+
+      setToast('Informations de livraison mises à jour.');
+      setTimeout(() => setToast(null), 3000);
+    } catch (err) {
+      console.error('Erreur mise à jour livraison:', err);
+
+      setToast(
+        err.response?.data?.message ||
+        "Impossible de mettre à jour les informations de livraison."
+      );
+
+      setTimeout(() => setToast(null), 3000);
+    }
+  };
+
+  // Calcul des stats dynamiques
+  const stats = useMemo(() => [
+    {
+      key: 'total',
+      icon: Truck,
+      tone: 'blue',
+      label: 'Livraisons totales',
+      value: deliveries.length,
+    },
+    {
+      key: 'prep',
+      icon: Package,
+      tone: 'orange',
+      label: 'En préparation',
+      value: deliveries.filter(
+        (d) => d.statut === 'EN_PREPARATION'
+      ).length,
+    },
+    {
+      key: 'cours',
+      icon: MapPinned,
+      tone: 'purple',
+      label: 'En cours de livraison',
+      value: deliveries.filter(
+        (d) => d.statut === 'EN_LIVRAISON'
+      ).length,
+    },
+    {
+      key: 'livrees',
+      icon: CheckCircle,
+      tone: 'green',
+      label: 'Livrées',
+      value: deliveries.filter(
+        (d) => d.statut === 'LIVREE'
+      ).length,
+    },
+  ], [deliveries]);
+
+  // Filtrage et Recherche
   const filtered = useMemo(() => {
     return deliveries.filter((d) => {
-      const matchesFilter = activeFilter === 'Toutes' || d.statut === activeFilter;
+      const matchesFilter =
+        activeFilter === 'Toutes' ||
+        d.statut === activeFilter;
+
       const q = search.trim().toLowerCase();
+
       const matchesSearch =
         q === '' ||
-        d.id.toLowerCase().includes(q) ||
-        d.cmd.toLowerCase().includes(q) ||
-        d.client.toLowerCase().includes(q);
+        String(d.id).toLowerCase().includes(q) ||
+        String(d.cmd || '').toLowerCase().includes(q) ||
+        String(d.client || '').toLowerCase().includes(q);
+
       return matchesFilter && matchesSearch;
     });
   }, [deliveries, search, activeFilter]);
@@ -506,7 +667,10 @@ export default function LivraisonsFournisseur() {
   const currentPage = Math.min(page, totalPages);
   const pageDeliveries = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const inTransit = deliveries.filter((d) => d.statut === 'En cours de livraison').slice(0, 4);
+  const inTransit = deliveries
+    .filter((d) => d.statut === 'EN_LIVRAISON')
+    .slice(0, 4);
+
   const selectedDelivery = deliveries.find((d) => d.id === selectedId) || null;
 
   const handleFilterClick = (filter) => {
@@ -516,7 +680,7 @@ export default function LivraisonsFournisseur() {
 
   const handleDownloadFromTable = (delivery) => {
     downloadDeliveryNote(delivery);
-    setToast(`Bon de livraison ${delivery.id} téléchargé`);
+    setToast(`Bon de livraison ${delivery.cmd} téléchargé`);
     setTimeout(() => setToast(null), 2500);
   };
 
@@ -598,7 +762,7 @@ export default function LivraisonsFournisseur() {
 
         {/* Stat cards */}
         <section className="liv-four-stats-row">
-          {STATS.map((s) => {
+          {stats.map((s) => {
             const Icon = s.icon;
             return (
               <div className="liv-four-stat-card" key={s.key}>
@@ -632,10 +796,12 @@ export default function LivraisonsFournisseur() {
               <button
                 key={filter}
                 type="button"
-                className={`liv-four-filter-chip ${activeFilter === filter ? 'liv-four-filter-chip-active' : ''}`}
+                className={`liv-four-filter-chip ${
+                  activeFilter === filter ? 'liv-four-filter-chip-active' : ''
+                }`}
                 onClick={() => handleFilterClick(filter)}
               >
-                {filter}
+                {filter === 'Toutes' ? 'Toutes' : STATUS_LABELS[filter]}
               </button>
             ))}
           </div>
@@ -667,7 +833,23 @@ export default function LivraisonsFournisseur() {
                 </tr>
               </thead>
               <tbody>
-                {pageDeliveries.map((d) => (
+                {loading && (
+                  <tr>
+                    <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                      Chargement des livraisons...
+                    </td>
+                  </tr>
+                )}
+
+                {!loading && error && (
+                  <tr>
+                    <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: '#dc2626' }}>
+                      {error}
+                    </td>
+                  </tr>
+                )}
+
+                {!loading && !error && pageDeliveries.map((d) => (
                   <tr key={d.id}>
                     <td className="liv-four-ref">{d.id}</td>
                     <td>{d.cmd}</td>
@@ -677,12 +859,11 @@ export default function LivraisonsFournisseur() {
                     <td>{d.prevue}</td>
                     <td>
                       <span className={`liv-four-badge-pill liv-four-badge-pill-${STATUS_TONE[d.statut]}`}>
-                        {d.statut}
+                        {STATUS_LABELS[d.statut] || d.statut}
                       </span>
                     </td>
                     <td>
                       <div className="liv-four-row-actions">
-                        {/* ✅ Bouton œil supprimé */}
                         <button
                           type="button"
                           className="liv-four-row-action-btn"
@@ -703,7 +884,8 @@ export default function LivraisonsFournisseur() {
                     </td>
                   </tr>
                 ))}
-                {pageDeliveries.length === 0 && (
+
+                {!loading && !error && pageDeliveries.length === 0 && (
                   <tr>
                     <td colSpan={8} style={{ textAlign: 'center', padding: '1.5rem', color: '#9ca3af' }}>
                       Aucune livraison ne correspond à votre recherche.
@@ -765,7 +947,7 @@ export default function LivraisonsFournisseur() {
               const pos = positions[i] || positions[0];
               return (
                 <div className="liv-four-map-marker" style={pos} key={d.id}>
-                  <span className="liv-four-map-marker-label">{d.id}</span>
+                  <span className="liv-four-map-marker-label">{d.cmd}</span>
                   <span className="liv-four-map-marker-icon">
                     <MapPin size={16} />
                   </span>
@@ -781,6 +963,7 @@ export default function LivraisonsFournisseur() {
         delivery={selectedDelivery}
         onClose={() => setSelectedId(null)}
         onChangeStatus={handleChangeStatus}
+        onUpdateInfo={handleUpdateDeliveryInfo}
       />
     </div>
   );

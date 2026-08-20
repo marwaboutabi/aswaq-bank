@@ -58,7 +58,6 @@ import VirementCom from './pages/VirementCom';
 import AccueilFournisseur from './pages/AccueilFournisseur';
 import ProduitsFournisseur from './pages/ProduitsFournisseur';
 import CommandesRecuesFournisseur from './pages/CommandesRecuesFournisseur';
-import PaiementsFournisseur from './pages/PaiementsFournisseur';
 import LivraisonsFournisseur from './pages/LivraisonsFournisseur';
 import ProfilFournisseur from './pages/ProfilFournisseur';
 import NotificationsFournisseur from './pages/NotificationsFournisseur';
@@ -149,7 +148,6 @@ export default function App() {
           <Route path="/accueil-fournisseur" element={<AccueilFournisseur />} />
           <Route path="/produits-fournisseur" element={<ProduitsFournisseur />} />
           <Route path="/commandes-fournisseur" element={<CommandesRecuesFournisseur />} />
-          <Route path="/paiements-fournisseur" element={<PaiementsFournisseur />} />
           <Route path="/livraisons-fournisseur" element={<LivraisonsFournisseur />} />
           <Route path="/profil-fournisseur" element={<ProfilFournisseur />} />
           <Route path="/notifications-fournisseur" element={<NotificationsFournisseur />} />

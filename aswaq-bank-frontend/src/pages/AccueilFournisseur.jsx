@@ -103,7 +103,6 @@ const REVENUE_TREND = [
 const QUICK_ACTIONS = [
   { label: 'Ajouter un produit', icon: Plus, tone: 'green', to: '/produits-fournisseur?mode=add' },
   { label: 'Voir les commandes', icon: ShoppingBag, tone: 'blue', to: '/commandes-fournisseur' },
-  { label: 'Paiements reçus', icon: CreditCard, tone: 'purple', to: '/paiements-fournisseur' },
   { label: 'Gérer les livraisons', icon: Truck, tone: 'orange', to: '/livraisons-fournisseur' },
 ];
 
@@ -251,7 +250,6 @@ export default function AccueilFournisseur() {
     { icon: Home, label: 'Accueil', to: '/accueil-fournisseur' , active: true},
     { icon: Package, label: 'Produits', to: '/produits-fournisseur' },
     { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur' },
-    { icon: CreditCard, label: 'Paiements', to: '/paiements-fournisseur' },
     { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' },
    { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
     { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur' },

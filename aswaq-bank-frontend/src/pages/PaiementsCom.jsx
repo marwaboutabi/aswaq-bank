@@ -12,8 +12,6 @@ import Logo from '../components/Logo/Logo';
 import './PaiementsCom.css';
 import api from "../services/api";
 
-
-
 const TYPE_OPTIONS = ['Tous les types', 'Paiement reçu', 'Paiement envoyé', 'Virement reçu', 'Virement envoyé', 'Remboursement'];
 const PERIOD_OPTIONS = [
   { value: 'today', label: "Aujourd'hui" },
@@ -30,7 +28,6 @@ const FORMAT_OPTIONS = [
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/acceuil-com' },
   { icon: Package, label: 'Produits', to: '/produits' },
-  { icon: Boxes, label: 'Stock', to: '/stock' },
   { icon: ArrowLeftRight, label: 'Paiements & Transactions', to: '/transactions-commerce', active: true },
   { icon: Users, label: 'Fournisseurs', to: '/fournisseurs' },
   { icon: Star, label: 'Fidélité & Tickets', to: '/fidelite-commerce' },
@@ -41,16 +38,36 @@ const NAV_ITEMS = [
 
 const PAGE_SIZE = 10;
 
+// Fonctions utilitaires pour les dates dynamiques
+const getMonthStart = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+};
+
+const getToday = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
 export default function PaiementsCom() {
-    const [transactions, setTransactions] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
 
+  // States principaux
+  const [transactions, setTransactions] = useState([]);
+  const [account, setAccount] = useState(null);
+  
+  // States filtres
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('Tous les types');
+  const [dateFrom, setDateFrom] = useState(getMonthStart());
+  const [dateTo, setDateTo] = useState(getToday());
   const [currentPage, setCurrentPage] = useState(1);
-  const [dateFrom, setDateFrom] = useState('2025-06-01');
-  const [dateTo, setDateTo] = useState('2025-07-21');
+
+  // Reset page 1 quand les filtres changent
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, typeFilter, dateFrom, dateTo]);
 
   // Export Modal States
   const [showExportModal, setShowExportModal] = useState(false);
@@ -63,97 +80,165 @@ export default function PaiementsCom() {
     includeSummary: true,
     includeClient: true,
     includeRef: true,
-    exportMode: 'filtered', // 'filtered' ou 'selected'
+    exportMode: 'filtered',
   });
-useEffect(() => {
-  loadTransactions();
-}, []);
-useEffect(() => {
-    console.log("STATE transactions :", transactions);
-}, [transactions]);
 
-
-const loadTransactions = async () => {
-  try {
-    const res = await api.get("/transactions/my");
-
-console.log("TRANSACTIONS API :", res.data);
-    const data = res.data.map(tx => {
-
-      const [datePart, timePart] =
-        (tx.transactionDate || "").split("T");
-
-      
-
-      return {
-        id: tx.id,
-
-        date: datePart || "",
-        time: timePart ? timePart.substring(0,5) : "",
-
-        type: tx.incoming
-  ? "Paiement reçu"
-  : "Paiement envoyé",
-
-typeTone: tx.incoming ? "green" : "red",
-
-       partner:
-    tx.otherUserName || tx.otherAccountNumber || "Compte inconnu",
-
-email:
-  "",
-
-        method:
-    tx.type === "QR_PAYMENT"
-      ? "QR Code"
-      : "Virement bancaire",
-
-        amount:
-  tx.incoming
-    ? tx.amount
-    : -tx.amount,
-
-       status:
-  tx.status === "SUCCESS"
-    ? "Réussi"
-    : tx.status === "PENDING"
-    ? "En attente"
-    : "Échec",
-
-        statusTone:
-    tx.status === "SUCCESS"
-      ? "green"
-      : tx.status === "PENDING"
-      ? "orange"
-      : "red",
-
-  reference: tx.transactionReference || "-"
-      };
-
-    });
-
-    setTransactions(data);
-    console.log("DATA MAPPÉE :", data);
-
-  } catch(error) {
-    console.error(
-      "Erreur historique :",
-      error
-    );
-  }
-};
   // Transaction Selection State
   const [selectedTransactions, setSelectedTransactions] = useState([]);
 
-  const currentFormat = FORMAT_OPTIONS.find(f => f.value === exportParams.format) || FORMAT_OPTIONS[0];
-  const FormatIcon = currentFormat.icon;
+  // Chargement initial des données
+  useEffect(() => {
+    loadTransactions();
+    loadAccount();
+  }, []);
 
-  const stats = useMemo(() => [
-    { key: 'encaisse', icon: Wallet, label: 'Total encaissé', value: '5 840,00 MAD', sub: '+12,5% vs période précédente', subTone: 'green', iconBg: '#dbeafe', iconColor: '#1d4fd8' },
-    { key: 'depenses', icon: TrendingUp, label: 'Total des dépenses', value: '2 310,00 MAD', sub: '-8,3% vs période précédente', subTone: 'red', iconBg: '#d1fae5', iconColor: '#059669' },
-    { key: 'virements', icon: ArrowUpRight, label: 'Virements effectués', value: '1 450,00 MAD', sub: '3 opérations', subTone: 'blue', iconBg: '#ede9fe', iconColor: '#7c3aed' },
-    { key: 'solde', icon: Wallet, label: 'Solde du compte', value: '23 030,00 MAD', sub: 'Compte professionnel', subTone: 'blue', iconBg: '#fef3c7', iconColor: '#d97706' },
-  ], []);
+  const loadAccount = async () => {
+    try {
+      const res = await api.get("/accounts/me");
+      console.log("COMPTE API :", res.data);
+      setAccount(res.data);
+    } catch (error) {
+      console.error("Erreur récupération compte :", error);
+    }
+  };
+
+  const loadTransactions = async () => {
+    try {
+      const res = await api.get("/transactions/my");
+      console.log("TRANSACTIONS API :", res.data);
+
+      const rawData = Array.isArray(res.data) ? res.data : [];
+
+      const data = rawData.map(tx => {
+        const dateValue = tx.transactionDate || "";
+        const [datePart, timePart] = dateValue.split("T");
+
+        return {
+          id: tx.id,
+          date: datePart || "",
+          time: timePart ? timePart.substring(0, 5) : "",
+          transactionDate: tx.transactionDate,
+          type: tx.incoming ? "Paiement reçu" : "Paiement envoyé",
+          typeTone: tx.incoming ? "green" : "red",
+          partner: tx.otherUserName || tx.otherAccountNumber || "Compte inconnu",
+          email: "",
+          method: tx.type === "QR_PAYMENT" ? "QR Code" : "Virement bancaire",
+          amount: Number(tx.amount || 0),
+          incoming: Boolean(tx.incoming),
+          originalType: tx.type,
+          status: tx.status === "SUCCESS" ? "Réussi" : tx.status === "PENDING" ? "En attente" : "Échec",
+          statusTone: tx.status === "SUCCESS" ? "green" : tx.status === "PENDING" ? "orange" : "red",
+          reference: tx.transactionReference || "-"
+        };
+      });
+
+      setTransactions(data);
+      console.log("DATA MAPPÉE :", data);
+
+    } catch (error) {
+      console.error("Erreur historique :", error);
+      setTransactions([]);
+    }
+  };
+
+  // Filtrage dynamique incluant les dates
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      // FILTRE DATE
+      let matchDate = true;
+      if (t.transactionDate && dateFrom && dateTo) {
+        const transactionDate = new Date(t.transactionDate);
+        const from = new Date(`${dateFrom}T00:00:00`);
+        const to = new Date(`${dateTo}T23:59:59`);
+        matchDate = transactionDate >= from && transactionDate <= to;
+      }
+
+      // RECHERCHE
+      const searchValue = search.toLowerCase().trim();
+      const matchSearch = !searchValue ||
+        t.partner.toLowerCase().includes(searchValue) ||
+        t.email.toLowerCase().includes(searchValue) ||
+        t.method.toLowerCase().includes(searchValue) ||
+        t.reference.toLowerCase().includes(searchValue);
+
+      // FILTRE TYPE
+      const matchType = typeFilter === 'Tous les types' || t.type === typeFilter;
+
+      return matchDate && matchSearch && matchType;
+    });
+  }, [transactions, search, typeFilter, dateFrom, dateTo]);
+
+  // Statistiques dynamiques basées sur filteredTransactions
+  const stats = useMemo(() => {
+    const totalEncaisse = filteredTransactions
+      .filter(tx => tx.incoming)
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+
+    const totalDepenses = filteredTransactions
+      .filter(tx => !tx.incoming)
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+
+    const virementsEffectues = filteredTransactions
+      .filter(tx => {
+        if (tx.incoming) return false;
+        const type = String(tx.originalType || "").toUpperCase();
+        return type === "TRANSFER" || type === "VIREMENT" || type === "BANK_TRANSFER";
+      })
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+
+    const nombreEncaissements = filteredTransactions.filter(tx => tx.incoming).length;
+    const nombreDepenses = filteredTransactions.filter(tx => !tx.incoming).length;
+    const nombreVirements = filteredTransactions.filter(tx => {
+      if (tx.incoming) return false;
+      const type = String(tx.originalType || "").toUpperCase();
+      return type === "TRANSFER" || type === "VIREMENT" || type === "BANK_TRANSFER";
+    }).length;
+
+    const solde = Number(account?.balance ?? account?.solde ?? 0);
+
+    return [
+      {
+        key: "encaisse",
+        icon: Wallet,
+        label: "Total encaissé",
+        value: `${totalEncaisse.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`,
+        sub: `${nombreEncaissements} opération${nombreEncaissements > 1 ? "s" : ""}`,
+        subTone: "green",
+        iconBg: "#dbeafe",
+        iconColor: "#1d4fd8"
+      },
+      {
+        key: "depenses",
+        icon: TrendingUp,
+        label: "Total des dépenses",
+        value: `${totalDepenses.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`,
+        sub: `${nombreDepenses} opération${nombreDepenses > 1 ? "s" : ""}`,
+        subTone: "red",
+        iconBg: "#d1fae5",
+        iconColor: "#059669"
+      },
+      {
+        key: "virements",
+        icon: ArrowUpRight,
+        label: "Virements effectués",
+        value: `${virementsEffectues.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`,
+        sub: `${nombreVirements} opération${nombreVirements > 1 ? "s" : ""}`,
+        subTone: "blue",
+        iconBg: "#ede9fe",
+        iconColor: "#7c3aed"
+      },
+      {
+        key: "solde",
+        icon: Wallet,
+        label: "Solde du compte",
+        value: `${solde.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`,
+        sub: "Compte professionnel",
+        subTone: "blue",
+        iconBg: "#fef3c7",
+        iconColor: "#d97706"
+      }
+    ];
+  }, [filteredTransactions, account]);
 
   const quickActions = [
     { icon: QrCode, label: 'Recevoir un paiement', sub: 'QR Code', bg: '#1d4fd8', to: '/recevoir-paiement' },
@@ -161,15 +246,6 @@ email:
     { icon: Download, label: 'Exporter les transactions', sub: 'PDF / Excel', bg: '#1d4fd8', action: () => setShowExportModal(true) },
   ];
 
-  const filteredTransactions = useMemo(() => {
-return transactions.filter(t => {      const matchSearch = !search || 
-        t.partner.toLowerCase().includes(search.toLowerCase()) ||
-        t.email.toLowerCase().includes(search.toLowerCase()) ||
-        t.method.toLowerCase().includes(search.toLowerCase());
-      const matchType = typeFilter === 'Tous les types' || t.type === typeFilter;
-      return matchSearch && matchType;
-    });
-}, [transactions, search, typeFilter]);
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / PAGE_SIZE));
   const paginatedTransactions = filteredTransactions.slice(
     (currentPage - 1) * PAGE_SIZE,
@@ -196,7 +272,6 @@ return transactions.filter(t => {      const matchSearch = !search ||
     return <XCircle size={14} />;
   };
 
-  // Transaction Selection Handlers
   const handleSelectAll = () => {
     if (selectedTransactions.length === paginatedTransactions.length) {
       setSelectedTransactions(prev => 
@@ -219,7 +294,6 @@ return transactions.filter(t => {      const matchSearch = !search ||
   const isAllSelectedOnPage = paginatedTransactions.length > 0 && 
     paginatedTransactions.every(t => selectedTransactions.includes(t.id));
 
-  // Export Logic
   const startExport = () => {
     if (exportParams.exportMode === 'selected' && selectedTransactions.length === 0) {
       alert('Veuillez sélectionner au moins une transaction dans le tableau avant d\'exporter.');
@@ -268,6 +342,9 @@ return transactions.filter(t => {      const matchSearch = !search ||
     return filteredTransactions.length;
   };
 
+  const currentFormat = FORMAT_OPTIONS.find(f => f.value === exportParams.format) || FORMAT_OPTIONS[0];
+  const FormatIcon = currentFormat.icon;
+
   return (
     <div className="pay-layout">
       <aside className="pay-sidebar">
@@ -298,11 +375,6 @@ return transactions.filter(t => {      const matchSearch = !search ||
             <p className="pay-subtitle">Gérez vos paiements, virements et toutes vos transactions.</p>
           </div>
           <div className="pay-topbar-actions">
-            <div className="pay-search-bar">
-              <Search size={16} />
-              <input type="text" placeholder="Rechercher..." />
-            </div>
-            {/* ✅ C'est déjà correct ici ! */}
             <button type="button" className="pay-icon-button" onClick={() => navigate('/notifications-com')} aria-label="Notifications">
               <Bell size={18} />
               <span className="pay-badge">3</span>
@@ -446,7 +518,11 @@ return transactions.filter(t => {      const matchSearch = !search ||
                     </td>
                     <td className="pay-method">{t.method}</td>
                     <td className={`pay-amount ${t.amount >= 0 ? 'pay-amount-positive' : 'pay-amount-negative'}`}>
-                      {t.amount >= 0 ? '+' : ''}{t.amount.toLocaleString('fr-FR')},00 MAD
+                      {t.amount >= 0 ? '+' : ''}
+                      {Number(t.amount).toLocaleString('fr-FR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} MAD
                     </td>
                     <td>
                       <span className={`pay-status-pill pay-status-${t.statusTone}`}>
@@ -461,13 +537,24 @@ return transactions.filter(t => {      const matchSearch = !search ||
           </div>
 
           <div className="pay-pagination">
-            <p className="pay-result-info">Affichage de 1 à {paginatedTransactions.length} sur {filteredTransactions.length} résultats</p>
+            <p className="pay-result-info">
+              {filteredTransactions.length === 0
+                ? "Aucune transaction"
+                : `Affichage de ${(currentPage - 1) * PAGE_SIZE + 1} à ${Math.min(currentPage * PAGE_SIZE, filteredTransactions.length)} sur ${filteredTransactions.length} résultats`
+              }
+            </p>
             <div className="pay-pagination-controls">
               <select className="pay-per-page"><option>10 par page</option><option>20 par page</option></select>
               <div className="pay-page-buttons">
                 <button className="pay-page-btn" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}><ChevronLeft size={16} /></button>
-                {[1, 2, 3].map((n) => (
-                  <button key={n} className={`pay-page-btn ${currentPage === n ? 'pay-page-btn-active' : ''}`} onClick={() => setCurrentPage(n)}>{n}</button>
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((n) => (
+                  <button
+                    key={n}
+                    className={`pay-page-btn ${currentPage === n ? 'pay-page-btn-active' : ''}`}
+                    onClick={() => setCurrentPage(n)}
+                  >
+                    {n}
+                  </button>
                 ))}
                 <button className="pay-page-btn" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}><ChevronRight size={16} /></button>
               </div>

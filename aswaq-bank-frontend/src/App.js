@@ -64,7 +64,10 @@ import NotificationsFournisseur from './pages/NotificationsFournisseur';
 import AssistantFournisseur from './pages/AssistantFournisseur';
 import InformationsCommercant from './pages/InformationsCommercant';
 import InformationsFournisseur from './pages/InformationsFournisseur';
-
+import ServicesPage from './pages/Services';
+import About from './pages/About';
+import Security from './pages/Security';
+import Help from './pages/Help';
 function HomePage() {
   const { lang } = useLanguage();
   const [modalOpen, setModalOpen] = useState(null);
@@ -154,7 +157,10 @@ export default function App() {
           <Route path="/assistant-fournisseur" element={<AssistantFournisseur />} />
           <Route path="/informations-commercant" element={<InformationsCommercant />} />
           <Route path="/informations-fournisseur" element={<InformationsFournisseur />} />
-        </Routes>
+          <Route path="/about" element={<About />} />
+<Route path="/security" element={<Security />} />
+<Route path="/help" element={<Help />} />
+<Route path="/services" element={<ServicesPage />} />        </Routes>
       </BrowserRouter>
       </NotificationProvider>
     </LanguageProvider>

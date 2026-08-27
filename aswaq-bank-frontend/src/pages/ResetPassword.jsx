@@ -1,53 +1,55 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate , useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronDown, Lock, ShieldCheck, Zap, TrendingUp, Users, ArrowLeft, KeyRound } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import Logo from '../components/Logo/Logo';
 import './ResetPassword.css';
 import api from '../services/api';
+
 export default function ResetPassword() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const location = useLocation();
+  const { lang, setLang } = useLanguage();
 
+  const resetToken = location.state?.resetToken;
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-
   const [loading, setLoading] = useState(false);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!password || !confirmPassword) {
-    setError(t('reset.errorEmpty'));
-    return;
-  }
-  if (password !== confirmPassword) {
-    setError(t('reset.errorMatch'));
-    return;
-  }
-  setLoading(true);
-  try {
-    await api.post('/auth/reset-password', { resetToken, newPassword: password });
-    navigate('/');
-  } catch (err) {
-    setError(err.response?.data?.message || 'Une erreur est survenue.');
-  } finally {
-    setLoading(false);
-  }
-};
+  // Redirige si la page est ouverte directement sans token
+  useEffect(() => {
+    if (!resetToken) navigate('/forgot-password');
+  }, [resetToken, navigate]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!password || !confirmPassword) {
+      setError('Veuillez remplir tous les champs.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Les mots de passe ne correspondent pas.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await api.post('/auth/reset-password', { resetToken, newPassword: password });
+      navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Une erreur est survenue.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const features = [
     { icon: ShieldCheck, title: 'Sécurisé', text: 'Vos données sont protégées avec les plus hauts standards.' },
     { icon: Zap, title: 'Rapide', text: 'Des opérations simples et rapides à tout moment.' },
     { icon: TrendingUp, title: 'Intelligent', text: 'Des outils intelligents pour vous accompagner au quotidien.' },
-    { icon: Users, title: 'Proche de vous', text: 'Une banque pensée pour les commerçants, fournisseurs et clients.' },
+    { icon: Users, title: 'À vos côtés', text: 'Une banque pensée pour les commerçants, fournisseurs et clients.' },
   ];
-const location = useLocation();
-const resetToken = location.state?.resetToken;
 
-useEffect(() => {
-  if (!resetToken) navigate('/forgot-password');
-}, [resetToken, navigate]);
   return (
     <div className="submitted-page">
       {/* ===== Header ===== */}
@@ -67,8 +69,8 @@ useEffect(() => {
             <a href="/security">Sécurité</a>
             <a href="/help">Aide</a>
           </nav>
-          <button type="button" className="submitted-lang-switch">
-            FR <ChevronDown size={16} />
+          <button type="button" className="submitted-lang-switch" onClick={() => setLang(lang === 'fr' ? 'ar' : 'fr')}>
+            {lang.toUpperCase()} <ChevronDown size={16} />
           </button>
         </div>
       </header>
@@ -111,52 +113,54 @@ useEffect(() => {
               <div className="submitted-icon-wrapper submitted-icon-loading">
                 <KeyRound className="submitted-icon" size={40} />
               </div>
-              <h1 className="submitted-card-title">{t('reset.title')}</h1>
-              <p className="submitted-card-subtitle">{t('reset.subtitle')}</p>
+              <h1 className="submitted-card-title">Réinitialiser le mot de passe</h1>
+              <p className="submitted-card-subtitle">Choisissez un nouveau mot de passe sécurisé.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="submitted-form">
               <div className="submitted-form-group">
-                <label className="submitted-form-label">{t('reset.newPassword')}</label>
+                <label className="submitted-form-label">Nouveau mot de passe</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   className="submitted-form-input"
-                  placeholder={t('reset.newPasswordPlaceholder')}
+                  placeholder="••••••••"
                   required
                 />
               </div>
 
               <div className="submitted-form-group">
-                <label className="submitted-form-label">{t('reset.confirmPassword')}</label>
+                <label className="submitted-form-label">Confirmer le mot de passe</label>
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
                   className="submitted-form-input"
-                  placeholder={t('reset.confirmPasswordPlaceholder')}
+                  placeholder="••••••••"
                   required
                 />
               </div>
 
               {error && <p className="submitted-form-error">{error}</p>}
 
-              <button type="submit" className="submitted-access-button">
-                {t('reset.submit')}
+              <button type="submit" className="submitted-access-button" disabled={loading}>
+                {loading ? 'Validation...' : 'Valider le nouveau mot de passe'}
               </button>
             </form>
 
             <Link to="/" className="submitted-back-link">
-              <ArrowLeft size={16} /> {t('reset.back')}
+              <ArrowLeft size={16} /> Retour à l'accueil
             </Link>
 
             <div className="submitted-footer">
               <div className="submitted-security-info">
                 <Lock size={14} />
-                <span>{t('reset.protected')}</span>
+                <span>Connexion sécurisée SSL</span>
               </div>
-              <p className="submitted-compliance">{t('reset.compliance')}</p>
+              <p className="submitted-compliance">
+                Conforme aux exigences de Bank Al-Maghrib
+              </p>
             </div>
           </div>
         </section>

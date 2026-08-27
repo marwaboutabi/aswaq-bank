@@ -29,6 +29,9 @@ import {
 
 import Logo from '../components/Logo/Logo';
 import api from '../services/api';
+// Nouveaux imports pour le header dynamique
+import UserHeader from '../components/UserHeader/UserHeader';
+import NotificationBell from '../components/NotificationBell/NotificationBell';
 
 import './TicketsNumeriquesClient.css';
 import './DashboardClient.css';
@@ -56,8 +59,6 @@ const NAV_ITEMS = [
 ];
 
 // Filtres disponibles : type, libellé affiché, icône et placeholder de l'input.
-// Un seul filtre actif par "type" à la fois, mais plusieurs types peuvent
-// être combinés en même temps (ex : Commerce + Montant min.)
 const FILTER_TYPES = [
   { value: 'merchant', label: 'Commerce', icon: Store, placeholder: 'Ex: Carrefour' },
   { value: 'product', label: 'Produit', icon: Package, placeholder: 'Ex: Lait' },
@@ -495,8 +496,8 @@ export default function TicketsNumeriquesClient() {
 
       <aside className="dash-sidebar">
 
-        <div className="dash-sidebar-logo">
-          <Logo />
+        <div className="dash-sidebar-logo" >
+          <Logo size={100}  className="mb-6 logo-white"/>
         </div>
 
         <nav className="dash-nav">
@@ -548,8 +549,7 @@ export default function TicketsNumeriquesClient() {
 
       <main className="dash-main">
 
-        {/* HEADER */}
-
+        {/* HEADER MODIFIÉ AVEC COMPOSANTS DYNAMIQUES */}
         <header className="dash-topbar">
 
           <div>
@@ -564,32 +564,8 @@ export default function TicketsNumeriquesClient() {
           </div>
 
           <div className="dash-topbar-actions">
-
-            <div className="dash-search">
-              <Search size={16} />
-
-              <input
-                type="text"
-                placeholder="Rechercher..."
-                value={searchQuery}
-                onChange={(e) =>
-                  setSearchQuery(
-                    e.target.value
-                  )
-                }
-              />
-            </div>
-
-            <button
-              type="button"
-              className="dash-icon-button"
-              onClick={() =>
-                navigate('/notifications')
-              }
-            >
-              <Bell size={18} />
-            </button>
-
+            <NotificationBell />
+            <UserHeader />
           </div>
         </header>
 
@@ -694,12 +670,7 @@ export default function TicketsNumeriquesClient() {
         </section>
 
         {/* =====================================================
-            FILTRES — un seul bloc cohérent :
-            1) on choisit le TYPE de filtre dans le menu déroulant
-            2) on saisit la valeur juste à côté et on valide
-            3) chaque filtre actif apparaît en "puce" et peut être
-               retiré individuellement — plusieurs types peuvent
-               être combinés en même temps (ex: Commerce + Montant)
+            FILTRES
         ===================================================== */}
 
         <section className="tickets-filters">

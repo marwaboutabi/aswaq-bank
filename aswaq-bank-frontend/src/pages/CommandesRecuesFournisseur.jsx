@@ -4,7 +4,7 @@ import {
   Home, Package, ShoppingCart, CreditCard, Truck, User,
   LogOut, Search, Bell, ChevronDown, ChevronLeft, ChevronRight,
   Building2, Download, Check, X, MoreVertical, Clock, ClipboardList,
-  CheckCircle2, Phone, Hash, Bot
+  CheckCircle2, Phone, Hash, Bot, MapPin
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import axiosClient from '../services/api';
@@ -28,6 +28,11 @@ const STATUS_TONE = {
   ANNULEE: 'red',
 };
 
+const PAYMENT_LABELS = {
+  UNPAID: 'Non payée',
+  PAID: 'Payée',
+};
+
 const STATS_META = [
   { key: 'total', icon: Package, tone: 'blue', label: 'Commandes reçues' },
   { key: 'attente', icon: Clock, tone: 'orange', label: 'En attente' },
@@ -48,6 +53,14 @@ function formatDate(iso) {
 
 function StatusBadge({ status }) {
   return <span className={`cmd-four-badge-pill cmd-four-badge-pill-${STATUS_TONE[status] || 'orange'}`}>{STATUS_LABELS[status] || status}</span>;
+}
+
+function PaymentBadge({ paymentStatus }) {
+  return (
+    <span className={`cmd-four-badge-pill cmd-four-badge-pill-${paymentStatus === 'PAID' ? 'green' : 'red'}`}>
+      {PAYMENT_LABELS[paymentStatus] || paymentStatus}
+    </span>
+  );
 }
 
 function OrderTimeline({ status }) {
@@ -118,6 +131,16 @@ function OrderDetailModal({ order, onClose, onAccept, onRefuse, onAdvance }) {
               </div>
             </div>
             <div className="cmd-four-detail-item">
+              <CreditCard size={14} />
+              <div>
+                <span className="cmd-four-detail-label">Paiement</span>
+                <span className="cmd-four-detail-value">
+                  {PAYMENT_LABELS[order.paymentStatus] || order.paymentStatus}
+                  {order.paymentStatus === 'PAID' && order.paidAt ? ` — ${formatDate(order.paidAt)}` : ''}
+                </span>
+              </div>
+            </div>
+            <div className="cmd-four-detail-item">
               <Building2 size={14} />
               <div>
                 <span className="cmd-four-detail-label">Commerçant</span>
@@ -129,6 +152,13 @@ function OrderDetailModal({ order, onClose, onAccept, onRefuse, onAdvance }) {
               <div>
                 <span className="cmd-four-detail-label">Téléphone</span>
                 <span className="cmd-four-detail-value">{order.merchantPhone || '—'}</span>
+              </div>
+            </div>
+            <div className="cmd-four-detail-item">
+              <MapPin size={14} />
+              <div>
+                <span className="cmd-four-detail-label">Adresse</span>
+                <span className="cmd-four-detail-value">{order.merchantAddress || '—'}</span>
               </div>
             </div>
             <div className="cmd-four-detail-item">
@@ -439,12 +469,13 @@ export default function CommandesRecuesFournisseur() {
                   <th>Articles</th>
                   <th>Total</th>
                   <th>Statut</th>
+                  <th>Paiement</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loadingOrders && (
-                  <tr><td colSpan={7} className="cmd-four-empty-row">Chargement...</td></tr>
+                  <tr><td colSpan={8} className="cmd-four-empty-row">Chargement...</td></tr>
                 )}
                 {!loadingOrders && pageOrders.map((o) => (
                   <tr key={o.id}>
@@ -454,6 +485,7 @@ export default function CommandesRecuesFournisseur() {
                     <td className="cmd-four-articles">{o.items.length}</td>
                     <td className="cmd-four-total">{fmt(o.totalAmount)} MAD</td>
                     <td><StatusBadge status={o.status} /></td>
+                    <td><PaymentBadge paymentStatus={o.paymentStatus} /></td>
                     <td>
                       <div className="cmd-four-row-actions" onClick={(e) => e.stopPropagation()}>
                         {o.status === 'EN_ATTENTE' && (
@@ -495,7 +527,7 @@ export default function CommandesRecuesFournisseur() {
 
                 {!loadingOrders && pageOrders.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="cmd-four-empty-row">Aucune commande ne correspond à votre recherche.</td>
+                    <td colSpan={8} className="cmd-four-empty-row">Aucune commande ne correspond à votre recherche.</td>
                   </tr>
                 )}
               </tbody>

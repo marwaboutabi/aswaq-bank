@@ -737,10 +737,6 @@ export default function LivraisonsFournisseur() {
           </div>
 
           <div className="liv-four-topbar-actions">
-            <div className="liv-four-search">
-              <Search size={16} />
-              <input type="text" placeholder="Rechercher..." />
-            </div>
             <button
               type="button"
               className="liv-four-icon-button"

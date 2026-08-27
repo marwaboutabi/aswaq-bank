@@ -13,7 +13,6 @@ import './DashboardClient.css';
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/acceuil-com' },
   { icon: Package, label: 'Produits', to: '/produits' },
-  { icon: Boxes, label: 'Stock', to: '/stock' },
   { icon: ArrowLeftRight, label: 'Paiements & Transactions', to: '/transactions-commerce' },
   { icon: Users, label: 'Fournisseurs', to: '/fournisseurs' },
   { icon: Star, label: 'Fidélité & Tickets', to: '/fidelite-commerce' },
@@ -85,7 +84,7 @@ const QUICK_SUGGESTIONS = [
   },
 ];
 
-// --- MODIFICATION : Appel API vers Spring Boot ---
+// --- Appel API vers Spring Boot ---
 async function askAI(question) {
   const token = localStorage.getItem('token');
 
@@ -131,11 +130,14 @@ export default function Assistant() {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
+  // CORRECTION : Ne scroller que si la conversation a commencé (plus que le message de bienvenue)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > 1) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages, isTyping]);
 
-  // --- MODIFICATION : Gestion robuste des erreurs et du loading ---
+  // --- Gestion robuste des erreurs et du loading ---
   const handleSend = async (text) => {
     const question = text || inputValue.trim();
 

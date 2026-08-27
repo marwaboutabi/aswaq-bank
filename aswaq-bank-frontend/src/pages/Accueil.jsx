@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -27,6 +27,9 @@ import Footer from '../components/Footer'; // ✅ Footer
 import './Accueil.css';
 
 export default function Accueil() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   return (
     <div className="home-page">
 
@@ -167,7 +170,7 @@ export default function Accueil() {
 
                   <div className="dashboard-top">
                     <span>
-                      Bonjour, Ahmed 👋
+                      Bonjour, Ahmad 👋
                     </span>
 
                     <Bell size={19} />

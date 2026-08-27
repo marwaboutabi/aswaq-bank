@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import Logo from '../Logo/Logo';
@@ -26,22 +26,21 @@ export default function Navbar() {
 
         {/* Liens de navigation */}
         <div className="navbar-links">
-          <a href="#services" className="nav-link">
-            {t('nav.services') || 'Nos services'}
-          </a>
-          
+         <Link to="/services" className="nav-link">
+  Nos services
+</Link>
           <button 
             onClick={() => navigate('/login')} 
             className="nav-link"
           >
-            {t('nav.login') || 'Se connecter'}
+            Se connecter
           </button>
           
           <button 
             onClick={() => navigate('/create-account')} 
             className="nav-link nav-link-highlight"
           >
-            {t('nav.openAccount') || 'Ouvrir un compte'}
+           Ouvrir un compte
           </button>
         </div>
 

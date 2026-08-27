@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, ArrowLeftRight, Receipt, Star, PiggyBank, PieChart,
   Bell, Bot, User, LogOut, Search, Eye, EyeOff, Send, Download,
   PlusCircle, FileText, Copy, Shield, Settings, Lock, Unlock, RefreshCw,
-  Wifi, Globe, Banknote, MapPin, CheckCircle2, Building2, X,
+  Wifi, Globe, Banknote, MapPin, CheckCircle2, Building2, X, Loader2
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
+import api from '../services/api';
 import './MonCompte.css';
 import './DashboardClient.css';
 import UserHeader from '../components/UserHeader/UserHeader';
@@ -92,8 +93,12 @@ export default function MonCompte() {
   const config = OFFER_CONFIG[offreId] || OFFER_CONFIG.personnel;
   const isBusiness = offreId === 'commercant' || offreId === 'fournisseur';
 
+  // États dynamiques pour le compte bancaire
+  const [account, setAccount] = useState(null);
+  const [accountLoading, setAccountLoading] = useState(true);
+
   const [showBalance, setShowBalance] = useState(true);
-  const [activePanel, setActivePanel] = useState(null); // 'carte' | 'paiements' | 'plafonds' | null
+  const [activePanel, setActivePanel] = useState(null);
 
   const [cardActive] = useState(true);
   const [cardBlocked, setCardBlocked] = useState(false);
@@ -106,12 +111,43 @@ export default function MonCompte() {
   const [limitsMA, setLimitsMA] = useState(config.defaultLimits.ma);
   const [limitsIntl, setLimitsIntl] = useState(config.defaultLimits.intl);
 
+  // Chargement des données du compte depuis le backend
+  useEffect(() => {
+    const loadAccount = async () => {
+      try {
+        setAccountLoading(true);
+        const { data } = await api.get('/accounts/me');
+        console.log('Compte bancaire réel :', data);
+        setAccount(data);
+      } catch (error) {
+        console.error('Erreur récupération compte bancaire :', error);
+      } finally {
+        setAccountLoading(false);
+      }
+    };
+
+    loadAccount();
+  }, []);
+
   const SERVICES = [
     { key: 'carte', icon: Lock, title: 'Ma carte', desc: 'Activer, bloquer, PIN, nouvelle carte' },
     { key: 'paiements', icon: Wifi, title: 'Paramètres de paiement', desc: 'En ligne, sans contact, international' },
     { key: 'plafonds', icon: Shield, title: 'Plafonds', desc: 'Maroc et international' },
     { key: 'infos', icon: Settings, title: 'Informations du compte', desc: 'Type, statut, devise' },
   ];
+
+  if (accountLoading) {
+    return (
+      <div className="dash-layout">
+        <main className="dash-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+          <div style={{ textAlign: 'center' }}>
+            <Loader2 size={32} className="animate-spin" style={{ animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }} />
+            <p>Chargement de votre compte...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="dash-layout">
@@ -159,12 +195,8 @@ export default function MonCompte() {
             <p className="dash-greeting-sub">Gérez votre compte et consultez vos informations financières.</p>
           </div>
           <div className="dash-topbar-actions">
-            <div className="dash-search">
-              <Search size={16} />
-              <input type="text" placeholder="Rechercher..." />
-            </div>
             <NotificationBell />
-           <UserHeader />
+            <UserHeader />
           </div>
         </header>
 
@@ -193,9 +225,23 @@ export default function MonCompte() {
               <div className="compte-account-body">
                 <div className="compte-balance-block">
                   <span className="compte-balance-label">Solde disponible</span>
-                  <span className="compte-balance-amount">{showBalance ? '12 450,00' : '••• •••'} <small>MAD</small></span>
+                  <span className="compte-balance-amount">
+                    {showBalance
+                      ? account
+                        ? Number(account.balance).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                        : '—'
+                      : '••• •••'}
+                    <small>{account?.currency || 'MAD'}</small>
+                  </span>
                   <span className="compte-balance-label" style={{ marginTop: '0.6rem' }}>Solde comptable</span>
-                  <span className="compte-balance-amount-sm">{showBalance ? '12 450,00' : '••• •••'} <small>MAD</small></span>
+                  <span className="compte-balance-amount-sm">
+                    {showBalance
+                      ? account
+                        ? Number(account.balance).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                        : '—'
+                      : '••• •••'}
+                    <small>{account?.currency || 'MAD'}</small>
+                  </span>
                 </div>
 
                 <div className="compte-mini-card">
@@ -207,7 +253,11 @@ export default function MonCompte() {
                     </svg>
                   </div>
                   <Wifi size={16} className="compte-mini-card-wifi" />
-                  <span className="compte-mini-card-number">•••• 4589</span>
+                  <span className="compte-mini-card-number">
+                    {account?.accountNumber
+                      ? `•••• ${account.accountNumber.slice(-4)}`
+                      : '•••• ••••'}
+                  </span>
                   {cardBlocked && <span className="compte-mini-card-blocked"><Lock size={11} /> Bloquée</span>}
                 </div>
               </div>
@@ -215,13 +265,13 @@ export default function MonCompte() {
               <div className="compte-account-footer">
                 <span>Numéro de compte</span>
                 <div className="compte-account-number-row">
-                  <span>•••• •••• •••• 4589</span>
+                  <span>{account?.accountNumber || '—'}</span>
                   <button type="button" className="compte-copy-btn"><Copy size={14} /></button>
                 </div>
 
                 <span style={{ marginTop: '0.75rem' }}>RIB</span>
                 <div className="compte-account-number-row">
-                  <span>230 780 0000123456789012 34</span>
+                  <span>{account?.rib || '—'}</span>
                   <button type="button" className="compte-copy-btn"><Copy size={14} /></button>
                 </div>
               </div>
@@ -239,8 +289,8 @@ export default function MonCompte() {
                   <strong className="compte-info-active"><span className="compte-status-dot" /> Actif</strong>
                 </div>
                 <div className="compte-info-row"><span>Date d'ouverture</span><strong>20 juillet 2026</strong></div>
-                <div className="compte-info-row"><span>Devise</span><strong>MAD</strong></div>
-                <div className="compte-info-row"><span>Titulaire du compte</span><strong>Marwa Boutabi</strong></div>
+                <div className="compte-info-row"><span>Devise</span><strong>{account?.currency || 'MAD'}</strong></div>
+                <div className="compte-info-row"><span>Titulaire du compte</span><strong>{account?.holderName || 'Marwa Boutabi'}</strong></div>
                 {isBusiness && (
                   <>
                     <div className="compte-info-row"><span>Registre de commerce</span><strong>Non renseigné</strong></div>
@@ -256,33 +306,19 @@ export default function MonCompte() {
             <div className="compte-panel">
               <h2 className="compte-panel-title">Actions rapides</h2>
               <div className="compte-quick-grid">
-                
-                <button 
-                  type="button" 
-                  className="compte-quick-btn"
-                  onClick={() => navigate('/envoyer-argent')}
-                >
+                <button type="button" className="compte-quick-btn" onClick={() => navigate('/envoyer-argent')}>
                   <Send size={20} /> Envoyer<br />de l'argent
                 </button>
-                
-                <button 
-  type="button" 
-  className="compte-quick-btn"
-  onClick={() => navigate('/recevoir-argent')}
->
-  <Download size={20} /> Recevoir<br />de l'argent
-</button>
+                <button type="button" className="compte-quick-btn" onClick={() => navigate('/recevoir-argent')}>
+                  <Download size={20} /> Recevoir<br />de l'argent
+                </button>
                 <button type="button" className="compte-quick-btn" onClick={() => setCardBlocked((v) => !v)}>
                   {cardBlocked ? <Unlock size={20} /> : <Lock size={20} />}
                   {cardBlocked ? 'Débloquer' : 'Bloquer'}<br />la carte
                 </button>
-                <button 
-  type="button" 
-  className="compte-quick-btn"
-  onClick={() => navigate('/transactions-client')}
->
-  <FileText size={20} /> Télécharger<br />un relevé
-</button>
+                <button type="button" className="compte-quick-btn" onClick={() => navigate('/transactions-client')}>
+                  <FileText size={20} /> Télécharger<br />un relevé
+                </button>
               </div>
             </div>
 
@@ -419,7 +455,7 @@ export default function MonCompte() {
                 <div className="compte-drawer-body compte-info-list">
                   <div className="compte-info-row"><span>Type de compte</span><strong>{config.label}</strong></div>
                   <div className="compte-info-row"><span>Date d'ouverture</span><strong>20 juillet 2026</strong></div>
-                  <div className="compte-info-row"><span>Devise</span><strong>MAD (Dirham marocain)</strong></div>
+                  <div className="compte-info-row"><span>Devise</span><strong>{account?.currency || 'MAD'} ({account?.currency === 'MAD' ? 'Dirham marocain' : ''})</strong></div>
                   <div className="compte-info-row"><span>Statut</span><strong className="compte-info-active"><CheckCircle2 size={14} /> Compte actif</strong></div>
                 </div>
               )}

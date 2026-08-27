@@ -481,10 +481,7 @@ export default function NotificationsFournisseur() {
             <p className="dash-greeting-sub">Restez informé en temps réel des commandes, paiements, livraisons et activités de votre entreprise.</p>
           </div>
           <div className="dash-topbar-actions">
-            <div className="dash-search">
-              <Search size={16} />
-              <input type="text" placeholder="Rechercher..." />
-            </div>
+           
             <button
               type="button"
               className="dash-icon-button"

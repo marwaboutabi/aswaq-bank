@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Package, Boxes, ArrowLeftRight, Users, Star, Bot, LogOut,
@@ -9,60 +9,8 @@ import Logo from '../components/Logo/Logo';
 import './AcceuilCom.css';
 import UserHeader from '../components/UserHeader/UserHeader';
 import NotificationBell from '../components/NotificationBell/NotificationBell';
-const STATS = [
-  {
-    key: 'solde',
-    icon: Wallet,
-    tone: 'green',
-    label: 'Solde disponible',
-    value: '28 450,00 MAD',
-    sub: 'Compte principal •••• 4589',
-    withEye: true,
-  },
-  {
-    key: 'produits',
-    icon: Package,
-    tone: 'blue',
-    label: 'Produits',
-    value: '156',
-    sub: '+ 12 ce mois',
-    trendUp: true,
-  },
-  {
-    key: 'ventes',
-    icon: ShoppingCart,
-    tone: 'orange',
-    label: 'Ventes ce mois',
-    value: '324',
-    sub: '+ 18% vs mois dernier',
-    trendUp: true,
-  },
-  {
-    key: 'points',
-    icon: Star,
-    tone: 'purple',
-    label: 'Points distribués',
-    value: '2 150 pts',
-    sub: '+ 210 pts ce mois',
-    trendUp: true,
-  },
-  {
-    key: 'ca',
-    icon: TrendingUp,
-    tone: 'teal',
-    label: "Chiffre d'affaires",
-    value: '45 780,00 MAD',
-    sub: '+ 15% vs mois dernier',
-    trendUp: true,
-  },
-];
 
-const LOW_STOCK = [
-  { name: 'Café Moulu 250g', current: 5, min: 10, icon: '☕' },
-  { name: 'Sucre Blanc 1kg', current: 7, min: 15, icon: '🍚' },
-  { name: "Huile d'Olive 1L", current: 3, min: 8, icon: '🫒' },
-  { name: 'Thé Vert 100g', current: 4, min: 10, icon: '🍵' },
-];
+const LOW_STOCK_THRESHOLD = 5; // aligné avec le seuil backend (TransactionServiceImpl)
 
 const NOTIFICATIONS = [
   {
@@ -93,14 +41,6 @@ const NOTIFICATIONS = [
     icon: Star,
     tone: 'gold',
   },
-];
-
-const TRANSACTIONS = [
-  { id: 1, name: 'Paiement QR - Client', type: 'Reçu', amount: 250, date: '18 Juil 2026 - 14:30', icon: QrCode, tone: 'green' },
-  { id: 2, name: 'Virement vers compte', type: 'Envoyé', amount: -1500, date: '18 Juil 2026 - 11:20', icon: Send, tone: 'blue' },
-  { id: 3, name: 'Achat fournisseur', type: 'Dépense', amount: -850, date: '17 Juil 2026 - 16:45', icon: ShoppingCart, tone: 'orange' },
-  { id: 4, name: 'Paiement QR - Client', type: 'Reçu', amount: 450, date: '17 Juil 2026 - 15:10', icon: QrCode, tone: 'green' },
-  { id: 5, name: 'Virement reçu', type: 'Reçu', amount: 2000, date: '17 Juil 2026 - 10:05', icon: Download, tone: 'blue' },
 ];
 
 const CATEGORY_SALES = [
@@ -214,16 +154,150 @@ export default function AcceuilCom() {
   const navigate = useNavigate();
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { from: 'ia', text: "Bonjour Ahmed 👋 Je suis votre assistant IA. Comment puis-je vous aider aujourd'hui ?" },
+    { from: 'ia', text: "Bonjour 👋 Je suis votre assistant IA. Comment puis-je vous aider aujourd'hui ?" },
   ]);
   const [input, setInput] = useState('');
+
+  // States dynamiques
+  const [user, setUser] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [sales, setSales] = useState([]);
+  const [loyaltyHistory, setLoyaltyHistory] = useState([]);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        };
+
+        const [userRes, accountRes, productsRes, transactionsRes, salesRes, loyaltyRes] = await Promise.all([
+          fetch('http://localhost:8080/api/users/me', { headers }),
+          fetch('http://localhost:8080/api/accounts/me', { headers }),
+          fetch('http://localhost:8080/api/products', { headers }),
+          fetch('http://localhost:8080/api/transactions/my', { headers }),
+          fetch('http://localhost:8080/api/sales/merchant', { headers }),
+          fetch('http://localhost:8080/api/loyalty/merchant/history', { headers }),
+        ]);
+
+        if (userRes.ok) setUser(await userRes.json());
+        if (accountRes.ok) setAccount(await accountRes.json());
+
+        if (productsRes.ok) {
+          const data = await productsRes.json();
+          setProducts(Array.isArray(data) ? data : []);
+        }
+
+        if (transactionsRes.ok) {
+          const data = await transactionsRes.json();
+          setTransactions(Array.isArray(data) ? data : []);
+        }
+
+        if (salesRes.ok) {
+          const data = await salesRes.json();
+          setSales(Array.isArray(data) ? data : []);
+        }
+
+        if (loyaltyRes.ok) {
+          const data = await loyaltyRes.json();
+          setLoyaltyHistory(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        console.error('Erreur récupération données dashboard commerçant:', error);
+      } finally {
+        setLoadingDashboard(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
+
+  // Calculs dynamiques
+  const supplierBalanceRaw = Number(
+    account?.balance ?? account?.solde ?? account?.availableBalance ?? 0
+  );
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const paidSales = sales.filter(s => String(s.status || '').toUpperCase() === 'PAID');
+
+  const salesThisMonth = paidSales.filter(s => {
+    if (!s.paidAt && !s.createdAt) return false;
+    const d = new Date(s.paidAt || s.createdAt);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+  });
+
+  const totalRevenue = paidSales.reduce((sum, s) => sum + Number(s.totalAmount || 0), 0);
+
+  const pointsDistributed = loyaltyHistory
+    .filter(t => String(t.type || '').toUpperCase() === 'EARNED')
+    .reduce((sum, t) => sum + Number(t.points || 0), 0);
+
+  const lowStockProducts = [...products]
+    .filter(p => Number(p.stock ?? 0) <= LOW_STOCK_THRESHOLD)
+    .sort((a, b) => Number(a.stock ?? 0) - Number(b.stock ?? 0))
+    .slice(0, 5);
+
+  const STATS = [
+    {
+      key: 'solde',
+      icon: Wallet,
+      tone: 'green',
+      label: 'Solde disponible',
+      value: `${supplierBalanceRaw.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`,
+      sub: 'Compte principal',
+      withEye: true,
+    },
+    {
+      key: 'produits',
+      icon: Package,
+      tone: 'blue',
+      label: 'Produits',
+      value: products.length.toLocaleString('fr-FR'),
+      sub: 'Produits actifs',
+    },
+    {
+      key: 'ventes',
+      icon: ShoppingCart,
+      tone: 'orange',
+      label: 'Ventes ce mois',
+      value: salesThisMonth.length.toLocaleString('fr-FR'),
+      sub: 'Ce mois-ci',
+      trendUp: salesThisMonth.length > 0,
+    },
+    {
+      key: 'points',
+      icon: Star,
+      tone: 'purple',
+      label: 'Points distribués',
+      value: `${pointsDistributed.toLocaleString('fr-FR')} pts`,
+      sub: 'Total distribué',
+      trendUp: pointsDistributed > 0,
+    },
+    {
+      key: 'ca',
+      icon: TrendingUp,
+      tone: 'teal',
+      label: "Chiffre d'affaires",
+      value: `${totalRevenue.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`,
+      sub: 'Ventes payées',
+      trendUp: totalRevenue > 0,
+    },
+  ];
 
   const totalCategorySales = CATEGORY_SALES.reduce((sum, c) => sum + c.amount, 0);
 
   const NAV_ITEMS = [
     { icon: Home, label: 'Accueil', active: true, to: '/acceuil-com' },
     { icon: Package, label: 'Produits', to: '/produits' },
-    { icon: Boxes, label: 'Stock', to: '/stock' },
     { icon: ArrowLeftRight, label: 'Paiements & Transactions', to: '/transactions-commerce' },
     { icon: Users, label: 'Fournisseurs', to: '/fournisseurs' },
     { icon: Star, label: 'Fidélité & Tickets', to: '/fidelite-commerce' },
@@ -243,6 +317,16 @@ export default function AcceuilCom() {
       ]);
     }, 600);
   };
+
+  if (loadingDashboard) {
+    return (
+      <div className="acc-layout">
+        <main className="acc-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+          <p>Chargement du tableau de bord...</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="acc-layout">
@@ -290,18 +374,14 @@ export default function AcceuilCom() {
       <main className="acc-main">
         <header className="acc-topbar">
           <div>
-            <h1 className="acc-greeting">Bonjour, Ahmed 👋</h1>
+            <h1 className="acc-greeting">Bonjour, {user?.prenom || user?.firstName || 'Commerçant'} 👋</h1>
             <p className="acc-greeting-sub">Voici un aperçu de votre activité commerciale.</p>
           </div>
 
           <div className="acc-topbar-actions">
-            <div className="acc-search">
-              <Search size={16} />
-              <input type="text" placeholder="Rechercher..." />
-            </div>
+            
             <NotificationBell />
-    <UserHeader />
-
+            <UserHeader />
           </div>
         </header>
 
@@ -348,14 +428,19 @@ export default function AcceuilCom() {
               <button type="button" className="acc-link-button">Voir tout</button>
             </div>
             <ul className="acc-stock-list">
-              {LOW_STOCK.map((p) => (
-                <li className="acc-stock-row" key={p.name}>
-                  <span className="acc-stock-emoji">{p.icon}</span>
+              {lowStockProducts.length === 0 && (
+                <li className="acc-stock-row">
+                  <span className="acc-stock-info">Aucun produit en stock faible</span>
+                </li>
+              )}
+              {lowStockProducts.map((p) => (
+                <li className="acc-stock-row" key={p.id}>
+                  <span className="acc-stock-emoji">📦</span>
                   <div className="acc-stock-info">
                     <span className="acc-stock-name">{p.name}</span>
-                    <span className="acc-stock-current">Stock actuel : {p.current}</span>
+                    <span className="acc-stock-current">Stock actuel : {p.stock ?? 0}</span>
                   </div>
-                  <span className="acc-stock-min">Minimum : {p.min}</span>
+                  <span className="acc-stock-min">Seuil : {LOW_STOCK_THRESHOLD}</span>
                 </li>
               ))}
             </ul>
@@ -394,26 +479,32 @@ export default function AcceuilCom() {
               <button type="button" className="acc-link-button">Voir tout</button>
             </div>
             <ul className="acc-transaction-list">
-              {TRANSACTIONS.map((tx) => {
-                const Icon = tx.icon;
-                return (
-                  <li key={tx.id} className="acc-transaction-row">
-                    <span className={`acc-transaction-icon acc-transaction-icon-${tx.tone}`}>
-                      <Icon size={16} />
-                    </span>
-                    <div className="acc-transaction-info">
-                      <p className="acc-transaction-name">{tx.name}</p>
-                      <p className={`acc-transaction-status status-${tx.amount > 0 ? 'in' : 'out'}`}>{tx.type}</p>
-                    </div>
-                    <div className="acc-transaction-amount-block">
-                      <p className={`acc-transaction-amount ${tx.amount > 0 ? 'amount-positive' : 'amount-negative'}`}>
-                        {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('fr-FR')},00 MAD
-                      </p>
-                      <p className="acc-transaction-date">{tx.date}</p>
-                    </div>
-                  </li>
-                );
-              })}
+              {transactions.length === 0 && (
+                <li className="acc-transaction-row">
+                  <span className="acc-transaction-info">Aucune transaction</span>
+                </li>
+              )}
+              {transactions.slice(0, 5).map((tx) => (
+                <li key={tx.id} className="acc-transaction-row">
+                  <span className={`acc-transaction-icon acc-transaction-icon-${tx.incoming ? 'green' : 'orange'}`}>
+                    {tx.incoming ? <Download size={16} /> : <Send size={16} />}
+                  </span>
+                  <div className="acc-transaction-info">
+                    <p className="acc-transaction-name">{tx.otherUserName || tx.description || tx.type}</p>
+                    <p className={`acc-transaction-status status-${tx.incoming ? 'in' : 'out'}`}>
+                      {tx.incoming ? 'Reçu' : 'Envoyé'}
+                    </p>
+                  </div>
+                  <div className="acc-transaction-amount-block">
+                    <p className={`acc-transaction-amount ${tx.incoming ? 'amount-positive' : 'amount-negative'}`}>
+                      {tx.incoming ? '+' : '-'}{Number(tx.amount || 0).toLocaleString('fr-FR')} MAD
+                    </p>
+                    <p className="acc-transaction-date">
+                      {tx.transactionDate ? new Date(tx.transactionDate).toLocaleString('fr-FR') : '-'}
+                    </p>
+                  </div>
+                </li>
+              ))}
             </ul>
           </div>
 

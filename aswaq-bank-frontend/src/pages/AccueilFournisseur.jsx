@@ -1,87 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Home, Package, ShoppingCart, CreditCard, Truck,  User, Settings,
-   LogOut, Search, Bell, ChevronDown, ShoppingBag, AlertTriangle,
-  CheckCircle, Wallet, Plus, Building2,Bot,Layers
+  Home, Package, ShoppingCart, CreditCard, Truck, User, Settings,
+  LogOut, Search, Bell, ChevronDown, ShoppingBag, AlertTriangle,
+  CheckCircle, Wallet, Plus, Building2, Bot, Layers
 } from 'lucide-react';
 import Logo from '../components/Logo/Logo';
 import './AccueilFournisseur.css';
 
-const STATS = [
-  {
-    key: 'ca',
-    icon: Wallet,
-    tone: 'green',
-    label: "Chiffre d'affaires",
-    value: '245 800,00 MAD',
-    sub: '+ 12% vs mois dernier',
-    trendUp: true,
-  },
-  {
-    key: 'commandes',
-    icon: ShoppingBag,
-    tone: 'blue',
-    label: 'Commandes reçues',
-    value: '152',
-    sub: '+ 18 aujourd\u2019hui',
-    trendUp: true,
-  },
-  {
-    key: 'catalogue',
-    icon: Package,
-    tone: 'orange',
-    label: 'Produits en catalogue',
-    value: '87',
-    sub: '+ 3 nouveaux produits',
-    trendUp: true,
-  },
-  {
-    key: 'rupture',
-    icon: AlertTriangle,
-    tone: 'purple',
-    label: 'Produits en rupture',
-    value: '5',
-    sub: '- 2 vs hier',
-    trendDown: true,
-  },
-  {
-    key: 'preparer',
-    icon: Truck,
-    tone: 'cyan',
-    label: 'Commandes à préparer',
-    value: '12',
-    sub: 'En attente',
-  },
-  {
-    key: 'livrees',
-    icon: CheckCircle,
-    tone: 'green',
-    label: 'Livraisons terminées',
-    value: '128',
-    sub: '+ 16 vs hier',
-    trendUp: true,
-  },
-];
-
-const ORDERS = [
-  { id: 'CMD-1025', client: 'Épicerie Atlas', total: 2500, date: 'Aujourd\u2019hui', status: 'En attente', tone: 'orange' },
-  { id: 'CMD-1024', client: 'Market Plus', total: 1300, date: 'Aujourd\u2019hui', status: 'En préparation', tone: 'blue' },
-  { id: 'CMD-1023', client: 'Bio Shop', total: 950, date: 'Hier', status: 'Expédiée', tone: 'purple' },
-  { id: 'CMD-1022', client: 'Alimentation Nour', total: 3600, date: 'Hier', status: 'Livrée', tone: 'green' },
-  { id: 'CMD-1021', client: 'Super Marché Al Amal', total: 1750, date: '25 Juil 2026', status: 'Livrée', tone: 'green' },
-];
-
-
-
-const RECENT_ACTIVITY = [
-  { title: 'Commande CMD-1024 acceptée', time: 'Il y a 15 min', icon: CheckCircle, tone: 'green' },
-  { title: 'Commande CMD-1021 expédiée', time: 'Il y a 45 min', icon: Truck, tone: 'blue' },
-  { title: 'Paiement reçu de la commande CMD-1019', time: 'Il y a 1 heure', icon: CreditCard, tone: 'purple' },
-  { title: 'Nouveau produit ajouté : Riz Basmati 1kg', time: 'Il y a 2 heures', icon: Package, tone: 'orange' },
-  { title: 'Commande CMD-1020 livrée', time: 'Il y a 3 heures', icon: Truck, tone: 'green' },
-];
-
+// CONSTANTES STATIQUES CONSERVÉES (en attente d'endpoints dédiés)
 const CATEGORY_SALES = [
   { label: 'Épicerie', percent: 40, amount: 98320, color: '#1d4fd8' },
   { label: 'Boissons', percent: 25, amount: 61450, color: '#0ea5e9' },
@@ -90,14 +17,12 @@ const CATEGORY_SALES = [
   { label: 'Autres', percent: 10, amount: 24580, color: '#64748b' },
 ];
 
-const REVENUE_TREND = [
-  { label: '21 Juil.', value: 20000 },
-  { label: '22 Juil.', value: 35000 },
-  { label: '23 Juil.', value: 30000 },
-  { label: '24 Juil.', value: 42000 },
-  { label: '25 Juil.', value: 38000 },
-  { label: '26 Juil.', value: 52000 },
-  { label: '27 Juil.', value: 70000, peak: true },
+const RECENT_ACTIVITY = [
+  { title: 'Commande CMD-1024 acceptée', time: 'Il y a 15 min', icon: CheckCircle, tone: 'green' },
+  { title: 'Commande CMD-1021 expédiée', time: 'Il y a 45 min', icon: Truck, tone: 'blue' },
+  { title: 'Paiement reçu de la commande CMD-1019', time: 'Il y a 1 heure', icon: CreditCard, tone: 'purple' },
+  { title: 'Nouveau produit ajouté : Riz Basmati 1kg', time: 'Il y a 2 heures', icon: Package, tone: 'orange' },
+  { title: 'Commande CMD-1020 livrée', time: 'Il y a 3 heures', icon: Truck, tone: 'green' },
 ];
 
 const QUICK_ACTIONS = [
@@ -112,9 +37,7 @@ function DonutChart({ data, total }) {
   let offsetAcc = 0;
 
   return (
-    
     <svg viewBox="0 0 160 160" className="four-donut-svg">
-        
       <circle cx="80" cy="80" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="20" />
       {data.map((slice) => {
         const dash = (slice.percent / 100) * circumference;
@@ -198,47 +121,227 @@ function SalesTrendChart({ data }) {
 export default function AccueilFournisseur() {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // State pour stocker les informations de l'utilisateur connecté
-  const [user, setUser] = useState(null);
 
-  // Chargement du profil utilisateur au montage du composant
+  // States dynamiques
+  const [user, setUser] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [account, setAccount] = useState(null);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
+
+  // Chargement de toutes les données du dashboard
   useEffect(() => {
-    const loadUser = async () => {
+    const loadDashboardData = async () => {
       try {
         const token = localStorage.getItem('token');
+        if (!token) return;
 
-        if (!token) {
-            // Si pas de token, on pourrait rediriger vers le login, mais ici on reste silencieux
-            return;
-        }
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        };
 
-        const response = await fetch('http://localhost:8080/api/users/me', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        // 1. Utilisateur connecté
+        const userRes = await fetch('http://localhost:8080/api/users/me', { headers });
+        if (!userRes.ok) throw new Error('Impossible de récupérer le profil');
+        setUser(await userRes.json());
 
-        if (!response.ok) {
-          throw new Error('Impossible de récupérer le profil');
-        }
+        // 2. Commandes du fournisseur
+        const ordersRes = await fetch('http://localhost:8080/api/supplier/orders', { headers });
+        if (!ordersRes.ok) throw new Error('Impossible de récupérer les commandes');
+        const ordersData = await ordersRes.json();
+        setOrders(Array.isArray(ordersData) ? ordersData : []);
 
-        const data = await response.json();
-        setUser(data);
+               // 3. Produits du fournisseur (avec log détaillé)
+        const productsRes = await fetch('http://localhost:8080/api/supplier/products', { headers });
+        if (!productsRes.ok) throw new Error('Impossible de récupérer les produits');
+        const productsData = await productsRes.json();
+
+        console.log("========== REPONSE PRODUCTS ==========");
+        console.log(JSON.stringify(productsData, null, 2));
+
+        const productsArray = Array.isArray(productsData)
+          ? productsData
+          : (Array.isArray(productsData.content) ? productsData.content : []);
+
+        console.log("========== PRODUCTS ARRAY ==========");
+        console.log(productsArray);
+
+        setProducts(productsArray);
+
+        // 4. Compte bancaire (avec log détaillé)
+        const accountRes = await fetch('http://localhost:8080/api/accounts/me', { headers });
+        if (!accountRes.ok) throw new Error('Impossible de récupérer le compte');
+        const accountData = await accountRes.json();
+
+        console.log("========== REPONSE ACCOUNT ==========");
+        console.log(JSON.stringify(accountData, null, 2));
+
+        setAccount(accountData);
+
       } catch (error) {
-        console.error('Erreur récupération utilisateur:', error);
+        console.error('Erreur récupération données dashboard fournisseur:', error);
+      } finally {
+        setLoadingDashboard(false);
       }
     };
 
-    loadUser();
+    loadDashboardData();
   }, []);
+
+  // Calculs dynamiques des statistiques
+  const paidOrders = orders.filter(order => {
+    const ps = String(order.paymentStatus || '').toUpperCase();
+    return ps === 'PAID' || ps === 'PAYEE' || ps === 'PAYÉE';
+  });
+
+  const totalRevenue = paidOrders.reduce(
+    (sum, order) => sum + Number(order.totalAmount || 0), 0
+  );
+
+  const totalOrders = orders.length;
+  const totalProducts = products.length;
+
+  // Calcul agnostique pour rupture de stock (test plusieurs noms de champs)
+  const outOfStockProducts = products.filter(product => {
+    const stock = Number(
+      product.stock ??
+      product.stockQuantity ??
+      product.quantiteStock ??
+      product.quantity ??
+      product.availableStock ??
+      0
+    );
+    return stock <= 0;
+  }).length;
+
+  console.log("PRODUITS :", products);
+  console.log("PRODUITS EN RUPTURE :", outOfStockProducts);
+
+  const ordersToPrepare = orders.filter(order => {
+    const status = String(order.status || '').toUpperCase();
+    return ['EN_ATTENTE', 'ACCEPTEE', 'EN_PREPARATION', 'PENDING'].includes(status);
+  }).length;
+
+  const deliveredOrders = orders.filter(order => {
+    const status = String(order.status || '').toUpperCase();
+    return ['LIVREE', 'DELIVERED'].includes(status);
+  }).length;
+
+  // Calcul agnostique pour le solde (test plusieurs noms de champs)
+  const supplierBalance = Number(
+    account?.balance ??
+    account?.solde ??
+    account?.availableBalance ??
+    account?.amount ??
+    account?.currentBalance ??
+    account?.accountBalance ??
+    0
+  );
+
+  console.log("SOLDE UTILISÉ :", supplierBalance);
+  console.log("OBJET ACCOUNT :", account);
+
+  // Commandes récentes (triées par date, limitées à 5)
+  const recentOrders = [...orders]
+    .sort((a, b) => new Date(b.orderDate || 0) - new Date(a.orderDate || 0))
+    .slice(0, 5);
+
+  // Graphique des 7 derniers jours (CA encaissé uniquement)
+  const REVENUE_TREND = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (6 - index));
+
+    const nextDate = new Date(date);
+    nextDate.setDate(nextDate.getDate() + 1);
+
+    const value = paidOrders
+      .filter(order => {
+        if (!order.paidAt) return false;
+        const paidDate = new Date(order.paidAt);
+        return paidDate >= date && paidDate < nextDate;
+      })
+      .reduce((sum, order) => sum + Number(order.totalAmount || 0), 0);
+
+    return {
+      label: date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+      value,
+      peak: false,
+    };
+  });
+
+  const maxRevenue = Math.max(...REVENUE_TREND.map(item => item.value), 0);
+  const peakIndex = REVENUE_TREND.findIndex(item => item.value === maxRevenue);
+  if (peakIndex >= 0) REVENUE_TREND[peakIndex].peak = true;
+
+  // STATS dynamique (7 cartes)
+  const STATS = [
+    {
+      key: 'balance',
+      icon: Wallet,
+      tone: 'green',
+      label: 'Solde disponible',
+      value: `${supplierBalance.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`,
+      sub: 'Compte fournisseur',
+    },
+    {
+      key: 'ca',
+      icon: Wallet,
+      tone: 'green',
+      label: "Chiffre d'affaires",
+      value: `${totalRevenue.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`,
+      sub: 'Commandes payées',
+      trendUp: totalRevenue > 0,
+    },
+    {
+      key: 'commandes',
+      icon: ShoppingBag,
+      tone: 'blue',
+      label: 'Commandes reçues',
+      value: totalOrders.toLocaleString('fr-FR'),
+      sub: 'Depuis le début',
+    },
+    {
+      key: 'catalogue',
+      icon: Package,
+      tone: 'orange',
+      label: 'Produits en catalogue',
+      value: totalProducts.toLocaleString('fr-FR'),
+      sub: 'Produits actifs',
+    },
+    {
+      key: 'rupture',
+      icon: AlertTriangle,
+      tone: 'purple',
+      label: 'Produits en rupture',
+      value: outOfStockProducts.toLocaleString('fr-FR'),
+      sub: 'Stock épuisé',
+      trendDown: outOfStockProducts > 0,
+    },
+    {
+      key: 'preparer',
+      icon: Truck,
+      tone: 'cyan',
+      label: 'Commandes à préparer',
+      value: ordersToPrepare.toLocaleString('fr-FR'),
+      sub: 'En attente de traitement',
+    },
+    {
+      key: 'livrees',
+      icon: CheckCircle,
+      tone: 'green',
+      label: 'Livraisons terminées',
+      value: deliveredOrders.toLocaleString('fr-FR'),
+      sub: 'Commandes livrées',
+      trendUp: deliveredOrders > 0,
+    },
+  ];
 
   const totalCategorySales = CATEGORY_SALES.reduce((sum, c) => sum + c.amount, 0);
 
-  // Helper pour générer les initiales si l'utilisateur est chargé
   const getInitials = () => {
-    if (!user) return 'MB'; // Fallback par défaut
+    if (!user) return 'MB';
     const prenom = user.prenom || user.firstName || '';
     const nom = user.nom || user.lastName || '';
     const firstLetter = prenom.charAt(0).toUpperCase();
@@ -247,15 +350,24 @@ export default function AccueilFournisseur() {
   };
 
   const NAV_ITEMS = [
-    { icon: Home, label: 'Accueil', to: '/accueil-fournisseur' , active: true},
+    { icon: Home, label: 'Accueil', to: '/accueil-fournisseur', active: true },
     { icon: Package, label: 'Produits', to: '/produits-fournisseur' },
     { icon: ShoppingCart, label: 'Commandes reçues', to: '/commandes-fournisseur' },
     { icon: Truck, label: 'Livraisons', to: '/livraisons-fournisseur' },
-   { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
+    { icon: Bell, label: 'Notifications', to: '/notifications-fournisseur' },
     { icon: Bot, label: 'Assistant IA', to: '/assistant-fournisseur' },
     { icon: User, label: 'Profil & Paramètres', to: '/profil-fournisseur' },
-
   ];
+
+  if (loadingDashboard) {
+    return (
+      <div className="four-layout">
+        <main className="four-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+          <p>Chargement du tableau de bord...</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="four-layout">
@@ -264,12 +376,10 @@ export default function AccueilFournisseur() {
         <div className="acc-sidebar-logo">
           <Logo size={100} className="mb-6" logo-white />
         </div>
-
         <p className="four-sidebar-section">
           <Building2 size={13} />
           FOURNISSEUR
         </p>
-
         <nav className="four-nav">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
@@ -286,9 +396,6 @@ export default function AccueilFournisseur() {
             );
           })}
         </nav>
-
-        
-
         <Link to="/" className="four-logout">
           <LogOut size={18} />
           Se déconnecter
@@ -299,18 +406,13 @@ export default function AccueilFournisseur() {
       <main className="four-main">
         <header className="four-topbar">
           <div>
-            {/* Affichage dynamique du prénom */}
             <h1 className="four-greeting">
               Bonjour, {user?.prenom || user?.firstName || 'Fournisseur'} 👋
             </h1>
             <p className="four-greeting-sub">Voici un aperçu de votre activité fournisseur.</p>
           </div>
-
           <div className="four-topbar-actions">
-            <div className="four-search">
-              <Search size={16} />
-              <input type="text" placeholder="Rechercher..." />
-            </div>
+            
             <button
               type="button"
               className="four-icon-button"
@@ -320,10 +422,8 @@ export default function AccueilFournisseur() {
               <span className="four-badge">3</span>
             </button>
             <div className="four-user-chip">
-              {/* Avatar avec initiales dynamiques */}
               <div className="four-user-avatar">{getInitials()}</div>
               <div className="four-user-info">
-                {/* Affichage dynamique Nom Prénom */}
                 <span className="four-user-name">
                   {user
                     ? `${user.prenom || user.firstName || ''} ${user.nom || user.lastName || ''}`.trim()
@@ -336,7 +436,7 @@ export default function AccueilFournisseur() {
           </div>
         </header>
 
-        {/* Row 1 — 6 stat cards */}
+        {/* Row 1 — 7 stat cards */}
         <section className="four-stats-row">
           {STATS.map((s) => {
             const Icon = s.icon;
@@ -356,32 +456,34 @@ export default function AccueilFournisseur() {
             );
           })}
         </section>
-{/* Actions rapides - Section visible */}
-<section className="four-quick-actions-section">
-  <div className="four-panel">
-    <div className="four-panel-header">
-      <h3>Actions rapides</h3>
-    </div>
-    <div className="four-quick-actions-grid">
-      {QUICK_ACTIONS.map((a) => {
-        const Icon = a.icon;
-        return (
-          <Link 
-            to={a.to}
-            className={`four-quick-action-card four-quick-action-card-${a.tone}`} 
-            key={a.label}
-          >
-            <span className="four-quick-action-card-icon">
-              <Icon size={20} />
-            </span>
-            <span className="four-quick-action-card-label">{a.label}</span>
-          </Link>
-        );
-      })}
-    </div>
-  </div>
-</section>
-        {/* Row 2 — chart / orders / low stock */}
+
+        {/* Actions rapides */}
+        <section className="four-quick-actions-section">
+          <div className="four-panel">
+            <div className="four-panel-header">
+              <h3>Actions rapides</h3>
+            </div>
+            <div className="four-quick-actions-grid">
+              {QUICK_ACTIONS.map((a) => {
+                const Icon = a.icon;
+                return (
+                  <Link
+                    to={a.to}
+                    className={`four-quick-action-card four-quick-action-card-${a.tone}`}
+                    key={a.label}
+                  >
+                    <span className="four-quick-action-card-icon">
+                      <Icon size={20} />
+                    </span>
+                    <span className="four-quick-action-card-label">{a.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Row 2 — chart / orders */}
         <section className="four-middle-row">
           <div className="four-panel four-chart-panel">
             <div className="four-panel-header">
@@ -409,70 +511,82 @@ export default function AccueilFournisseur() {
                 <span>Statut</span>
               </div>
               <ul className="four-orders-body">
-                {ORDERS.map((o) => (
+                {recentOrders.map((o) => (
                   <li className="four-orders-row" key={o.id}>
-                    <span className="four-orders-id">{o.id}</span>
-                    <span className="four-orders-client">{o.client}</span>
-                    <span className="four-orders-total">{o.total.toLocaleString('fr-FR')},00 MAD</span>
-                    <span className="four-orders-date">{o.date}</span>
-                    <span className={`four-badge-pill four-badge-pill-${o.tone}`}>{o.status}</span>
+                    <span className="four-orders-id">
+                      {o.reference || `CMD-${o.id}`}
+                    </span>
+                    <span className="four-orders-client">
+                      {o.merchantName || 'Commerçant'}
+                    </span>
+                    <span className="four-orders-total">
+                      {Number(o.totalAmount || 0).toLocaleString('fr-FR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })} MAD
+                    </span>
+                    <span className="four-orders-date">
+                      {o.orderDate
+                        ? new Date(o.orderDate).toLocaleDateString('fr-FR')
+                        : '-'}
+                    </span>
+                    <span className="four-badge-pill four-badge-pill-blue">
+                      {o.status || '-'}
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
           </div>
-
-  
         </section>
 
-        {/* Row 3 — activity / donut / quick actions */}
-  <section className="four-bottom-row">
-  <div className="four-panel">
-    <div className="four-panel-header">
-      <h3>Activité récente</h3>
-      <button type="button" className="four-link-button">Voir tout</button>
-    </div>
-    <ul className="four-timeline-list">
-      {RECENT_ACTIVITY.map((a, i) => {
-        const Icon = a.icon;
-        return (
-          <li className="four-timeline-row" key={a.title}>
-            <span className={`four-timeline-icon four-timeline-icon-${a.tone}`}>
-              <Icon size={15} />
-            </span>
-            <div className="four-timeline-info">
-              <p className="four-timeline-title">{a.title}</p>
-              <p className="four-timeline-time">{a.time}</p>
+        {/* Row 3 — activity / donut */}
+        <section className="four-bottom-row">
+          <div className="four-panel">
+            <div className="four-panel-header">
+              <h3>Activité récente</h3>
+              <button type="button" className="four-link-button">Voir tout</button>
             </div>
-            {i !== RECENT_ACTIVITY.length - 1 && <span className="four-timeline-connector" />}
-          </li>
-        );
-      })}
-    </ul>
-  </div>
+            <ul className="four-timeline-list">
+              {RECENT_ACTIVITY.map((a, i) => {
+                const Icon = a.icon;
+                return (
+                  <li className="four-timeline-row" key={a.title}>
+                    <span className={`four-timeline-icon four-timeline-icon-${a.tone}`}>
+                      <Icon size={15} />
+                    </span>
+                    <div className="four-timeline-info">
+                      <p className="four-timeline-title">{a.title}</p>
+                      <p className="four-timeline-time">{a.time}</p>
+                    </div>
+                    {i !== RECENT_ACTIVITY.length - 1 && <span className="four-timeline-connector" />}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
 
-  <div className="four-panel">
-    <div className="four-panel-header">
-      <h3>Répartition des ventes par catégorie</h3>
-      <button type="button" className="four-link-button">Voir tout</button>
-    </div>
-    <div className="four-donut-wrapper">
-      <DonutChart data={CATEGORY_SALES} total={totalCategorySales} />
-      <ul className="four-legend">
-        {CATEGORY_SALES.map((c) => (
-          <li key={c.label} className="four-legend-row">
-            <span className="four-legend-dot" style={{ background: c.color }} />
-            <span className="four-legend-label">{c.label}</span>
-            <span className="four-legend-percent">{c.percent}%</span>
-            <span className="four-legend-amount">{c.amount.toLocaleString('fr-FR')} MAD</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  </div>
-</section>
+          <div className="four-panel">
+            <div className="four-panel-header">
+              <h3>Répartition des ventes par catégorie</h3>
+              <button type="button" className="four-link-button">Voir tout</button>
+            </div>
+            <div className="four-donut-wrapper">
+              <DonutChart data={CATEGORY_SALES} total={totalCategorySales} />
+              <ul className="four-legend">
+                {CATEGORY_SALES.map((c) => (
+                  <li key={c.label} className="four-legend-row">
+                    <span className="four-legend-dot" style={{ background: c.color }} />
+                    <span className="four-legend-label">{c.label}</span>
+                    <span className="four-legend-percent">{c.percent}%</span>
+                    <span className="four-legend-amount">{c.amount.toLocaleString('fr-FR')} MAD</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
       </main>
-      
     </div>
   );
 }

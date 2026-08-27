@@ -15,7 +15,6 @@ import api from '../services/api';
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/acceuil-com' },
   { icon: Package, label: 'Produits', to: '/produits' },
-  { icon: Boxes, label: 'Stock', to: '/stock' },
   { icon: ArrowLeftRight, label: 'Paiements & Transactions', to: '/transactions-commerce' },
   { icon: Users, label: 'Fournisseurs', to: '/fournisseurs' },
   { icon: Star, label: 'Fidélité & Tickets', to: '/fidelite-commerce' },

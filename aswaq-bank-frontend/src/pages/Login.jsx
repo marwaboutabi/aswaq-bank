@@ -8,7 +8,7 @@ import api from '../services/api';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { lang, setLang, t } = useLanguage(); // t conservé pour compatibilité, mais non utilisé ici
 
   const [formData, setFormData] = useState({ email: '', password: '', rememberMe: false });
   const [error, setError] = useState('');
@@ -24,55 +24,62 @@ export default function Login() {
     e.preventDefault();
 
     if (!formData.email || !formData.password) {
-        setError(t('login.errorEmpty') || 'Veuillez remplir tous les champs.');
+        setError('Veuillez remplir tous les champs.');
         return;
     }
 
     setIsLoading(true);
 
     try {
-
         const response = await api.post("/auth/login", {
             email: formData.email,
             password: formData.password
         });
         
-const { token, role } = response.data;
+        const { token, role } = response.data;
 
-localStorage.setItem("token", token);
-localStorage.setItem("role", role);
+        localStorage.setItem("token", token);
+        localStorage.setItem("role", role);
 
-if (role === "CLIENT") {
-    navigate("/dashboard-client");
-} else if (role === "COMMERCANT") {
-    navigate("/acceuiL-com");
-} else if (role === "FOURNISSEUR") {
-    navigate("/accueil-fournisseur");
-} else {
-    navigate("/");
-}
+        if (role === "CLIENT") {
+            navigate("/dashboard-client");
+        } else if (role === "COMMERCANT") {
+            navigate("/acceuiL-com");
+        } else if (role === "FOURNISSEUR") {
+            navigate("/accueil-fournisseur");
+        } else {
+            navigate("/");
+        }
 
-
-    } catch (error) {
-
-        console.log(error);
-
-        setError(
-          "Email ou mot de passe incorrect"
-        );
-
-    } finally {
-
+   } catch (error) {
+    console.error("Échec de la connexion :", error.response?.status || "Erreur réseau");
+    setError("Email ou mot de passe incorrect");
+} finally {
         setIsLoading(false);
-
     }
 };
 
   const features = [
-    { icon: ShieldCheck, title: t('login.feat1Title') || 'Sécurisé', text: t('login.feat1Text') || 'Vos données sont protégées avec les plus hauts standards.' },
-    { icon: Zap, title: t('login.feat2Title') || 'Rapide', text: t('login.feat2Text') || 'Des opérations simples et rapides à tout moment.' },
-    { icon: TrendingUp, title: t('login.feat3Title') || 'Intelligent', text: t('login.feat3Text') || 'Des outils intelligents pour vous accompagner au quotidien.' },
-    { icon: Users, title: t('login.feat4Title') || 'Proche de vous', text: t('login.feat4Text') || 'Une banque pensée pour les commerçants, fournisseurs et clients.' },
+    { 
+      icon: ShieldCheck, 
+      title: 'Sécurisé', 
+      text: 'Vos données sont protégées avec les plus hauts standards.' 
+    },
+    { 
+      icon: Zap, 
+      title: 'Rapide', 
+      text: 'Des opérations simples et rapides à tout moment.' 
+    },
+    { 
+      icon: TrendingUp, 
+      title: 'Intelligent', 
+      text: 'Des outils intelligents pour vous accompagner au quotidien.' 
+    },
+    { 
+      icon: Users, 
+      title: 'Accessible', 
+      text: 'Une banque pensée pour les commerçants, fournisseurs et clients.' 
+    },
   ];
 
   return (
@@ -83,18 +90,18 @@ if (role === "CLIENT") {
           <div className="brand-block">
             <Logo size={90} />
             <div className="brand-text">
-              <span className="brand-name">{t('login.brandName') || 'Aswaq Bank'}</span>
-              <span className="brand-tagline">{t('login.brandTagline') || 'Votre banque, partout, pour vous.'}</span>
+              <span className="brand-name">Aswaq Bank</span>
+              <span className="brand-tagline">Votre banque, partout, pour vous.</span>
             </div>
           </div>
           <nav className="navbar-links">
-            <a href="/">{t('nav.home') || 'Accueil'}</a>
-            <a href="/about">{t('nav.about') || 'À propos'}</a>
-            <a href="/security">{t('nav.security') || 'Sécurité'}</a>
-            <a href="/help">{t('nav.help') || 'Aide'}</a>
+            <a href="/">Accueil</a>
+            <a href="/about">À propos</a>
+            <a href="/security">Sécurité</a>
+            <a href="/help">Aide</a>
           </nav>
-          <button type="button" className="lang-switch">
-            FR <ChevronDown size={16} />
+          <button type="button" className="lang-switch" onClick={() => setLang(lang === 'fr' ? 'ar' : 'fr')}>
+            {lang.toUpperCase()} <ChevronDown size={16} />
           </button>
         </div>
       </header>
@@ -103,14 +110,13 @@ if (role === "CLIENT") {
       <main className="login-main">
         <section className="login-hero">
           <h1 className="hero-title">
-            {t('login.heroLine1') || 'La banque digitale'}
+            La banque digitale
             <br />
-            {t('login.heroLine2') || 'qui fait grandir le'}{' '}
-            <span className="hero-accent">{t('login.heroLine3') || 'commerce de proximité.'}</span>
+            qui fait grandir le{' '}
+            <span className="hero-accent">commerce de proximité.</span>
           </h1>
           <p className="hero-subtitle">
-            {t('login.heroSubtitle') ||
-              'Gérez vos finances, développez votre activité et profitez de services innovants, 100% en ligne.'}
+            Gérez vos finances, développez votre activité et profitez de services innovants, 100% en ligne.
           </p>
 
           <ul className="hero-features">
@@ -132,15 +138,15 @@ if (role === "CLIENT") {
         <section className="login-card-wrapper">
           <div className="login-card">
             <div className="login-tabs">
-              <span className="login-tab login-tab-active">{t('login.tabLogin') || 'Connexion'}</span>
+              <span className="login-tab login-tab-active">Connexion</span>
               <Link to="/create-account" className="login-tab login-tab-link">
-                {t('login.tabRegister') || 'Créer un compte'}
+                Créer un compte
               </Link>
             </div>
 
             <form onSubmit={handleSubmit} className="login-form">
               <div className="form-group">
-                <label className="form-label">{t('login.email') || 'Adresse e-mail'}</label>
+                <label className="form-label">Adresse e-mail</label>
                 <input
                   type="email"
                   name="email"
@@ -154,7 +160,7 @@ if (role === "CLIENT") {
               </div>
 
               <div className="form-group">
-                <label className="form-label">{t('login.password') || 'Mot de passe'}</label>
+                <label className="form-label">Mot de passe</label>
                 <input
                   type="password"
                   name="password"
@@ -176,10 +182,10 @@ if (role === "CLIENT") {
                     onChange={handleChange}
                     disabled={isLoading}
                   />
-                  <span>{t('login.remember') || 'Se souvenir de moi'}</span>
+                  <span>Se souvenir de moi</span>
                 </label>
                 <Link to="/forgot-password" className="forgot-password">
-                  {t('login.forgot') || 'Mot de passe oublié ?'}
+                  Mot de passe oublié ?
                 </Link>
               </div>
 
@@ -189,19 +195,19 @@ if (role === "CLIENT") {
                 {isLoading ? (
                   <>
                     <Loader2 className="animate-spin" size={18} />
-                    {t('login.loading') || 'Connexion en cours...'}
+                    Connexion en cours...
                   </>
                 ) : (
                   <>
                     <Lock size={16} />
-                    {t('login.submit') || 'Se connecter'}
+                    Se connecter
                   </>
                 )}
               </button>
             </form>
 
             <div className="divider">
-              <span>{t('login.orContinue') || 'ou continuer avec'}</span>
+              <span>ou continuer avec</span>
             </div>
 
             <div className="social-buttons">
@@ -216,9 +222,9 @@ if (role === "CLIENT") {
             </div>
 
             <div className="signup-link">
-              <p>{t('login.noAccount') || "Vous n'avez pas de compte ?"}</p>
+              <p>Vous n'avez pas de compte ?</p>
               <Link to="/create-account" className="signup-button-link">
-                {t('login.openAccount') || 'Créer un compte'}
+                Créer un compte
               </Link>
             </div>
           </div>

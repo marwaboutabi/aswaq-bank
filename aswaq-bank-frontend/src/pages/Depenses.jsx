@@ -244,10 +244,7 @@ export default function Depenses() {
             </p>
           </div>
           <div className="dash-topbar-actions">
-            <div className="dash-search">
-              <Search size={16} />
-              <input type="text" placeholder="Rechercher..." />
-            </div>
+          
            <NotificationBell />
             <UserHeader />
           </div>
@@ -304,7 +301,7 @@ export default function Depenses() {
               </div>
             </div>
             <div className="dep-ai-body">
-              <p className="dep-ai-greeting">Bonjour Marwa 👋</p>
+              <p className="dep-ai-greeting">Bonjour👋</p>
               <p className="dep-ai-text">
                 Ce mois-ci vos dépenses en <strong>restauration</strong> ont augmenté de{' '}
                 <strong>18%</strong>.

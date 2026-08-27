@@ -179,10 +179,6 @@ export default function Notifications() {
             <p className="dash-greeting-sub">Restez informé de toutes les activités de votre compte.</p>
           </div>
           <div className="dash-topbar-actions">
-            <div className="dash-search">
-              <Search size={16} />
-              <input type="text" placeholder="Rechercher..." />
-            </div>
             <NotificationBell />
             <UserHeader />
           </div>

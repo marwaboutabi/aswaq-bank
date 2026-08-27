@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, CreditCard, ArrowLeftRight, QrCode, Star, Bot, LogOut,
@@ -9,12 +9,13 @@ import Logo from '../components/Logo/Logo';
 import './DashboardClient.css';
 import UserHeader from '../components/UserHeader/UserHeader';
 import NotificationBell from '../components/NotificationBell/NotificationBell';
-const TRANSACTIONS = [
-  { id: 1, name: 'Carrefour Market', type: 'Achat', amount: -250, date: '15 Juil 2026 · 14:30', icon: ShoppingCart },
-  { id: 2, name: 'Virement de Sara Ali', type: 'Virement reçu', amount: 2000, date: '15 Juil 2026 · 11:20', icon: Download },
-  { id: 3, name: 'Paiement QR - Café Milano', type: 'Paiement', amount: -85, date: '14 Juil 2026 · 18:45', icon: QrCode },
-  { id: 4, name: 'Station Total', type: 'Carburant', amount: -300, date: '14 Juil 2026 · 09:15', icon: Fuel },
-  { id: 5, name: 'Virement vers Ahmad', type: 'Virement envoyé', amount: -1500, date: '13 Juil 2026 · 16:05', icon: Send },
+
+// Seuils alignés avec LoyaltyService.updateLevel (backend)
+const LEVEL_THRESHOLDS = [
+  { level: 'Bronze', min: 0, next: 500 },
+  { level: 'Argent', min: 500, next: 1500 },
+  { level: 'Or', min: 1500, next: 3000 },
+  { level: 'Platine', min: 3000, next: null },
 ];
 
 const SPENDING = [
@@ -64,6 +65,97 @@ export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const [showBalance, setShowBalance] = useState(true);
+
+  // States dynamiques
+  const [user, setUser] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [loyaltyAccount, setLoyaltyAccount] = useState(null);
+  const [savingsGoals, setSavingsGoals] = useState([]);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        };
+
+        const [userRes, accountRes, transactionsRes, loyaltyRes, savingsRes] = await Promise.all([
+          fetch('http://localhost:8080/api/users/me', { headers }),
+          fetch('http://localhost:8080/api/accounts/me', { headers }),
+          fetch('http://localhost:8080/api/transactions/my', { headers }),
+          fetch('http://localhost:8080/api/loyalty/my-points', { headers }),
+          fetch('http://localhost:8080/api/savings-goals', { headers }),
+        ]);
+
+        if (userRes.ok) setUser(await userRes.json());
+        
+        // MODIFICATION ICI : Ajout du console.log pour vérifier la structure des données
+        if (accountRes.ok) {
+          const accountData = await accountRes.json();
+          console.log("COMPTE CONNECTÉ :", accountData);
+          setAccount(accountData);
+        }
+
+        if (transactionsRes.ok) {
+          const data = await transactionsRes.json();
+          setTransactions(Array.isArray(data) ? data : []);
+        }
+
+        if (loyaltyRes.ok) setLoyaltyAccount(await loyaltyRes.json());
+
+        if (savingsRes.ok) {
+          const data = await savingsRes.json();
+          setSavingsGoals(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        console.error('Erreur récupération données dashboard client:', error);
+      } finally {
+        setLoadingDashboard(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
+
+  // Calculs dynamiques
+  const balance = Number(account?.balance ?? account?.solde ?? 0);
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const transactionsThisMonth = transactions.filter(tx => {
+    if (!tx.transactionDate) return false;
+    const d = new Date(tx.transactionDate);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+  });
+
+  const revenusThisMonth = transactionsThisMonth
+    .filter(tx => tx.incoming)
+    .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+
+  const depensesThisMonth = transactionsThisMonth
+    .filter(tx => !tx.incoming)
+    .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+
+  const loyaltyPoints = loyaltyAccount?.points ?? 0;
+  const loyaltyLevel = loyaltyAccount?.level ?? 'Bronze';
+  const levelInfo = LEVEL_THRESHOLDS.find(l => l.level === loyaltyLevel) || LEVEL_THRESHOLDS[0];
+  const loyaltyProgressPercent = levelInfo.next
+    ? Math.min(100, Math.round(((loyaltyPoints - levelInfo.min) / (levelInfo.next - levelInfo.min)) * 100))
+    : 100;
+
+  // Premier objectif d'épargne actif (le plus récent)
+  const mainSavingsGoal = savingsGoals.length > 0 ? savingsGoals[0] : null;
+  const savingsCurrent = Number(mainSavingsGoal?.currentAmount ?? 0);
+  const savingsTarget = Number(mainSavingsGoal?.targetAmount ?? 0);
+  const savingsPercent = savingsTarget > 0 ? Math.min(100, Math.round((savingsCurrent / savingsTarget) * 100)) : 0;
+
   const totalSpending = SPENDING.reduce((sum, s) => sum + s.amount, 0);
 
   const NAV_ITEMS = [
@@ -79,20 +171,30 @@ export default function Dashboard() {
     { icon: User, label: 'Profil et paramètres', to: '/parametres' },
   ];
 
- const QUICK_ACTIONS = [
-  { icon: Send, title: "Envoyer de l'argent", subtitle: 'Virement vers un contact', to: '/envoyer-argent' },
-  { icon: Download, title: "Recevoir de l'argent", subtitle: 'Partager vos coordonnées', to: '/recevoir-argent' },
-  { icon: QrCode, title: 'Payer / Scanner un QR', subtitle: 'Paiement instantané', to: '/payer-qr' },
-  { icon: ShoppingBag, title: 'Historique des achats', subtitle: 'Vos achats passés', to: '/transactions-client' },
-  { icon: Receipt, title: 'Tickets numériques', subtitle: 'Vos reçus dématérialisés', to: '/tickets-client' },
-];
+  const QUICK_ACTIONS = [
+    { icon: Send, title: "Envoyer de l'argent", subtitle: 'Virement vers un contact', to: '/envoyer-argent' },
+    { icon: Download, title: "Recevoir de l'argent", subtitle: 'Partager vos coordonnées', to: '/recevoir-argent' },
+    { icon: QrCode, title: 'Payer / Scanner un QR', subtitle: 'Paiement instantané', to: '/payer-qr' },
+    { icon: ShoppingBag, title: 'Historique des achats', subtitle: 'Vos achats passés', to: '/transactions-client' },
+    { icon: Receipt, title: 'Tickets numériques', subtitle: 'Vos reçus dématérialisés', to: '/tickets-client' },
+  ];
+
+  if (loadingDashboard) {
+    return (
+      <div className="dash-layout">
+        <main className="dash-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+          <p>Chargement du tableau de bord...</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="dash-layout">
       {/* Sidebar */}
       <aside className="dash-sidebar">
         <div className="dash-sidebar-logo">
-          <Logo size={100}  className="mb-6 logo-white"/>
+          <Logo size={100} className="mb-6 logo-white" />
         </div>
 
         <nav className="dash-nav">
@@ -133,15 +235,11 @@ export default function Dashboard() {
       <main className="dash-main">
         <header className="dash-topbar">
           <div>
-            <h1 className="dash-greeting">Bonjour, Marwa 👋</h1>
+            <h1 className="dash-greeting">Bonjour, {user?.prenom || 'Client'} 👋</h1>
             <p className="dash-greeting-sub">Voici un aperçu de votre activité financière.</p>
           </div>
 
           <div className="dash-topbar-actions">
-            <div className="dash-search">
-              <Search size={16} />
-              <input type="text" placeholder="Rechercher..." />
-            </div>
             <NotificationBell />
             <UserHeader />
           </div>
@@ -160,7 +258,9 @@ export default function Dashboard() {
             </div>
 
             <div className="dash-balance-amount">
-              {showBalance ? '12 450,00' : '••• •••'} <span>MAD</span>
+              {showBalance
+                ? balance.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                : '••• •••'} <span>MAD</span>
             </div>
 
             <div className="dash-card-chip">
@@ -176,7 +276,7 @@ export default function Dashboard() {
 
             <div className="dash-balance-meta">
               <span>Compte principal</span>
-              <span className="dash-card-number">•••• •••• •••• 4589</span>
+              <span className="dash-card-number">{account?.accountNumber || '•••• •••• •••• ••••'}</span>
             </div>
 
             <div className="dash-balance-actions">
@@ -191,25 +291,30 @@ export default function Dashboard() {
           <div className="dash-stat-card">
             <div className="dash-stat-icon dash-stat-icon-blue"><TrendingUp size={18} /></div>
             <p className="dash-stat-label">Revenus ce mois</p>
-            <p className="dash-stat-value dash-stat-positive">+ 8 500,00 MAD</p>
-            <p className="dash-stat-trend dash-stat-trend-up">↗ 12.5% vs mois dernier</p>
+            <p className="dash-stat-value dash-stat-positive">
+              + {revenusThisMonth.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD
+            </p>
           </div>
 
           <div className="dash-stat-card">
             <div className="dash-stat-icon dash-stat-icon-orange"><CreditCard size={18} /></div>
             <p className="dash-stat-label">Dépenses ce mois</p>
-            <p className="dash-stat-value dash-stat-negative">- 3 250,00 MAD</p>
-            <p className="dash-stat-trend dash-stat-trend-down">↘ 8.2% vs mois dernier</p>
+            <p className="dash-stat-value dash-stat-negative">
+              - {depensesThisMonth.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD
+            </p>
           </div>
 
           <div className="dash-stat-card">
             <div className="dash-stat-icon dash-stat-icon-purple"><Star size={18} /></div>
             <p className="dash-stat-label">Points de fidélité</p>
-            <p className="dash-stat-value">1 250 pts</p>
+            <p className="dash-stat-value">{loyaltyPoints.toLocaleString('fr-FR')} pts</p>
             <div className="dash-loyalty-bar">
-              <div className="dash-loyalty-fill" style={{ width: '62%' }} />
+              <div className="dash-loyalty-fill" style={{ width: `${loyaltyProgressPercent}%` }} />
             </div>
-            <p className="dash-stat-trend">Niveau Bronze · Prochain : 2 000 pts</p>
+            <p className="dash-stat-trend">
+              Niveau {loyaltyLevel}
+              {levelInfo.next ? ` · Prochain : ${levelInfo.next.toLocaleString('fr-FR')} pts` : ' · Niveau maximum'}
+            </p>
           </div>
         </section>
 
@@ -245,24 +350,30 @@ export default function Dashboard() {
               <button type="button" className="dash-link-button">Voir tout</button>
             </div>
             <ul className="dash-transaction-list">
-              {TRANSACTIONS.map((tx) => {
-                const Icon = tx.icon;
-                return (
-                  <li key={tx.id} className="dash-transaction-row">
-                    <div className="dash-transaction-icon"><Icon size={18} /></div>
-                    <div className="dash-transaction-info">
-                      <p className="dash-transaction-name">{tx.name}</p>
-                      <p className="dash-transaction-type">{tx.type}</p>
-                    </div>
-                    <div className="dash-transaction-amount-block">
-                      <p className={`dash-transaction-amount ${tx.amount > 0 ? 'dash-stat-positive' : ''}`}>
-                        {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('fr-FR')},00 MAD
-                      </p>
-                      <p className="dash-transaction-date">{tx.date}</p>
-                    </div>
-                  </li>
-                );
-              })}
+              {transactions.length === 0 && (
+                <li className="dash-transaction-row">
+                  <span className="dash-transaction-info">Aucune transaction</span>
+                </li>
+              )}
+              {transactions.slice(0, 5).map((tx) => (
+                <li key={tx.id} className="dash-transaction-row">
+                  <div className="dash-transaction-icon">
+                    {tx.incoming ? <Download size={18} /> : <Send size={18} />}
+                  </div>
+                  <div className="dash-transaction-info">
+                    <p className="dash-transaction-name">{tx.otherUserName || tx.description || tx.type}</p>
+                    <p className="dash-transaction-type">{tx.incoming ? 'Reçu' : 'Envoyé'}</p>
+                  </div>
+                  <div className="dash-transaction-amount-block">
+                    <p className={`dash-transaction-amount ${tx.incoming ? 'dash-stat-positive' : ''}`}>
+                      {tx.incoming ? '+' : '-'}{Number(tx.amount || 0).toLocaleString('fr-FR')} MAD
+                    </p>
+                    <p className="dash-transaction-date">
+                      {tx.transactionDate ? new Date(tx.transactionDate).toLocaleString('fr-FR') : '-'}
+                    </p>
+                  </div>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -290,14 +401,24 @@ export default function Dashboard() {
             <div className="dash-panel dash-savings-card">
               <div className="dash-panel-header">
                 <h2 className="dash-section-title">Objectif d'épargne</h2>
-                <button type="button" className="dash-link-button">Modifier</button>
+                <button type="button" className="dash-link-button" onClick={() => navigate('/epargne')}>
+                  {mainSavingsGoal ? 'Modifier' : 'Créer'}
+                </button>
               </div>
-              <p className="dash-savings-name">Voyage à Dubaï ✈️</p>
-              <p className="dash-savings-amount">4 560 <span>/ 10 000 MAD</span></p>
-              <div className="dash-savings-track">
-                <div className="dash-savings-fill" style={{ width: '45%' }} />
-              </div>
-              <p className="dash-savings-percent">45% de l'objectif atteint</p>
+              {mainSavingsGoal ? (
+                <>
+                  <p className="dash-savings-name">{mainSavingsGoal.name}</p>
+                  <p className="dash-savings-amount">
+                    {savingsCurrent.toLocaleString('fr-FR')} <span>/ {savingsTarget.toLocaleString('fr-FR')} MAD</span>
+                  </p>
+                  <div className="dash-savings-track">
+                    <div className="dash-savings-fill" style={{ width: `${savingsPercent}%` }} />
+                  </div>
+                  <p className="dash-savings-percent">{savingsPercent}% de l'objectif atteint</p>
+                </>
+              ) : (
+                <p className="dash-savings-percent">Aucun objectif d'épargne pour le moment</p>
+              )}
             </div>
           </div>
         </section>
@@ -308,8 +429,7 @@ export default function Dashboard() {
           <div>
             <p className="dash-tip-title">Conseil du jour</p>
             <p className="dash-tip-text">
-              Vos dépenses en alimentation ont augmenté de 12% ce mois-ci.{' '}
-              <button type="button" className="dash-link-button">Voir mes astuces d'économie →</button>
+              Pensez à suivre régulièrement vos dépenses pour mieux gérer votre budget.
             </p>
           </div>
         </section>
@@ -317,5 +437,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-

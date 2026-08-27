@@ -16,7 +16,6 @@ import './FournisseursCom.css';
 const NAV_ITEMS = [
   { icon: Home, label: 'Accueil', to: '/acceuil-com' },
   { icon: Package, label: 'Produits', to: '/produits' },
-  { icon: Boxes, label: 'Stock', to: '/stock' },
   { icon: ArrowLeftRight, label: 'Paiements & Transactions', to: '/transactions-commerce' },
   { icon: Users, label: 'Fournisseurs', to: '/fournisseurs', active: true },
   { icon: Star, label: 'Fidélité & Tickets', to: '/fidelite-commerce' },
@@ -39,6 +38,16 @@ const COMMANDE_STATUS_STYLES = {
   EXPEDIEE: { bg: '#ede9fe', color: '#7c3aed' },
   LIVREE: { bg: '#dcfce7', color: '#16a34a' },
   ANNULEE: { bg: '#f1f5f9', color: '#64748b' },
+};
+
+const PAYMENT_LABELS = {
+  UNPAID: 'Non payée',
+  PAID: 'Payée',
+};
+
+const PAYMENT_STYLES = {
+  UNPAID: { bg: '#fee2e2', color: '#dc2626' },
+  PAID: { bg: '#dcfce7', color: '#16a34a' },
 };
 
 const CATEGORIES = ['Distribution', 'Alimentaire', 'Fruits & Légumes', 'Boissons', 'Équipements', 'Textile', 'Autre'];
@@ -273,6 +282,21 @@ export default function FournisseursCom() {
     }
   };
 
+  // ---- Paiement d'une commande livrée ----
+
+  const handlePayOrder = async (orderId) => {
+    try {
+      const res = await axiosClient.patch(`/merchant/orders/${orderId}/pay`);
+      setCommandes((prev) => prev.map((c) => (c.id === orderId ? res.data : c)));
+      setToastMessage('Paiement effectué avec succès.');
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 3000);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Erreur lors du paiement.');
+    }
+  };
+
   const selectedFournisseur = fournisseurs.find((f) => f.id === Number(orderData.fournisseurId));
 
   const filteredCatalog = useMemo(() => {
@@ -364,10 +388,7 @@ export default function FournisseursCom() {
             <div className="fourn-panel-header">
               <h2 className="fourn-panel-title">Liste des fournisseurs</h2>
               <div className="fourn-panel-actions">
-                <div className="fourn-search">
-                  <Search size={16} />
-                  <input type="text" placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)} />
-                </div>
+                
               </div>
             </div>
             <div className="fourn-table-wrapper">
@@ -421,14 +442,23 @@ export default function FournisseursCom() {
             <div className="fourn-table-wrapper">
               <table className="fourn-table">
                 <thead>
-                  <tr><th>N° Commande</th><th>Fournisseur</th><th>Date</th><th>Montant</th><th>Statut</th><th>Livraison prévue</th></tr>
+                  <tr>
+                    <th>N° Commande</th>
+                    <th>Fournisseur</th>
+                    <th>Date</th>
+                    <th>Montant</th>
+                    <th>Statut</th>
+                    <th>Paiement</th>
+                    <th>Livraison prévue</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {loadingOrders && (
-                    <tr><td colSpan={6} style={{ textAlign: 'center', padding: '1rem' }}>Chargement...</td></tr>
+                    <tr><td colSpan={7} style={{ textAlign: 'center', padding: '1rem' }}>Chargement...</td></tr>
                   )}
                   {!loadingOrders && commandes.map((cmd) => {
                     const style = COMMANDE_STATUS_STYLES[cmd.status] || { bg: '#f1f5f9', color: '#64748b' };
+                    const payStyle = PAYMENT_STYLES[cmd.paymentStatus] || PAYMENT_STYLES.UNPAID;
                     return (
                       <tr key={cmd.id}>
                         <td className="fourn-cell-text fourn-command-id">{cmd.reference}</td>
@@ -436,12 +466,27 @@ export default function FournisseursCom() {
                         <td className="fourn-cell-text">{formatDateTime(cmd.orderDate)}</td>
                         <td className="fourn-cell-text fourn-amount">{cmd.totalAmount?.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</td>
                         <td><span className="fourn-command-status" style={{ background: style.bg, color: style.color }}>{STATUS_LABELS[cmd.status] || cmd.status}</span></td>
+                        <td>
+                          {cmd.status === 'LIVREE' && cmd.paymentStatus === 'UNPAID' ? (
+                            <button
+                              className="fourn-btn-primary"
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                              onClick={() => handlePayOrder(cmd.id)}
+                            >
+                              Payer
+                            </button>
+                          ) : (
+                            <span className="fourn-command-status" style={{ background: payStyle.bg, color: payStyle.color }}>
+                              {PAYMENT_LABELS[cmd.paymentStatus] || cmd.paymentStatus}
+                            </span>
+                          )}
+                        </td>
                         <td className="fourn-cell-text">{cmd.deliveryDate || 'À définir'}</td>
                       </tr>
                     );
                   })}
                   {!loadingOrders && commandes.length === 0 && (
-                    <tr><td colSpan={6} style={{ textAlign: 'center', padding: '1rem' }}>Aucune commande pour l'instant.</td></tr>
+                    <tr><td colSpan={7} style={{ textAlign: 'center', padding: '1rem' }}>Aucune commande pour l'instant.</td></tr>
                   )}
                 </tbody>
               </table>

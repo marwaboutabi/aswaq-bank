@@ -162,8 +162,11 @@ export default function AssistantFournisseur() {
     loadUser();
   }, []);
 
+    // CORRECTION : Ne scroller vers le bas que si la conversation a commencé (plus que le message de bienvenue)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > 1) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages, isTyping]);
 
   // Helper pour générer les initiales si l'utilisateur est chargé

@@ -1,10 +1,7 @@
 import React from 'react';
-import { useLanguage } from '../context/LanguageContext';
 import Logo from '../components/Logo/Logo';
 
 export default function Footer() {
-  const { t } = useLanguage();
-
   return (
     <footer className="home-footer">
       <div className="home-footer-grid">
@@ -14,13 +11,13 @@ export default function Footer() {
             <Logo size={80} />
           </div>
           <p className="home-footer-desc">
-            {t('footer.desc') || 'La banque digitale qui fait grandir le commerce de proximité au Maroc.'}
+            La banque digitale qui fait grandir le commerce de proximité au Maroc.
           </p>
         </div>
 
         {/* Services */}
         <div className="home-footer-col">
-          <h4>{t('footer.services') || 'Services'}</h4>
+          <h4>Services</h4>
           <ul>
             <li><button type="button">Paiement QR</button></li>
             <li><button type="button">Gestion de stock</button></li>
@@ -30,7 +27,7 @@ export default function Footer() {
 
         {/* Entreprise */}
         <div className="home-footer-col">
-          <h4>{t('footer.company') || 'Entreprise'}</h4>
+          <h4>Entreprise</h4>
           <ul>
             <li><button type="button">À propos</button></li>
             <li><button type="button">Contact</button></li>
@@ -40,7 +37,7 @@ export default function Footer() {
 
         {/* Légal */}
         <div className="home-footer-col">
-          <h4>{t('footer.legal') || 'Légal'}</h4>
+          <h4>Légal</h4>
           <ul>
             <li><button type="button">Conditions générales (CGU)</button></li>
             <li><button type="button">Politique de confidentialité</button></li>
@@ -50,7 +47,7 @@ export default function Footer() {
       </div>
 
       <div className="home-footer-bottom">
-        {t('footer.rights') || '© 2026 Aswaq Bank. Tous droits réservés. Conforme aux exigences de Bank Al-Maghrib.'}
+        © 2026 Aswaq Bank. Tous droits réservés. Conforme aux exigences de Bank Al-Maghrib.
       </div>
     </footer>
   );

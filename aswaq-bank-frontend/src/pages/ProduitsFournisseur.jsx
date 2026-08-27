@@ -317,10 +317,7 @@ export default function ProduitsFournisseur() {
           </div>
 
           <div className="prod-four-topbar-actions">
-            <div className="prod-four-search">
-              <Search size={16} />
-              <input type="text" placeholder="Rechercher..." />
-            </div>
+            
             <button type="button" className="prod-four-icon-button" onClick={() => navigate('/notifications-fournisseur')}>
               <Bell size={18} />
               <span className="prod-four-badge">3</span>

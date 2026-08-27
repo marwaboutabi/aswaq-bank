@@ -4,39 +4,38 @@ import { ChevronDown, Lock, ShieldCheck, Zap, TrendingUp, Users, ArrowLeft, KeyR
 import { useLanguage } from '../context/LanguageContext';
 import Logo from '../components/Logo/Logo';
 import './ForgotPassword.css';
-import api from '../services/api'; 
+import api from '../services/api';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { lang, setLang, t } = useLanguage(); // t conservé pour compatibilité, non utilisé ici
 
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
-
   const [loading, setLoading] = useState(false);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!email) {
-    setError(t('forgot.errorEmpty'));
-    return;
-  }
-  setLoading(true);
-  try {
-    await api.post('/auth/forgot-password', { email });
-    navigate('/verify-otp', { state: { email } });
-  } catch (err) {
-    setError(err.response?.data?.message || 'Une erreur est survenue.');
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email) {
+      setError('Veuillez entrer une adresse e-mail.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await api.post('/auth/forgot-password', { email });
+      navigate('/verify-otp', { state: { email } });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Une erreur est survenue.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const features = [
     { icon: ShieldCheck, title: 'Sécurisé', text: 'Vos données sont protégées avec les plus hauts standards.' },
     { icon: Zap, title: 'Rapide', text: 'Des opérations simples et rapides à tout moment.' },
     { icon: TrendingUp, title: 'Intelligent', text: 'Des outils intelligents pour vous accompagner au quotidien.' },
-    { icon: Users, title: 'Proche de vous', text: 'Une banque pensée pour les commerçants, fournisseurs et clients.' },
+    { icon: Users, title: 'À vos côtés', text: 'Une banque pensée pour les commerçants, fournisseurs et clients.' },
   ];
 
   return (
@@ -58,8 +57,8 @@ const handleSubmit = async (e) => {
             <a href="/security">Sécurité</a>
             <a href="/help">Aide</a>
           </nav>
-          <button type="button" className="submitted-lang-switch">
-            FR <ChevronDown size={16} />
+          <button type="button" className="submitted-lang-switch" onClick={() => setLang(lang === 'fr' ? 'ar' : 'fr')}>
+            {lang.toUpperCase()} <ChevronDown size={16} />
           </button>
         </div>
       </header>
@@ -102,22 +101,20 @@ const handleSubmit = async (e) => {
               <div className="submitted-icon-wrapper submitted-icon-loading">
                 <KeyRound className="submitted-icon" size={40} />
               </div>
-              <h1 className="submitted-card-title">{t('forgot.title')}</h1>
-              <p className="submitted-card-subtitle">{t('forgot.subtitle')}</p>
+              <h1 className="submitted-card-title">Mot de passe oublié ?</h1>
+              <p className="submitted-card-subtitle">Entrez votre email pour recevoir un code de vérification.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="submitted-form">
               <div className="submitted-form-group">
-                <label className="submitted-form-label">
-                  {t('forgot.email') || 'Email'}
-                </label>
+                <label className="submitted-form-label">Adresse e-mail</label>
                 <input
                   type="email"
                   name="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
                   className="submitted-form-input"
-                  placeholder={t('forgot.emailPlaceholder') || 'exemple@email.com'}
+                  placeholder="exemple@email.com"
                   required
                 />
               </div>
@@ -125,21 +122,21 @@ const handleSubmit = async (e) => {
               {error && <p className="submitted-form-error">{error}</p>}
 
               <button type="submit" className="submitted-access-button">
-                {t('forgot.submit')}
+                Envoyer le code
               </button>
             </form>
 
             <Link to="/" className="submitted-back-link">
-              <ArrowLeft size={16} /> {t('forgot.back')}
+              <ArrowLeft size={16} /> Retour à la connexion
             </Link>
 
             <div className="submitted-footer">
               <div className="submitted-security-info">
                 <Lock size={14} />
-                <span>{t('forgot.protected')}</span>
+                <span>Connexion sécurisée SSL</span>
               </div>
               <p className="submitted-compliance">
-                {t('forgot.compliance')}
+                Conforme aux exigences de Bank Al-Maghrib
               </p>
             </div>
           </div>

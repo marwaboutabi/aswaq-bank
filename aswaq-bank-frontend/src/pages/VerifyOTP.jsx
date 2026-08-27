@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate , useLocation} from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronDown, Lock, ShieldCheck, Zap, TrendingUp, Users, ArrowLeft, ShieldQuestion } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import Logo from '../components/Logo/Logo';
@@ -8,15 +8,34 @@ import api from '../services/api';
 
 export default function VerifyOTP() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const location = useLocation();
+  const { lang, setLang } = useLanguage();
 
+  const email = location.state?.email;
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(300);
+  const [resendCooldown, setResendCooldown] = useState(30);
   const inputRefs = useRef([]);
+
+  // Redirige si la page est ouverte directement sans email
+  useEffect(() => {
+    if (!email) navigate('/forgot-password');
+  }, [email, navigate]);
 
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
+
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timeLeft]);
 
   const handleChange = (index, value) => {
     if (value.length > 1) {
@@ -48,69 +67,51 @@ export default function VerifyOTP() {
     }
   };
 
-  const [loading, setLoading] = useState(false);
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  const code = otp.join('');
-  if (code.length !== 6) {
-    setError(t('otp.errorEmpty'));
-    return;
-  }
-  setLoading(true);
-  try {
-    const response = await api.post('/auth/verify-reset-otp', { email, otp: code });
-    const { resetToken } = response.data;
-    navigate('/reset-password', { state: { resetToken } });
-  } catch (err) {
-    setError(err.response?.data?.message || t('otp.error'));
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const code = otp.join('');
+    if (code.length !== 6) {
+      setError('Veuillez entrer le code à 6 chiffres.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await api.post('/auth/verify-reset-otp', { email, otp: code });
+      const { resetToken } = response.data;
+      navigate('/reset-password', { state: { resetToken } });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Code incorrect ou expiré.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
- const handleResend = async () => {
-  setOtp(['', '', '', '', '', '']);
-  setError('');
-  inputRefs.current[0]?.focus();
-  try {
-    await api.post('/auth/forgot-password', { email });
-    setTimeLeft(300);
-    setResendCooldown(30);
-    alert(t('otp.resendSuccess'));
-  } catch (err) {
-    setError(err.response?.data?.message || 'Erreur lors du renvoi.');
-  }
-};
-const [timeLeft, setTimeLeft] = useState(300); // 5 minutes en secondes
-const formatTime = (seconds) => {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-};
+  const handleResend = async () => {
+    setOtp(['', '', '', '', '', '']);
+    setError('');
+    inputRefs.current[0]?.focus();
+    try {
+      await api.post('/auth/forgot-password', { email });
+      setTimeLeft(300);
+      setResendCooldown(30);
+      alert('Un nouveau code a été envoyé.');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Erreur lors du renvoi.');
+    }
+  };
+
   const features = [
     { icon: ShieldCheck, title: 'Sécurisé', text: 'Vos données sont protégées avec les plus hauts standards.' },
     { icon: Zap, title: 'Rapide', text: 'Des opérations simples et rapides à tout moment.' },
     { icon: TrendingUp, title: 'Intelligent', text: 'Des outils intelligents pour vous accompagner au quotidien.' },
-    { icon: Users, title: 'Proche de vous', text: 'Une banque pensée pour les commerçants, fournisseurs et clients.' },
+    { icon: Users, title: 'À vos côtés', text: 'Une banque pensée pour les commerçants, fournisseurs et clients.' },
   ];
-  const location = useLocation();
-const email = location.state?.email;
-const [resendCooldown, setResendCooldown] = useState(30);
-
-// redirige si la page est ouverte directement sans email
-useEffect(() => {
-  if (!email) navigate('/forgot-password');
-}, [email, navigate]);
-
-useEffect(() => {
-  if (timeLeft <= 0) return;
-  const interval = setInterval(() => {
-    setTimeLeft((prev) => prev - 1);
-    setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
-  }, 1000);
-  return () => clearInterval(interval);
-}, [timeLeft]);
 
   return (
     <div className="submitted-page">
@@ -131,8 +132,8 @@ useEffect(() => {
             <a href="/security">Sécurité</a>
             <a href="/help">Aide</a>
           </nav>
-          <button type="button" className="submitted-lang-switch">
-            FR <ChevronDown size={16} />
+          <button type="button" className="submitted-lang-switch" onClick={() => setLang(lang === 'fr' ? 'ar' : 'fr')}>
+            {lang.toUpperCase()} <ChevronDown size={16} />
           </button>
         </div>
       </header>
@@ -175,8 +176,8 @@ useEffect(() => {
               <div className="submitted-icon-wrapper submitted-icon-loading">
                 <ShieldQuestion className="submitted-icon" size={40} />
               </div>
-              <h1 className="submitted-card-title">{t('otp.title')}</h1>
-              <p className="submitted-card-subtitle">{t('otp.subtitle')}</p>
+              <h1 className="submitted-card-title">Vérification du code</h1>
+              <p className="submitted-card-subtitle">Entrez le code à 6 chiffres envoyé à votre adresse e-mail.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="submitted-form">
@@ -198,37 +199,39 @@ useEffect(() => {
 
               {error && <p className="submitted-form-error submitted-form-error-center">{error}</p>}
 
-              <button type="submit" className="submitted-access-button">
-                {t('otp.submit')}
+              <button type="submit" className="submitted-access-button" disabled={loading}>
+                {loading ? 'Vérification...' : 'Vérifier le code'}
               </button>
             </form>
-<p className={`submitted-otp-timer ${timeLeft === 0 ? 'expired' : ''}`}>
-  {timeLeft > 0
-    ? `Code valide encore ${formatTime(timeLeft)}`
-    : 'Le code a expiré.'}
-</p>
+
+            <p className={`submitted-otp-timer ${timeLeft === 0 ? 'expired' : ''}`}>
+              {timeLeft > 0
+                ? `Code valide encore ${formatTime(timeLeft)}`
+                : 'Le code a expiré.'}
+            </p>
+
             <div className="submitted-otp-links">
               <button
-  type="button"
-  className="submitted-resend-link"
-  onClick={handleResend}
-  disabled={resendCooldown > 0}
->
-  {resendCooldown > 0 ? `Renvoyer (${resendCooldown}s)` : t('otp.resend')}
-</button>
+                type="button"
+                className="submitted-resend-link"
+                onClick={handleResend}
+                disabled={resendCooldown > 0}
+              >
+                {resendCooldown > 0 ? `Renvoyer (${resendCooldown}s)` : 'Renvoyer le code'}
+              </button>
 
               <Link to="/forgot-password" className="submitted-back-link">
-                <ArrowLeft size={16} /> {t('otp.back')}
+                <ArrowLeft size={16} /> Retour
               </Link>
             </div>
 
             <div className="submitted-footer">
               <div className="submitted-security-info">
                 <Lock size={14} />
-                <span>{t('otp.protected')}</span>
+                <span>Connexion sécurisée SSL</span>
               </div>
               <p className="submitted-compliance">
-                {t('otp.compliance')}
+                Conforme aux exigences de Bank Al-Maghrib
               </p>
             </div>
           </div>

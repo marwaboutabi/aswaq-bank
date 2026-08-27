@@ -3,29 +3,27 @@ package com.aswaqbank.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-
 @Service
 public class JwtService {
 
-
-    private static final String SECRET_KEY =
-            "aswaqBankSecretKeyForJwtAuthentication2026Secure";
-
+    @Value("${jwt.secret:aswaqBankSecretKeyForJwtAuthentication2026Secure}")
+    private String secretKey;
 
     private SecretKey getSignKey() {
 
         return Keys.hmacShaKeyFor(
-                SECRET_KEY.getBytes()
+                secretKey.getBytes(StandardCharsets.UTF_8)
         );
     }
-
 
     // Génération du token
     public String generateToken(String email) {
@@ -46,14 +44,12 @@ public class JwtService {
                 .compact();
     }
 
-
     // Récupérer l'email depuis le token
     public String extractUsername(String token) {
 
         return extractAllClaims(token)
                 .getSubject();
     }
-
 
     // Vérifier le token
     public boolean isTokenValid(String token, String email) {
@@ -64,14 +60,12 @@ public class JwtService {
                 && !isTokenExpired(token);
     }
 
-
     private boolean isTokenExpired(String token) {
 
         return extractAllClaims(token)
                 .getExpiration()
                 .before(new Date());
     }
-
 
     private Claims extractAllClaims(String token) {
 

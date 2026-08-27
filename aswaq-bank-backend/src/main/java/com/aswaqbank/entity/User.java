@@ -1,7 +1,9 @@
 package com.aswaqbank.entity;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.OneToOne;
 
 @Entity
 @Table(name = "users")
@@ -48,6 +50,18 @@ public class User {
    private String fourchetteRevenus;
    private String objetCompte;
    private String offre;
+   
+   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+   private BankAccount bankAccount;
+   
+   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+   @JsonIgnore
+   private Merchant merchant;
+   
+   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+   @JsonIgnore
+   private Supplier supplier;
+   
     public User() {
     }
 
@@ -240,5 +254,26 @@ public class User {
 
     public void setSelfie(String selfie) {
         this.selfie = selfie;
+    }
+    public BankAccount getBankAccount() {
+        return bankAccount;
+    }
+
+    public void setBankAccount(BankAccount bankAccount) {
+        this.bankAccount = bankAccount;
+    }
+    public Merchant getMerchant() {
+        return merchant;
+    }
+
+    public void setMerchant(Merchant merchant) {
+        this.merchant = merchant;
+    }
+    public Supplier getSupplier() {
+        return supplier;
+    }
+
+    public void setSupplier(Supplier supplier) {
+        this.supplier = supplier;
     }
 }

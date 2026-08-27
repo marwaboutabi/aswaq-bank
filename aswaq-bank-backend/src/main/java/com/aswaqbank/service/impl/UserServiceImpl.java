@@ -36,4 +36,38 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
+
+    // =====================================================
+    // RÉCUPÉRER L'UTILISATEUR CONNECTÉ
+    // =====================================================
+
+    @Override
+    public User getCurrentUser(String email) {
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("Utilisateur connecté introuvable")
+                );
+    }
+
+    // =====================================================
+    // MODIFIER L'UTILISATEUR CONNECTÉ
+    // =====================================================
+
+    @Override
+    public User updateCurrentUser(String email, User updatedUser) {
+
+        User existingUser = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("Utilisateur connecté introuvable")
+                );
+
+        // On modifie uniquement les informations du profil
+        existingUser.setNom(updatedUser.getNom());
+        existingUser.setPrenom(updatedUser.getPrenom());
+        existingUser.setEmail(updatedUser.getEmail());
+        existingUser.setTelephone(updatedUser.getTelephone());
+
+        return userRepository.save(existingUser);
+    }
 }

@@ -13,4 +13,12 @@ public interface UserService {
     User getUserById(Long id);
 
     void deleteUser(Long id);
+
+    // =====================================================
+    // PROFIL UTILISATEUR - /me
+    // =====================================================
+
+    User getCurrentUser(String email);
+
+    User updateCurrentUser(String email, User updatedUser);
 }

@@ -143,6 +143,7 @@ export default function ProduitsCom() {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
+  const [user, setUser] = useState(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('Toutes');
   const [sortBy, setSortBy] = useState('recent');
@@ -174,6 +175,7 @@ export default function ProduitsCom() {
 
   useEffect(() => {
     loadProducts();
+    loadUser();
   }, []);
 
   const loadProducts = async () => {
@@ -192,6 +194,15 @@ export default function ProduitsCom() {
     } catch (error) {
       console.error('Erreur chargement produits :', error);
       setProducts([]);
+    }
+  };
+
+  const loadUser = async () => {
+    try {
+      const response = await api.get('/users/me');
+      setUser(response.data);
+    } catch (error) {
+      console.error('Erreur chargement utilisateur :', error);
     }
   };
 
@@ -672,9 +683,18 @@ export default function ProduitsCom() {
               onClick={() => setShowUserMenu(!showUserMenu)}
               style={{ position: 'relative' }}
             >
-              <div className="prod-user-avatar">MB</div>
+              <div className="prod-user-avatar">
+                {(user?.prenom?.[0] || user?.firstName?.[0] || '')}
+                {(user?.nom?.[0] || user?.lastName?.[0] || '')}
+              </div>
               <div className="prod-user-info">
-                <span className="prod-user-name">Marwa Boutabi</span>
+                <span className="prod-user-name">
+                  {user
+                    ? `${user.prenom || user.firstName || ''} ${
+                        user.nom || user.lastName || ''
+                      }`.trim() || 'Commerçant'
+                    : 'Commerçant'}
+                </span>
                 <span className="prod-user-role">Commerçant</span>
               </div>
               <ChevronDown size={16} />

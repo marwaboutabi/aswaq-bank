@@ -36,10 +36,19 @@ export default function Login() {
             password: formData.password
         });
         
-        const { token, role } = response.data;
+ const {
+    token,
+    role,
+    nom,
+    prenom,
+    email
+} = response.data;
 
-        localStorage.setItem("token", token);
-        localStorage.setItem("role", role);
+localStorage.setItem("token", token);
+localStorage.setItem("role", role);
+localStorage.setItem("nom", nom || "");
+localStorage.setItem("prenom", prenom || "");
+localStorage.setItem("email", email || "");
 
         if (role === "CLIENT") {
             navigate("/dashboard-client");

@@ -112,6 +112,23 @@ async function askAI(question) {
   };
 }
 
+// --- Récupération de l'utilisateur connecté ---
+async function fetchCurrentUser() {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+
+  const response = await fetch('http://localhost:8080/api/users/me', {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) return null;
+
+  return response.json();
+}
+
 export default function Assistant() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -129,6 +146,15 @@ export default function Assistant() {
 
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    fetchCurrentUser()
+      .then((data) => {
+        if (data) setUser(data);
+      })
+      .catch((err) => console.error('Erreur chargement utilisateur:', err));
+  }, []);
 
   // CORRECTION : Ne scroller que si la conversation a commencé (plus que le message de bienvenue)
   useEffect(() => {
@@ -136,6 +162,14 @@ export default function Assistant() {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isTyping]);
+
+  const userInitials = user
+    ? `${(user.prenom || user.firstName || '')[0] || ''}${(user.nom || user.lastName || '')[0] || ''}`
+    : 'CO';
+
+  const userFullName = user
+    ? `${user.prenom || user.firstName || ''} ${user.nom || user.lastName || ''}`.trim() || 'Commerçant'
+    : 'Commerçant';
 
   // --- Gestion robuste des erreurs et du loading ---
   const handleSend = async (text) => {
@@ -279,9 +313,9 @@ export default function Assistant() {
               <span className="dash-badge">3</span>
             </button>
             <div className="dash-user-chip">
-              <div className="dash-user-avatar">MB</div>
+              <div className="dash-user-avatar">{userInitials}</div>
               <div className="dash-user-info">
-                <span className="dash-user-name">Marwa Boutabi</span>
+                <span className="dash-user-name">{userFullName}</span>
                 <span className="dash-user-role">Commerçant</span>
               </div>
               <ChevronDown size={16} />
@@ -328,7 +362,7 @@ export default function Assistant() {
                   </div>
                   {msg.sender === 'user' && (
                     <div className="assistant-avatar assistant-avatar-user">
-                      MB
+                      {userInitials}
                     </div>
                   )}
                 </div>

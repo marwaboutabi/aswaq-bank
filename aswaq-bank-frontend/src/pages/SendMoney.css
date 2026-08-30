@@ -304,6 +304,9 @@
   justify-content: center;
   flex-shrink: 0;
 }
+.logo-white-filter {
+  filter: brightness(0) invert(1);
+}
 .sm-verification-info-box-error {
   background-color: #fee2e2;
   border: 1px solid #fca5a5;

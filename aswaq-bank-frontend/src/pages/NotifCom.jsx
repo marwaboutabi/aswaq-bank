@@ -86,6 +86,7 @@ export default function Notifications() {
   const [selectedNotif, setSelectedNotif] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [user, setUser] = useState(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -104,6 +105,15 @@ export default function Notifications() {
         setErrorMsg('Impossible de charger les notifications.');
       } finally {
         setLoading(false);
+      }
+    })();
+
+    (async () => {
+      try {
+        const res = await api.get('/users/me');
+        setUser(res.data);
+      } catch (err) {
+        console.error('Erreur chargement utilisateur:', err);
       }
     })();
   }, []);
@@ -196,9 +206,18 @@ export default function Notifications() {
               {unreadCount > 0 && <span className="dash-badge">{unreadCount}</span>}
             </button>
             <div className="fourn-user-chip" onClick={() => navigate('/parametres-commerce')}>
-              <div className="fourn-user-avatar">MB</div>
+              <div className="fourn-user-avatar">
+                {(user?.prenom?.[0] || user?.firstName?.[0] || '')}
+                {(user?.nom?.[0] || user?.lastName?.[0] || '')}
+              </div>
               <div className="fourn-user-info">
-                <span className="fourn-user-name">Marwa Boutabi</span>
+                <span className="fourn-user-name">
+                  {user
+                    ? `${user.prenom || user.firstName || ''} ${
+                        user.nom || user.lastName || ''
+                      }`.trim() || 'Commerçant'
+                    : 'Commerçant'}
+                </span>
                 <span className="fourn-user-role">Commerçant</span>
               </div>
               <ChevronDown size={16} />

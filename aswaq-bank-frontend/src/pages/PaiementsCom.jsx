@@ -56,6 +56,7 @@ export default function PaiementsCom() {
   // States principaux
   const [transactions, setTransactions] = useState([]);
   const [account, setAccount] = useState(null);
+  const [user, setUser] = useState(null);
   
   // States filtres
   const [search, setSearch] = useState('');
@@ -90,6 +91,7 @@ export default function PaiementsCom() {
   useEffect(() => {
     loadTransactions();
     loadAccount();
+    loadUser();
   }, []);
 
   const loadAccount = async () => {
@@ -99,6 +101,15 @@ export default function PaiementsCom() {
       setAccount(res.data);
     } catch (error) {
       console.error("Erreur récupération compte :", error);
+    }
+  };
+
+  const loadUser = async () => {
+    try {
+      const res = await api.get("/users/me");
+      setUser(res.data);
+    } catch (error) {
+      console.error("Erreur récupération utilisateur :", error);
     }
   };
 
@@ -380,9 +391,18 @@ export default function PaiementsCom() {
               <span className="pay-badge">3</span>
             </button>
             <div className="pay-user-chip" onClick={() => navigate('/parametres-commerce')}>
-              <div className="pay-user-avatar">MB</div>
+              <div className="pay-user-avatar">
+                {(user?.prenom?.[0] || user?.firstName?.[0] || '')}
+                {(user?.nom?.[0] || user?.lastName?.[0] || '')}
+              </div>
               <div className="pay-user-info">
-                <span className="pay-user-name">Marwa Boutabi</span>
+                <span className="pay-user-name">
+                  {user
+                    ? `${user.prenom || user.firstName || ''} ${
+                        user.nom || user.lastName || ''
+                      }`.trim() || 'Commerçant'
+                    : 'Commerçant'}
+                </span>
                 <span className="pay-user-role">Commerçant</span>
               </div>
               <ChevronDown size={16} />

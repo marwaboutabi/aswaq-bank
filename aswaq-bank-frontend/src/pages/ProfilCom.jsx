@@ -99,6 +99,11 @@ const [preferences, setPreferences] = useState({
   currency: 'MAD',
   theme: 'Clair',
 });
+
+// Initiales et nom complet dérivés du profil réel, avec repli si pas encore chargé
+const userInitials = `${(profileForm.prenom || '')[0] || ''}${(profileForm.nom || '')[0] || ''}` || 'CO';
+const userFullName = `${profileForm.prenom || ''} ${profileForm.nom || ''}`.trim() || 'Commerçant';
+
 useEffect(() => { const loadCurrentUser = async () => { try { const response = await api.get('/users/me'); 
   const user = response.data; console.log('Utilisateur connecté :', user); 
   setCurrentUser(user); setProfileForm({
@@ -236,9 +241,9 @@ const handleConfirmEmailOtp = async () => {
               <span className="dash-badge">3</span>
             </button>
            <div className="dash-user-chip">
-  <div className="dash-user-avatar">MB</div>
+  <div className="dash-user-avatar">{userInitials}</div>
   <div className="dash-user-info">
-    <span className="dash-user-name">Marwa Boutabi</span>
+    <span className="dash-user-name">{userFullName}</span>
     <span className="dash-user-role">Commerçant</span>
   </div>
   <ChevronDown size={16} />
@@ -252,7 +257,7 @@ const handleConfirmEmailOtp = async () => {
             <div className="profil-card profil-profile-card">
               <div className="profil-profile-header">
                 <div className="profil-avatar-wrapper">
-                  <div className="profil-avatar">MB</div>
+                  <div className="profil-avatar">{userInitials}</div>
                   <button type="button" className="profil-avatar-edit">
                     <Camera size={14} />
                   </button>
@@ -535,12 +540,4 @@ const handleConfirmEmailOtp = async () => {
     </div>
   );
 
-  }
-
-
-
-
-
-
-
-  
+}

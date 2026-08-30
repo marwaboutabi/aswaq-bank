@@ -38,7 +38,11 @@ export default function SendMoneyVerification() {
     <div className="dash-layout">
       {/* Sidebar (identique) */}
       <aside className="dash-sidebar">
-        <div className="dash-sidebar-logo"><Logo size={100} className="mb-6" /></div>
+        <div className="dash-sidebar-logo">
+  <div className="logo-white-filter">
+    <Logo size={100} className="mb-6" />
+  </div>
+</div>
         <nav className="dash-nav">
           {[
             { icon: 'Home', label: 'Accueil', to: '/dashboard-client' },

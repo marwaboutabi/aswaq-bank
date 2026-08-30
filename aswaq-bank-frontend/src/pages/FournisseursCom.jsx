@@ -77,6 +77,8 @@ export default function FournisseursCom() {
   const [commandes, setCommandes] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
 
+  const [user, setUser] = useState(null);
+
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -132,10 +134,20 @@ export default function FournisseursCom() {
     }
   };
 
+  const fetchUser = async () => {
+    try {
+      const res = await axiosClient.get('/users/me');
+      setUser(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchSuppliers();
     fetchManualSuppliers();
     fetchOrders();
+    fetchUser();
   }, []);
 
   // Liste fusionnée pour l'affichage du tableau (chaque ligne garde son origine)
@@ -340,9 +352,18 @@ export default function FournisseursCom() {
               <Bell size={18} /><span className="fourn-badge">3</span>
             </button>
             <div className="fourn-user-chip" onClick={() => navigate('/parametres-commerce')}>
-              <div className="fourn-user-avatar">MB</div>
+              <div className="fourn-user-avatar">
+                {(user?.prenom?.[0] || user?.firstName?.[0] || '')}
+                {(user?.nom?.[0] || user?.lastName?.[0] || '')}
+              </div>
               <div className="fourn-user-info">
-                <span className="fourn-user-name">Marwa Boutabi</span>
+                <span className="fourn-user-name">
+                  {user
+                    ? `${user.prenom || user.firstName || ''} ${
+                        user.nom || user.lastName || ''
+                      }`.trim() || 'Commerçant'
+                    : 'Commerçant'}
+                </span>
                 <span className="fourn-user-role">Commerçant</span>
               </div>
               <ChevronDown size={16} />
